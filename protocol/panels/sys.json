@@ -1,0 +1,271 @@
+{
+  "id": "sys",
+  "title": "SYSTEMS",
+  "fw": "virtual-0.1",
+  "sections": [
+    {
+      "title": "ELECTRICAL",
+      "items": [
+        {
+          "type": "bar",
+          "id": "bar_ec",
+          "label": "CHARGE",
+          "out": "bar_ec",
+          "segments": 10
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ec",
+          "label": "EC",
+          "out": "disp_ec",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ec_rate",
+          "label": "EC/S",
+          "out": "disp_ec_rate",
+          "digits": 5,
+          "color": "green"
+        },
+        {
+          "type": "toggle",
+          "id": "solar",
+          "label": "SOLAR",
+          "in": "solar",
+          "led": {
+            "out": "led_solar",
+            "color": "green"
+          }
+        },
+        {
+          "type": "toggle",
+          "id": "cb_dsky",
+          "label": "CB DSKY",
+          "in": "cb_dsky",
+          "default": 1
+        }
+      ]
+    },
+    {
+      "title": "PROPELLANT · STAGE",
+      "items": [
+        {
+          "type": "bar",
+          "id": "bar_lf",
+          "label": "FUEL",
+          "out": "bar_lf",
+          "segments": 10
+        },
+        {
+          "type": "bar",
+          "id": "bar_ox",
+          "label": "OXID",
+          "out": "bar_ox",
+          "segments": 10
+        },
+        {
+          "type": "bar",
+          "id": "bar_mono",
+          "label": "MONO",
+          "out": "bar_mono",
+          "segments": 10
+        },
+        {
+          "type": "seg7",
+          "id": "disp_dv",
+          "label": "STAGE ΔV M/S",
+          "out": "disp_dv",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_twr",
+          "label": "TWR",
+          "out": "disp_twr",
+          "digits": 4,
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "title": "EVENT TIMER",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_evt",
+          "label": "MIN.SEC",
+          "out": "disp_evt",
+          "digits": 5
+        },
+        {
+          "type": "rotary",
+          "id": "evt_src",
+          "label": "SOURCE",
+          "in": "evt_src",
+          "positions": [
+            "MAN",
+            "TIG",
+            "APO",
+            "PERI",
+            "SOI"
+          ]
+        },
+        {
+          "type": "led",
+          "id": "led_evt_run",
+          "label": "RUN",
+          "out": "led_evt_run",
+          "color": "green"
+        },
+        {
+          "type": "button",
+          "id": "evt_start",
+          "label": "START",
+          "in": "evt_start"
+        },
+        {
+          "type": "button",
+          "id": "evt_stop",
+          "label": "STOP",
+          "in": "evt_stop"
+        },
+        {
+          "type": "button",
+          "id": "evt_reset",
+          "label": "RESET",
+          "in": "evt_reset"
+        },
+        {
+          "type": "toggle",
+          "id": "evt_down",
+          "label": "COUNT DOWN",
+          "in": "evt_down"
+        },
+        {
+          "type": "button",
+          "id": "evt_min",
+          "label": "MIN +",
+          "in": "evt_min"
+        },
+        {
+          "type": "button",
+          "id": "evt_sec",
+          "label": "SEC +10",
+          "in": "evt_sec"
+        }
+      ]
+    },
+    {
+      "title": "RECOVERY · BRAKES",
+      "items": [
+        {
+          "type": "guarded_toggle",
+          "id": "chute_arm",
+          "label": "CHUTE ARM",
+          "in": "chute_arm",
+          "led": {
+            "out": "led_chute_armed",
+            "color": "amber"
+          }
+        },
+        {
+          "type": "lamp_button",
+          "id": "chute_deploy",
+          "label": "CHUTE",
+          "color": "green",
+          "in": "chute_deploy",
+          "out": "lamp_chute"
+        },
+        {
+          "type": "toggle",
+          "id": "brakes",
+          "label": "BRAKES",
+          "in": "brakes",
+          "led": {
+            "out": "led_brakes",
+            "color": "green"
+          }
+        }
+      ]
+    },
+    {
+      "title": "TIME WARP",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_warp",
+          "label": "RATE ×",
+          "out": "disp_warp",
+          "digits": 6,
+          "color": "green"
+        },
+        {
+          "type": "led",
+          "id": "led_warp",
+          "label": "WARP",
+          "out": "led_warp",
+          "color": "amber"
+        },
+        {
+          "type": "button",
+          "id": "warp_down",
+          "label": "◂ SLOWER",
+          "in": "warp_down"
+        },
+        {
+          "type": "button",
+          "id": "warp_up",
+          "label": "FASTER ▸",
+          "in": "warp_up"
+        },
+        {
+          "type": "button",
+          "id": "warp_to",
+          "label": "WARP TO EVT",
+          "in": "warp_to"
+        },
+        {
+          "type": "lamp_button",
+          "id": "warp_stop",
+          "label": "STOP WARP",
+          "color": "red",
+          "in": "warp_stop"
+        }
+      ]
+    },
+    {
+      "title": "GAME",
+      "items": [
+        {
+          "type": "toggle",
+          "id": "pause",
+          "label": "PAUSE",
+          "in": "pause",
+          "led": {
+            "out": "led_pause",
+            "color": "amber"
+          }
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "save_arm",
+          "label": "SAVE ARM",
+          "in": "save_arm"
+        },
+        {
+          "type": "button",
+          "id": "quicksave",
+          "label": "QUICK SAVE",
+          "in": "quicksave"
+        },
+        {
+          "type": "button",
+          "id": "quickload",
+          "label": "QUICK LOAD",
+          "in": "quickload"
+        }
+      ]
+    }
+  ]
+}

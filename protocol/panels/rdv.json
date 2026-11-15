@@ -1,0 +1,227 @@
+{
+  "id": "rdv",
+  "title": "RENDEZVOUS · DOCKING",
+  "fw": "virtual-0.1",
+  "sections": [
+    {
+      "title": "TARGET",
+      "items": [
+        {
+          "type": "alpha",
+          "id": "txt_tgt",
+          "label": "TARGET",
+          "out": "txt_tgt",
+          "chars": 12
+        },
+        {
+          "type": "led",
+          "id": "led_tgt",
+          "label": "TGT",
+          "out": "led_tgt",
+          "color": "green"
+        },
+        {
+          "type": "led",
+          "id": "led_port",
+          "label": "PORT",
+          "out": "led_port",
+          "color": "green"
+        },
+        {
+          "type": "button",
+          "id": "tgt_prev",
+          "label": "◂ TGT",
+          "in": "tgt_prev"
+        },
+        {
+          "type": "button",
+          "id": "tgt_next",
+          "label": "TGT ▸",
+          "in": "tgt_next"
+        },
+        {
+          "type": "button",
+          "id": "port_next",
+          "label": "PORT ▸",
+          "in": "port_next"
+        },
+        {
+          "type": "button",
+          "id": "tgt_clear",
+          "label": "CLEAR",
+          "in": "tgt_clear"
+        },
+        {
+          "type": "toggle",
+          "id": "ctrl_port",
+          "label": "CTRL FROM PORT",
+          "in": "ctrl_port",
+          "led": {
+            "out": "led_ctrl_port",
+            "color": "green"
+          }
+        }
+      ]
+    },
+    {
+      "title": "RENDEZVOUS",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_range",
+          "label": "RANGE M",
+          "out": "disp_range",
+          "digits": 6
+        },
+        {
+          "type": "led",
+          "id": "led_km",
+          "label": "KM",
+          "out": "led_km",
+          "color": "amber"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_closing",
+          "label": "CLOSING M/S",
+          "out": "disp_closing",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_gate",
+          "label": "GATE M/S",
+          "out": "disp_gate",
+          "digits": 5,
+          "color": "green"
+        },
+        {
+          "type": "annunciator",
+          "id": "rdv_lamps",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_overspeed",
+              "label": "OVERSPEED",
+              "color": "amber"
+            }
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_los",
+          "label": "LOS °/MIN",
+          "out": "disp_los",
+          "digits": 4,
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "title": "DOCK 1 · FACE THE PORT",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_yaw",
+          "label": "YAW ° (+ RIGHT)",
+          "out": "disp_yaw",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_pitch",
+          "label": "PITCH ° (+ UP)",
+          "out": "disp_pitch",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_roll",
+          "label": "ROLL ° (+ RIGHT)",
+          "out": "disp_roll",
+          "digits": 5,
+          "color": "green"
+        },
+        {
+          "type": "annunciator",
+          "id": "lamp_aligned_box",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_aligned",
+              "label": "ALIGNED",
+              "color": "green"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "DOCK 2 · CENTRE",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_right",
+          "label": "PORT IS RIGHT M",
+          "out": "disp_right",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_vright",
+          "label": "RATE M/S",
+          "out": "disp_vright",
+          "digits": 4,
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_up",
+          "label": "PORT IS UP M",
+          "out": "disp_up",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_vup",
+          "label": "RATE M/S",
+          "out": "disp_vup",
+          "digits": 4,
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "title": "DOCK 3 · CLOSE",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_axial",
+          "label": "DISTANCE M",
+          "out": "disp_axial",
+          "digits": 5
+        },
+        {
+          "type": "seg7",
+          "id": "disp_vaxial",
+          "label": "CLOSING M/S",
+          "out": "disp_vaxial",
+          "digits": 4,
+          "color": "green"
+        },
+        {
+          "type": "annunciator",
+          "id": "lamp_capture_box",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_capture",
+              "label": "CAPTURE",
+              "color": "green"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capsule · virtual panel</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="panel.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">CAPSULE <span>virtual panel</span></div>
+  <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
+  <nav id="nav" class="nav" aria-label="Panels"></nav>
+  <div class="links">
+    <span id="plant">plant: ?</span>
+    <span id="cockpit">cockpit: ?</span>
+    <label class="sw-sniff"><input type="checkbox" id="sniff-toggle"> bus</label>
+  </div>
+</header>
+
+<main id="panel" class="panel" aria-label="Panel"></main>
+
+<section class="bench" aria-label="Instructor bench">
+  <div class="bench-title">INSTRUCTOR · BENCH</div>
+  <button data-bench="sim/reset">RESET SIM</button>
+  <label><input type="checkbox" data-failure="engine_out"> engine out</label>
+  <label><input type="checkbox" data-failure="battery_short"> battery short</label>
+  <label><input type="checkbox" data-failure="telemetry_freeze"> telemetry freeze</label>
+  <span class="bench-note">Mock plant only. Keys: <kbd>Space</kbd> stage (when armed), <kbd>↑</kbd>/<kbd>↓</kbd> throttle, <kbd>T</kbd> lamp test.</span>
+</section>
+
+<section id="sniffer" class="sniffer" hidden aria-label="Bus sniffer">
+  <div class="sniff-head">
+    <strong>BUS</strong>
+    <input id="sniff-filter" placeholder="filter topic (e.g. panel/ or cmd/)" value="">
+    <label><input type="checkbox" id="sniff-tlm"> show tlm/*</label>
+    <button id="sniff-clear">clear</button>
+  </div>
+  <ol id="sniff-list"></ol>
+</section>
+
+<script src="vendor/mqtt.min.js"></script>
+<script src="panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,427 @@
+{
+ "made": "2026-11-15T08:53:20.290Z",
+ "vehicle": {
+  "name": "Mun LOR",
+  "m0": 136631.99995422363,
+  "payload": 1295.0000915527344,
+  "phases": [
+   {
+    "name": "group 8 (7 eng)",
+    "group": 8,
+    "prop": 12000.000122070312,
+    "dry": 5549.9998779296875,
+    "fVac": 2790000,
+    "ispVac": 314.5448346403,
+    "ispSL": 269.09307875894984,
+    "engines": [
+     "RE-M3 \"Mainsail\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine"
+    ],
+    "lateIgnition": false,
+    "m0": 136631.99995422363,
+    "dv": 283.5571389943049
+   },
+   {
+    "name": "group 7 (5 eng)",
+    "group": 7,
+    "prop": 12000.000122070312,
+    "dry": 5549.9998779296875,
+    "fVac": 2360000,
+    "ispVac": 313.570854540584,
+    "ispSL": 272.5020091079561,
+    "engines": [
+     "RE-M3 \"Mainsail\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine"
+    ],
+    "lateIgnition": false,
+    "m0": 119081.99995422363,
+    "dv": 326.62707440139127
+   },
+   {
+    "name": "group 6 (3 eng)",
+    "group": 6,
+    "prop": 12000.000122070312,
+    "dry": 5549.9998779296875,
+    "fVac": 1930000,
+    "ispVac": 312.1734876895483,
+    "ispSL": 277.3927930865808,
+    "engines": [
+     "RE-M3 \"Mainsail\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine",
+     "LV-T45 \"Swivel\" Liquid Fuel Engine"
+    ],
+    "lateIgnition": false,
+    "m0": 101531.99995422363,
+    "dv": 385.0535158529751
+   },
+   {
+    "name": "group 5 (1 eng)",
+    "group": 5,
+    "prop": 48000,
+    "dry": 12760,
+    "fVac": 1500000,
+    "ispVac": 310,
+    "ispSL": 285,
+    "engines": [
+     "RE-M3 \"Mainsail\" Liquid Fuel Engine"
+    ],
+    "lateIgnition": false,
+    "m0": 83981.99995422363,
+    "dv": 2576.7065059331285
+   },
+   {
+    "name": "group 3 (1 eng)",
+    "group": 3,
+    "prop": 2760.0000495910645,
+    "dry": 4471.999965667725,
+    "fVac": 60000,
+    "ispVac": 345,
+    "ispSL": 85,
+    "engines": [
+     "LV-909 \"Terrier\" Liquid Fuel Engine"
+    ],
+    "lateIgnition": true,
+    "m0": 23221.999954223633,
+    "dv": 428.0902529093273
+   },
+   {
+    "name": "group 2 (1 eng)",
+    "group": 2,
+    "prop": 9999.999633789062,
+    "dry": 4695.000213623047,
+    "fVac": 250000,
+    "ispVac": 350,
+    "ispSL": 90,
+    "engines": [
+     "RE-L10 \"Poodle\" Liquid Fuel Engine"
+    ],
+    "lateIgnition": true,
+    "m0": 15989.999938964844,
+    "dv": 3370.106472861353
+   }
+  ],
+  "dvVac": 7370.14096095248,
+  "twr0": 1.781357440771714,
+  "upperFrom": 3,
+  "cdA": 10
+ },
+ "prog": {
+  "kickT": 8,
+  "kickA": 10,
+  "cutoff": "apo",
+  "targetAlt": 80000
+ },
+ "result": {
+  "outcome": "cutoff",
+  "circ": {
+   "tApo": 223.79999999999825,
+   "hApo": 80021.37665204715,
+   "dv": 1204.274884292518,
+   "coast": 117.50000000000001,
+   "vApo": 1074.620934254785,
+   "thApo": 0.2763117715385373
+  },
+  "t": 106.29999999999824,
+  "h": 80021.37665204715,
+  "v": 1074.6216672460969,
+  "el": {
+   "apo": 80021.50928480516,
+   "peri": -514936.9375585812,
+   "e": 0.7776374911090023
+  },
+  "phase": 3,
+  "propLeft": 19283.475679685987,
+  "m": 55265.475633911476,
+  "dvLeft": 3898.5021896043304,
+  "losses": {
+   "gravity": 840.9318718940451,
+   "drag": 143.4443745869605,
+   "steering": 2.1713837008901655,
+   "ideal": 2181.110743167391
+  },
+  "maxQ": {
+   "q": 24341.049952433856,
+   "t": 38.60000000000028,
+   "h": 5829.25323480845
+  },
+  "events": [
+   {
+    "t": 13.299999999999969,
+    "label": "group 8 (7 eng) burnout",
+    "h": 724
+   },
+   {
+    "t": 29.000000000000142,
+    "label": "group 7 (5 eng) burnout",
+    "h": 3373
+   },
+   {
+    "t": 48.10000000000041,
+    "label": "group 6 (3 eng) burnout",
+    "h": 8821
+   },
+   {
+    "t": 106.29999999999824,
+    "label": "cutoff (apoapsis)",
+    "h": 38439
+   },
+   {
+    "t": 223.79999999999825,
+    "label": "apoapsis, circularise 1204.3 m/s",
+    "h": 80021
+   }
+  ]
+ },
+ "trace": [
+  {
+   "t": 0,
+   "h": 0,
+   "vAir": 0,
+   "pitch": 90,
+   "path": 90,
+   "ph": 0,
+   "m": 136632,
+   "q": 0,
+   "mode": "vertical"
+  },
+  {
+   "t": 5.1,
+   "h": 103,
+   "vAir": 40.8,
+   "pitch": 90,
+   "path": 90.09,
+   "ph": 0,
+   "m": 132019,
+   "q": 1234,
+   "mode": "vertical"
+  },
+  {
+   "t": 10.2,
+   "h": 421,
+   "vAir": 84.4,
+   "pitch": 84.5,
+   "path": 88.88,
+   "ph": 0,
+   "m": 127406,
+   "q": 4982,
+   "mode": "kick"
+  },
+  {
+   "t": 15.3,
+   "h": 961,
+   "vAir": 126.5,
+   "pitch": 80,
+   "path": 82.66,
+   "ph": 1,
+   "m": 117547,
+   "q": 10133,
+   "mode": "kick"
+  },
+  {
+   "t": 20.3,
+   "h": 1678,
+   "vAir": 164.6,
+   "pitch": 79.18,
+   "path": 79.18,
+   "ph": 1,
+   "m": 113710,
+   "q": 15043,
+   "mode": "turn"
+  },
+  {
+   "t": 25.3,
+   "h": 2581,
+   "vAir": 205.6,
+   "pitch": 76.18,
+   "path": 76.18,
+   "ph": 1,
+   "m": 109872,
+   "q": 19886,
+   "mode": "turn"
+  },
+  {
+   "t": 30.3,
+   "h": 3675,
+   "vAir": 246.4,
+   "pitch": 73.16,
+   "path": 73.16,
+   "ph": 2,
+   "m": 100712,
+   "q": 23371,
+   "mode": "turn"
+  },
+  {
+   "t": 35.3,
+   "h": 4924,
+   "vAir": 281.1,
+   "pitch": 70.09,
+   "path": 70.09,
+   "ph": 2,
+   "m": 97560,
+   "q": 24180,
+   "mode": "turn"
+  },
+  {
+   "t": 40.3,
+   "h": 6321,
+   "vAir": 320.4,
+   "pitch": 66.97,
+   "path": 66.97,
+   "ph": 2,
+   "m": 94408,
+   "q": 24301,
+   "mode": "turn"
+  },
+  {
+   "t": 45.3,
+   "h": 7877,
+   "vAir": 364.9,
+   "pitch": 63.89,
+   "path": 63.89,
+   "ph": 2,
+   "m": 91256,
+   "q": 23682,
+   "mode": "turn"
+  },
+  {
+   "t": 50.3,
+   "h": 9594,
+   "vAir": 407.1,
+   "pitch": 60.91,
+   "path": 60.91,
+   "ph": 3,
+   "m": 82896,
+   "q": 21499,
+   "mode": "turn"
+  },
+  {
+   "t": 55.3,
+   "h": 11426,
+   "vAir": 445,
+   "pitch": 57.96,
+   "path": 57.96,
+   "ph": 3,
+   "m": 80429,
+   "q": 18357,
+   "mode": "turn"
+  },
+  {
+   "t": 60.3,
+   "h": 13370,
+   "vAir": 489.2,
+   "pitch": 55.08,
+   "path": 55.08,
+   "ph": 3,
+   "m": 77962,
+   "q": 15517,
+   "mode": "turn"
+  },
+  {
+   "t": 65.3,
+   "h": 15440,
+   "vAir": 539.6,
+   "pitch": 52.32,
+   "path": 52.32,
+   "ph": 3,
+   "m": 75495,
+   "q": 12910,
+   "mode": "turn"
+  },
+  {
+   "t": 70.3,
+   "h": 17644,
+   "vAir": 596.4,
+   "pitch": 49.72,
+   "path": 49.72,
+   "ph": 3,
+   "m": 73028,
+   "q": 10519,
+   "mode": "turn"
+  },
+  {
+   "t": 75.3,
+   "h": 19993,
+   "vAir": 659.7,
+   "pitch": 47.31,
+   "path": 47.31,
+   "ph": 3,
+   "m": 70561,
+   "q": 8359,
+   "mode": "turn"
+  },
+  {
+   "t": 80.4,
+   "h": 22548,
+   "vAir": 730.9,
+   "pitch": 45.06,
+   "path": 45.06,
+   "ph": 3,
+   "m": 68045,
+   "q": 6419,
+   "mode": "turn"
+  },
+  {
+   "t": 85.5,
+   "h": 25274,
+   "vAir": 809.1,
+   "pitch": 43.03,
+   "path": 43.03,
+   "ph": 3,
+   "m": 65528,
+   "q": 4767,
+   "mode": "turn"
+  },
+  {
+   "t": 90.6,
+   "h": 28183,
+   "vAir": 894.3,
+   "pitch": 41.22,
+   "path": 41.22,
+   "ph": 3,
+   "m": 63012,
+   "q": 3412,
+   "mode": "turn"
+  },
+  {
+   "t": 95.7,
+   "h": 31289,
+   "vAir": 986.4,
+   "pitch": 39.62,
+   "path": 39.62,
+   "ph": 3,
+   "m": 60496,
+   "q": 2347,
+   "mode": "turn"
+  },
+  {
+   "t": 100.8,
+   "h": 34605,
+   "vAir": 1085.8,
+   "pitch": 38.24,
+   "path": 38.24,
+   "ph": 3,
+   "m": 57979,
+   "q": 1546,
+   "mode": "turn"
+  },
+  {
+   "t": 105.9,
+   "h": 38150,
+   "vAir": 1192.5,
+   "pitch": 37.07,
+   "path": 37.07,
+   "ph": 3,
+   "m": 55463,
+   "q": 973,
+   "mode": "turn"
+  }
+ ]
+}

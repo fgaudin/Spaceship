@@ -1,0 +1,119 @@
+{
+ "name": "Target",
+ "mass": 17570.0,
+ "dry_mass": 5665.0,
+ "current_stage": 7,
+ "crew": [
+  "Valentina Kerman"
+ ],
+ "stages": {
+  "-1": {
+   "parts": [
+    "Mk1 Command Pod",
+    "Mk16 Parachute",
+    "Clamp-O-Tron Docking Port Jr.",
+    "Z-200 Rechargeable Battery Bank",
+    "Clamp-O-Tron Docking Port Jr.",
+    "Stratus-V Roundified Monopropellant Tank",
+    "Communotron 16"
+   ],
+   "mass": 1255.0000915527344,
+   "dry": 975.000072479248
+  },
+  "2": {
+   "parts": [
+    "TD-12 Decoupler",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "FL-T400 Fuel Tank",
+    "LV-909 \"Terrier\" Liquid Fuel Engine"
+   ],
+   "mass": 2949.999984741211,
+   "dry": 949.9999847412109
+  },
+  "4": {
+   "parts": [
+    "TD-12 Decoupler",
+    "FL-T800 Fuel Tank",
+    "Basic Fin",
+    "Basic Fin",
+    "Basic Fin",
+    "Basic Fin",
+    "LV-T45 \"Swivel\" Liquid Fuel Engine"
+   ],
+   "mass": 6080.0,
+   "dry": 2080.0
+  },
+  "5": {
+   "parts": [
+    "TT-70 Radial Decoupler",
+    "RT-10 \"Hammer\" Solid Fuel Booster",
+    "Aerodynamic Nose Cone",
+    "TT-70 Radial Decoupler",
+    "RT-10 \"Hammer\" Solid Fuel Booster",
+    "Aerodynamic Nose Cone"
+   ],
+   "mass": 7284.999996185303,
+   "dry": 1659.9999961853027
+  }
+ },
+ "engines": [
+  {
+   "title": "LV-909 \"Terrier\" Liquid Fuel Engine",
+   "stage": 3,
+   "decouple_stage": 2,
+   "max_thrust_vac": 60000.0,
+   "max_thrust_asl": 14782.608695652174,
+   "isp_vac": 345.0,
+   "isp_asl": 85.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "RT-10 \"Hammer\" Solid Fuel Booster",
+   "stage": 6,
+   "decouple_stage": 5,
+   "max_thrust_vac": 227000.0,
+   "max_thrust_asl": 197897.4358974359,
+   "isp_vac": 195.0,
+   "isp_asl": 170.0,
+   "propellants": [
+    "SolidFuel"
+   ],
+   "throttle_locked": true
+  },
+  {
+   "title": "RT-10 \"Hammer\" Solid Fuel Booster",
+   "stage": 6,
+   "decouple_stage": 5,
+   "max_thrust_vac": 227000.0,
+   "max_thrust_asl": 197897.4358974359,
+   "isp_vac": 195.0,
+   "isp_asl": 170.0,
+   "propellants": [
+    "SolidFuel"
+   ],
+   "throttle_locked": true
+  },
+  {
+   "title": "LV-T45 \"Swivel\" Liquid Fuel Engine",
+   "stage": 6,
+   "decouple_stage": 4,
+   "max_thrust_vac": 215000.0,
+   "max_thrust_asl": 167968.75,
+   "isp_vac": 320.0,
+   "isp_asl": 250.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  }
+ ],
+ "part_count": 27
+}

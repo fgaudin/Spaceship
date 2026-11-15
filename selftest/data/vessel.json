@@ -1,0 +1,319 @@
+{
+ "name": "Mun LOR",
+ "mass": 136632.0,
+ "dry_mass": 39592.0,
+ "current_stage": 10,
+ "crew": [
+  "Sigrid Kerman",
+  "Dunvey Kerman"
+ ],
+ "stages": {
+  "-1": {
+   "parts": [
+    "Mk1 Command Pod",
+    "Mk16 Parachute",
+    "Clamp-O-Tron Docking Port Jr.",
+    "Z-200 Rechargeable Battery Bank",
+    "Clamp-O-Tron Docking Port Jr.",
+    "TD-12 Decoupler",
+    "Stratus-V Roundified Monopropellant Tank",
+    "Communotron 16"
+   ],
+   "mass": 1295.0000915527344,
+   "dry": 1015.000072479248
+  },
+  "2": {
+   "parts": [
+    "TD-12 Decoupler",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "FL-T400 Fuel Tank",
+    "LV-909 \"Terrier\" Liquid Fuel Engine",
+    "TD-12 Decoupler",
+    "Rockomax Brand Adapter 02",
+    "TD-25 Decoupler",
+    "Rockomax X200-16 Fuel Tank",
+    "Z-400 Rechargeable Battery",
+    "Z-400 Rechargeable Battery",
+    "OX-STAT Photovoltaic Panels",
+    "OX-STAT Photovoltaic Panels",
+    "LT-2 Landing Strut",
+    "LT-2 Landing Strut",
+    "LT-2 Landing Strut",
+    "Pegasus I Mobility Enhancer",
+    "Kelus-LV Bay Mobility Enhancer",
+    "Communotron DTS-M1",
+    "RE-L10 \"Poodle\" Liquid Fuel Engine",
+    "Pegasus I Mobility Enhancer",
+    "LT-2 Landing Strut",
+    "LT-2 Landing Strut",
+    "LT-2 Landing Strut"
+   ],
+   "mass": 14694.99984741211,
+   "dry": 4695.000213623047
+  },
+  "5": {
+   "parts": [
+    "TD-25 Decoupler",
+    "Rockomax X200-32 Fuel Tank",
+    "Rockomax X200-32 Fuel Tank",
+    "Rockomax X200-32 Fuel Tank",
+    "RE-M3 \"Mainsail\" Liquid Fuel Engine",
+    "AV-R8 Winglet",
+    "AV-R8 Winglet",
+    "AV-R8 Winglet",
+    "AV-R8 Winglet",
+    "AV-R8 Winglet",
+    "AV-R8 Winglet"
+   ],
+   "mass": 60760.0,
+   "dry": 12760.0
+  },
+  "6": {
+   "parts": [
+    "Hydraulic Detachment Manifold",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "Advanced Nose Cone - Type B",
+    "LV-T45 \"Swivel\" Liquid Fuel Engine",
+    "FTX-2 External Fuel Duct",
+    "Hydraulic Detachment Manifold",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "Advanced Nose Cone - Type B",
+    "LV-T45 \"Swivel\" Liquid Fuel Engine",
+    "FTX-2 External Fuel Duct"
+   ],
+   "mass": 17550.0,
+   "dry": 5549.9998779296875
+  },
+  "8": {
+   "parts": [
+    "Hydraulic Detachment Manifold",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "Advanced Nose Cone - Type B",
+    "LV-T45 \"Swivel\" Liquid Fuel Engine",
+    "FTX-2 External Fuel Duct",
+    "Hydraulic Detachment Manifold",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "Advanced Nose Cone - Type B",
+    "LV-T45 \"Swivel\" Liquid Fuel Engine",
+    "FTX-2 External Fuel Duct"
+   ],
+   "mass": 17550.0,
+   "dry": 5549.9998779296875
+  },
+  "7": {
+   "parts": [
+    "Hydraulic Detachment Manifold",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "Advanced Nose Cone - Type B",
+    "LV-T45 \"Swivel\" Liquid Fuel Engine",
+    "FTX-2 External Fuel Duct",
+    "Hydraulic Detachment Manifold",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "FL-T400 Fuel Tank",
+    "Advanced Nose Cone - Type B",
+    "LV-T45 \"Swivel\" Liquid Fuel Engine",
+    "FTX-2 External Fuel Duct"
+   ],
+   "mass": 17550.0,
+   "dry": 5549.9998779296875
+  },
+  "9": {
+   "parts": [
+    "TT18-A Launch Stability Enhancer",
+    "TT18-A Launch Stability Enhancer",
+    "TT18-A Launch Stability Enhancer"
+   ],
+   "mass": 0.0,
+   "dry": 0.0
+  },
+  "3": {
+   "parts": [
+    "LV-909 \"Terrier\" Liquid Fuel Engine",
+    "FL-T400 Fuel Tank",
+    "TD-12 Decoupler",
+    "Rockomax Brand Adapter 02",
+    "TD-25 Decoupler",
+    "Heat Shield (2.5m)",
+    "Mk1-3 Command Pod",
+    "Mk16-XL Parachute",
+    "Clamp-O-Tron Docking Port Jr.",
+    "Z-200 Rechargeable Battery Bank",
+    "Clamp-O-Tron Docking Port Jr.",
+    "Stratus-V Roundified Monopropellant Tank",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block",
+    "RV-105 RCS Thruster Block"
+   ],
+   "mass": 7232.000015258789,
+   "dry": 4471.999965667725
+  }
+ },
+ "engines": [
+  {
+   "title": "LV-909 \"Terrier\" Liquid Fuel Engine",
+   "stage": 1,
+   "decouple_stage": 2,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 60000.0,
+   "max_thrust_asl": 14782.608695652174,
+   "isp_vac": 345.0,
+   "isp_asl": 85.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "RE-L10 \"Poodle\" Liquid Fuel Engine",
+   "stage": 4,
+   "decouple_stage": 2,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 250000.0,
+   "max_thrust_asl": 64285.71428571428,
+   "isp_vac": 350.0,
+   "isp_asl": 90.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "RE-M3 \"Mainsail\" Liquid Fuel Engine",
+   "stage": 9,
+   "decouple_stage": 5,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 1500000.0,
+   "max_thrust_asl": 1379032.2580645161,
+   "isp_vac": 310.0,
+   "isp_asl": 285.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "LV-T45 \"Swivel\" Liquid Fuel Engine",
+   "stage": 9,
+   "decouple_stage": 6,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 215000.0,
+   "max_thrust_asl": 167968.75,
+   "isp_vac": 320.0,
+   "isp_asl": 250.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "LV-T45 \"Swivel\" Liquid Fuel Engine",
+   "stage": 9,
+   "decouple_stage": 6,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 215000.0,
+   "max_thrust_asl": 167968.75,
+   "isp_vac": 320.0,
+   "isp_asl": 250.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "LV-T45 \"Swivel\" Liquid Fuel Engine",
+   "stage": 9,
+   "decouple_stage": 8,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 215000.0,
+   "max_thrust_asl": 167968.75,
+   "isp_vac": 320.0,
+   "isp_asl": 250.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "LV-T45 \"Swivel\" Liquid Fuel Engine",
+   "stage": 9,
+   "decouple_stage": 8,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 215000.0,
+   "max_thrust_asl": 167968.75,
+   "isp_vac": 320.0,
+   "isp_asl": 250.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "LV-T45 \"Swivel\" Liquid Fuel Engine",
+   "stage": 9,
+   "decouple_stage": 7,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 215000.0,
+   "max_thrust_asl": 167968.75,
+   "isp_vac": 320.0,
+   "isp_asl": 250.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "LV-T45 \"Swivel\" Liquid Fuel Engine",
+   "stage": 9,
+   "decouple_stage": 7,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 215000.0,
+   "max_thrust_asl": 167968.75,
+   "isp_vac": 320.0,
+   "isp_asl": 250.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  },
+  {
+   "title": "LV-909 \"Terrier\" Liquid Fuel Engine",
+   "stage": 3,
+   "decouple_stage": 3,
+   "thrust_limit": 1.0,
+   "max_thrust_vac": 60000.0,
+   "max_thrust_asl": 14782.608695652174,
+   "isp_vac": 345.0,
+   "isp_asl": 85.0,
+   "propellants": [
+    "LiquidFuel",
+    "Oxidizer"
+   ],
+   "throttle_locked": false
+  }
+ ],
+ "part_count": 106
+}

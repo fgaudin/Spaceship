@@ -1,0 +1,38 @@
+# Capsule prototype: MQTT bus, plant (mock or KSP gateway), cockpit logic, virtual panel.
+#   docker compose up -d --build                                   # mock plant
+#   docker compose stop plant-mock && docker compose --profile ksp up -d gateway-ksp   # KSP instead (kRPC 127.0.0.1:50000)
+# Panel: http://localhost:8650   Broker: mqtt://localhost:1883, ws://localhost:9001
+services:
+  broker:
+    image: eclipse-mosquitto:2.0.20
+    ports: ["1883:1883", "9001:9001"]
+    volumes: ["./broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro"]
+    restart: unless-stopped
+
+  cockpit:
+    build: ./cockpit-logic
+    environment: { MQTT_HOST: broker }
+    depends_on: [broker]
+    restart: unless-stopped
+
+  plant-mock:
+    build: ./plant-mock
+    environment: { MQTT_HOST: broker }
+    depends_on: [broker]
+    restart: unless-stopped
+
+  gateway-ksp:
+    profiles: [ksp]
+    build: ./gateway-ksp
+    network_mode: host          # kRPC listens on 127.0.0.1 only
+    environment: { MQTT_HOST: 127.0.0.1, KRPC_HOST: 127.0.0.1 }
+    restart: unless-stopped
+
+  panel:
+    image: nginx:1.27-alpine
+    ports: ["8650:80"]
+    volumes:
+      - ./panels/virtual:/srv/panel:ro
+      - ./protocol/panels:/srv/panels:ro
+      - ./panels/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped

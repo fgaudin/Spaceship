@@ -1,0 +1,206 @@
+{
+  "id": "cmp",
+  "title": "BURN COMPUTER",
+  "fw": "virtual-0.1",
+  "sections": [
+    {
+      "title": "PAD",
+      "items": [
+        {
+          "type": "lamp_button",
+          "id": "f_tig",
+          "label": "TIG",
+          "color": "green",
+          "in": "f_tig",
+          "out": "led_f_tig"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_tig",
+          "label": "TIG H.M.S",
+          "out": "disp_tig",
+          "digits": 6
+        },
+        {
+          "type": "lamp_button",
+          "id": "f_pro",
+          "label": "PRO",
+          "color": "green",
+          "in": "f_pro",
+          "out": "led_f_pro"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_pro",
+          "label": "ΔV PROGRADE",
+          "out": "disp_pro",
+          "digits": 6
+        },
+        {
+          "type": "lamp_button",
+          "id": "f_nrm",
+          "label": "NRM",
+          "color": "green",
+          "in": "f_nrm",
+          "out": "led_f_nrm"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_nrm",
+          "label": "ΔV NORMAL",
+          "out": "disp_nrm",
+          "digits": 6
+        },
+        {
+          "type": "lamp_button",
+          "id": "f_rad",
+          "label": "RAD",
+          "color": "green",
+          "in": "f_rad",
+          "out": "led_f_rad"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_rad",
+          "label": "ΔV RADIAL",
+          "out": "disp_rad",
+          "digits": 6
+        }
+      ],
+      "class": "pairs"
+    },
+    {
+      "title": "ENTRY",
+      "items": [
+        {
+          "type": "keypad",
+          "id": "key",
+          "label": "",
+          "in": "key",
+          "left": [
+            "CLR"
+          ],
+          "right": [
+            "ENTR"
+          ],
+          "rows": [
+            [
+              "7",
+              "8",
+              "9"
+            ],
+            [
+              "4",
+              "5",
+              "6"
+            ],
+            [
+              "1",
+              "2",
+              "3"
+            ],
+            [
+              "-",
+              "0",
+              "."
+            ]
+          ],
+          "labels": {
+            "-": "+/−",
+            "ENTR": "ENTER"
+          }
+        },
+        {
+          "type": "lamp_button",
+          "id": "pad_accept",
+          "label": "UPLINK ACCEPT",
+          "color": "amber",
+          "in": "pad_accept",
+          "out": "lamp_uplink"
+        },
+        {
+          "type": "button",
+          "id": "pad_clr",
+          "label": "PAD CLEAR",
+          "in": "pad_clr"
+        },
+        {
+          "type": "led",
+          "id": "lamp_err",
+          "label": "ENTRY ERR",
+          "out": "lamp_err",
+          "color": "amber"
+        }
+      ]
+    },
+    {
+      "title": "BURN",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_tfi",
+          "label": "TIME TO TIG",
+          "out": "disp_tfi",
+          "digits": 5,
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_vg",
+          "label": "ΔV TO GO",
+          "out": "disp_vg",
+          "digits": 5,
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_tb",
+          "label": "BURN TIME S",
+          "out": "disp_tb",
+          "digits": 4,
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_att",
+          "label": "ATT ERR °",
+          "out": "disp_att",
+          "digits": 4,
+          "color": "green"
+        },
+        {
+          "type": "toggle",
+          "id": "burn_arm",
+          "label": "BURN ARM",
+          "in": "burn_arm",
+          "led": {
+            "out": "led_burn_arm",
+            "color": "green"
+          }
+        },
+        {
+          "type": "annunciator",
+          "id": "burn_lamps",
+          "cols": 3,
+          "cells": [
+            {
+              "out": "lamp_tig",
+              "label": "TIG",
+              "color": "amber"
+            },
+            {
+              "out": "lamp_burn",
+              "label": "BURN",
+              "color": "green"
+            },
+            {
+              "out": "lamp_cutoff",
+              "label": "CUTOFF",
+              "color": "white"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,404 @@
+{
+  "id": "eng",
+  "title": "PROPULSION · FLIGHT CONTROL",
+  "fw": "virtual-0.1",
+  "sections": [
+    {
+      "title": "CAUTION & WARNING",
+      "items": [
+        {
+          "type": "lamp_button",
+          "id": "master_alarm",
+          "label": "MASTER ALARM",
+          "color": "red",
+          "in": "master_alarm",
+          "out": "master_alarm"
+        },
+        {
+          "type": "lamp_button",
+          "id": "master_caution",
+          "label": "MASTER CAUTION",
+          "color": "amber",
+          "in": "master_caution",
+          "out": "master_caution"
+        },
+        {
+          "type": "annunciator",
+          "id": "cw",
+          "cols": 4,
+          "cells": [
+            {
+              "out": "cw_low_fuel",
+              "label": "LOW FUEL",
+              "color": "amber"
+            },
+            {
+              "out": "cw_high_g",
+              "label": "HIGH G",
+              "color": "red"
+            },
+            {
+              "out": "cw_low_power",
+              "label": "LOW POWER",
+              "color": "amber"
+            },
+            {
+              "out": "cw_no_link",
+              "label": "NO LINK",
+              "color": "red"
+            },
+            {
+              "out": "cw_sas_dis",
+              "label": "SAS DISAGREE",
+              "color": "amber"
+            },
+            {
+              "out": "cw_q",
+              "label": "HIGH Q",
+              "color": "amber"
+            },
+            {
+              "out": "cw_flameout",
+              "label": "FLAMEOUT",
+              "color": "amber"
+            },
+            {
+              "out": "cw_eng_fail",
+              "label": "ENG FAIL",
+              "color": "red"
+            },
+            {
+              "out": "cw_rcs_low",
+              "label": "RCS LOW",
+              "color": "amber"
+            },
+            {
+              "out": "cw_sink",
+              "label": "SINK RATE",
+              "color": "red"
+            },
+            {
+              "out": "cw_closing",
+              "label": "CLOSING",
+              "color": "amber"
+            },
+            {
+              "out": "cw_throttle",
+              "label": "THROTTLE",
+              "color": "amber"
+            },
+            {
+              "out": "cw_overheat",
+              "label": "OVERHEAT",
+              "color": "red"
+            },
+            {
+              "out": "cw_gear",
+              "label": "GEAR UP",
+              "color": "red"
+            },
+            {
+              "out": "cw_att",
+              "label": "ATT ERR",
+              "color": "amber"
+            },
+            {
+              "out": "cw_resid",
+              "label": "ΔV RESID",
+              "color": "amber"
+            },
+            {
+              "out": "cw_peri",
+              "label": "PERI LOW",
+              "color": "amber"
+            },
+            {
+              "out": "cw_soi",
+              "label": "SOI CHANGE",
+              "color": "amber"
+            },
+            {
+              "out": "cw_chute",
+              "label": "CHUTE",
+              "color": "amber"
+            },
+            {
+              "out": "cw_comm",
+              "label": "COMM LOST",
+              "color": "amber"
+            }
+          ]
+        },
+        {
+          "type": "annunciator",
+          "id": "events",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_05g",
+              "label": "0.05 G",
+              "color": "green"
+            },
+            {
+              "out": "lamp_contact",
+              "label": "CONTACT",
+              "color": "blue"
+            }
+          ],
+          "label": "FLIGHT EVENTS"
+        },
+        {
+          "type": "button",
+          "id": "lamp_test",
+          "label": "LAMP TEST",
+          "in": "lamp_test"
+        },
+        {
+          "type": "buzzer",
+          "id": "buzzer",
+          "out": "buzzer",
+          "label": "TONE"
+        }
+      ],
+      "class": "wide"
+    },
+    {
+      "title": "DISPLAYS",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_a",
+          "label": "DISP A",
+          "digits": 7,
+          "out": "disp_a"
+        },
+        {
+          "type": "rotary",
+          "id": "disp_sel",
+          "label": "DISP A SEL",
+          "in": "disp_sel",
+          "positions": [
+            "ALT",
+            "APO",
+            "PERI",
+            "VEL",
+            "V/S",
+            "MASS"
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_met",
+          "label": "MET",
+          "digits": 7,
+          "out": "disp_met",
+          "color": "green"
+        },
+        {
+          "type": "bar",
+          "id": "bar_fuel",
+          "label": "STAGE FUEL",
+          "segments": 10,
+          "out": "bar_fuel"
+        },
+        {
+          "type": "bar",
+          "id": "bar_throttle",
+          "label": "THRUST",
+          "segments": 10,
+          "out": "bar_thrust"
+        }
+      ]
+    },
+    {
+      "title": "ENGINE",
+      "items": [
+        {
+          "type": "guarded_toggle",
+          "id": "eng_arm",
+          "label": "ENG ARM",
+          "in": "eng_arm",
+          "led": {
+            "out": "led_eng_arm",
+            "color": "green"
+          }
+        },
+        {
+          "type": "pot",
+          "id": "throttle",
+          "label": "THROTTLE",
+          "in": "throttle"
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "stage_arm",
+          "label": "STAGE ARM",
+          "in": "stage_arm"
+        },
+        {
+          "type": "lamp_button",
+          "id": "stage",
+          "label": "STAGE",
+          "color": "green",
+          "in": "stage",
+          "out": "lamp_stage"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_stage",
+          "label": "STAGE",
+          "digits": 2,
+          "out": "disp_stage"
+        },
+        {
+          "type": "lamp_button",
+          "id": "eng_cutoff",
+          "label": "CUTOFF",
+          "color": "red",
+          "in": "eng_cutoff",
+          "out": "lamp_cutoff"
+        },
+        {
+          "type": "pot",
+          "id": "thrust_lim",
+          "label": "THRUST LIMIT",
+          "in": "thrust_lim",
+          "default": 1
+        },
+        {
+          "type": "toggle",
+          "id": "gimbal_lock",
+          "label": "GIMBAL LOCK",
+          "in": "gimbal_lock",
+          "led": {
+            "out": "led_gimbal",
+            "color": "amber"
+          }
+        }
+      ]
+    },
+    {
+      "title": "ENGINES",
+      "items": [
+        {
+          "type": "matrix",
+          "id": "mx_eng",
+          "label": "ENGINE STATUS",
+          "out": "mx_eng",
+          "rows": 9,
+          "cols": 9
+        },
+        {
+          "type": "seg7",
+          "id": "disp_eng_on",
+          "label": "BURNING",
+          "digits": 2,
+          "out": "disp_eng_on",
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "title": "ATTITUDE · SYSTEMS",
+      "items": [
+        {
+          "type": "toggle",
+          "id": "sas",
+          "label": "SAS",
+          "in": "sas",
+          "led": {
+            "out": "led_sas",
+            "color": "green"
+          }
+        },
+        {
+          "type": "rotary",
+          "id": "sas_mode",
+          "label": "SAS MODE",
+          "in": "sas_mode",
+          "positions": [
+            "STAB",
+            "PRO",
+            "RETRO",
+            "NML",
+            "ANTI",
+            "RAD",
+            "A-RAD",
+            "TGT",
+            "A-TGT",
+            "MNVR"
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "rcs",
+          "label": "RCS",
+          "in": "rcs",
+          "led": {
+            "out": "led_rcs",
+            "color": "green"
+          }
+        },
+        {
+          "type": "toggle",
+          "id": "gear",
+          "label": "GEAR",
+          "in": "gear",
+          "led": {
+            "out": "led_gear",
+            "color": "green"
+          }
+        },
+        {
+          "type": "toggle",
+          "id": "lights",
+          "label": "LIGHTS",
+          "in": "lights",
+          "led": {
+            "out": "led_lights",
+            "color": "white"
+          }
+        },
+        {
+          "type": "toggle",
+          "id": "cb_main",
+          "label": "CB MAIN BUS",
+          "in": "cb_main",
+          "default": 1
+        }
+      ]
+    },
+    {
+      "title": "ABORT",
+      "items": [
+        {
+          "type": "rotary",
+          "id": "abort_mode",
+          "label": "ABORT MODE",
+          "in": "abort_mode",
+          "positions": [
+            "PAD",
+            "ASCENT",
+            "ORBIT",
+            "DESCENT"
+          ]
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "abort_arm",
+          "label": "ABORT ARM",
+          "in": "abort_arm",
+          "color": "red"
+        },
+        {
+          "type": "lamp_button",
+          "id": "abort",
+          "label": "ABORT",
+          "color": "red",
+          "in": "abort",
+          "out": "lamp_abort"
+        }
+      ]
+    }
+  ]
+}
