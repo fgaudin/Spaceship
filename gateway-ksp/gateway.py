@@ -131,7 +131,36 @@ class Link:
             self.heat.append((add(getattr, p, 'skin_temperature'), p.max_skin_temperature))
             if p._object_id in eng_parts:
                 self.heat.append((add(getattr, p, 'temperature'), p.max_temperature))
-        self.part_streams += [*self.ground, *[h for h, _ in self.heat]]
+        self.dock_ports = list(v.parts.docking_ports)
+        self.dock_states = [add(getattr, d, 'state') for d in self.dock_ports]
+        self.part_streams += [*self.ground, *[h for h, _ in self.heat], *self.dock_states]
+
+    def real_docks(self):
+        """Ports docked to another docking port. A port with an ordinary part stacked on it in the VAB also reports
+        'docked'; that is not a docking."""
+        return [d for d in self.dock_ports if d.state.name == 'docked' and d.docked_part is not None
+                and d.docked_part.docking_port is not None]
+
+    def docked(self):
+        try:
+            states = tuple(f().name for f in self.dock_states)
+            if states != getattr(self, 'dock_seen', None):          # look at the partners only when a port changes state
+                self.dock_seen, self.dock_real = states, bool(self.real_docks())
+            return self.dock_real
+        except Exception:
+            return False
+
+    def undock(self):
+        """Undock: the port the vessel is controlled from if it is docked, else the first docked port."""
+        v = self.vessel
+        ds = self.real_docks()
+        if not ds:
+            return
+        cp = v.parts.controlling
+        pick = [d for d in ds if d.part == cp] or ds
+        pick[0].undock()
+        time.sleep(0.2)
+        self.vessel = None                          # the vessel has split: rebuild every stream
 
     def grounded(self):
         try:
@@ -273,7 +302,7 @@ class Link:
         own = cp.docking_port                                           # None unless the vessel is controlled from a port
         self.has_target = tv is not None
         if tv is None:
-            return {'set': False, 'ctrl_port': own is not None}
+            return {'set': False, 'ctrl_port': own is not None, 'docked': self.docked()}
         nrf = v.orbit.body.non_rotating_reference_frame
         rp, rv = tv.position(nrf), v.position(nrf)
         d = [a - b for a, b in zip(rp, rv)]                         # chaser → target
@@ -284,7 +313,7 @@ class Link:
         side = [a - closing * b for a, b in zip(dv, u)]
         out = {'set': True, 'name': tv.name, 'range': round(rng, 2), 'closing': round(closing, 3),
                'los_rate': round(math.degrees(math.sqrt(sum(x * x for x in side)) / rng) * 60, 4) if rng > 1 else None,
-               'rel_v': round(math.sqrt(sum(x * x for x in dv)), 3), 'ctrl_port': own is not None}
+               'rel_v': round(math.sqrt(sum(x * x for x in dv)), 3), 'ctrl_port': own is not None, 'docked': self.docked()}
         if tp is not None:
             F = tp.reference_frame                                      # y out of the target port
             here = own.position(F) if own else v.position(F)
@@ -342,6 +371,8 @@ class Link:
             self.read_engine_settings()
         elif topic == 'cmd/target':
             self.set_target(p)
+        elif topic == 'cmd/undock':
+            self.undock()
         elif topic == 'cmd/control_from':
             if p.get('port'):
                 ports = [d for d in v.parts.docking_ports if d.state.name == 'ready']

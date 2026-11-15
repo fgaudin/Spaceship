@@ -60,7 +60,7 @@ fine as about 0.1 s of thrust: fly small burns on a low THRUST LIMIT (measured i
 4.2 m/s²; 7.5 delivered at 41.6 m/s²).
 
 **RDV** (I/O panel): target name on an alphanumeric display, ◂ TGT / TGT ▸ (vessels around the same body, nearest
-first), PORT ▸ (the target's free docking ports), CLEAR, CTRL FROM PORT. Range, closing speed and line-of-sight rate
+first), PORT ▸ (the target's free docking ports), CLEAR, CTRL FROM PORT; a DOCKED lamp and UNDOCK behind a guarded UNDOCK ARM. Range, closing speed and line-of-sight rate
 against the course's ρ/400 s braking gate (OVERSPEED lamp, CLOSING caution). With a port targeted (PORT LED), three
 plates in the order of the manoeuvre, all in the pilot's own axes so no roll is needed to read them: 1 yaw and pitch
 to face the port squarely (ALIGNED under 2°; roll is shown against the port's own "up"), 2 where the port is, right and
@@ -103,9 +103,10 @@ To fly the mock: CB MAIN BUS on, open the ENG ARM guard and arm, push the thrott
 
 ### Tests
 ```sh
-.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the DSKY and the burn computer (42)
+.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the DSKY and the burn computer (43)
 .venv/bin/python tests/e2e_mock.py                    # end to end on the running stack with the mock (65 checks; `MQTT_PORT` selects another broker)
 .venv/bin/python tests/e2e_ksp.py                     # end to end with KSP and gateway-ksp (85 checks; loads a save in orbit)
 .venv/bin/python tests/e2e_ksp_docking.py --save lor3-rdv-handover   # docking display signs in KSP (8 checks)
+.venv/bin/python tests/e2e_ksp_undock.py --save lor3-rdv-docked       # UNDOCK from the panel in KSP (5 checks)
 ```
 (`.venv`: `python3 -m venv .venv && .venv/bin/pip install pytest paho-mqtt==2.1.0 krpc==0.7.0`.)

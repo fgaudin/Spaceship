@@ -375,3 +375,13 @@ def test_burn_cautions_attitude_and_residual():
     assert 'cw_resid' in c.active()                                      # 3 m/s short of 50
     c.cmp.dv_acc = 49.8
     assert 'cw_resid' not in c.active()
+
+
+def test_undock_needs_arm_and_docked_lamp():
+    c = Cockpit(); fed(c)
+    c.handle('tlm/target', {'set': False, 'ctrl_port': False, 'docked': True}, 1)
+    assert c.last_sent[R + 'lamp_docked']['on']
+    assert 'cmd/undock' not in topics(c.handle('panel/rdv/in/undock', {'v': 1}, 2))
+    c.handle('panel/rdv/in/undock', {'v': 0}, 2.1)
+    c.handle('panel/rdv/in/undock_arm', {'v': 1}, 3)
+    assert topics(c.handle('panel/rdv/in/undock', {'v': 1}, 4))['cmd/undock'] == {}

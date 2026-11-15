@@ -52,6 +52,7 @@ class Plant:
         self.limit, self.gimbal_locked, self.paused = 1.0, False, False
         self.tgt, self.tgt_port, self.tgt_range, self.ctrl_port = None, None, 2000.0, False
         self.node = None
+        self.docked = False
 
     # ---------- commands ----------
     def command(self, topic, p):
@@ -84,6 +85,8 @@ class Plant:
                 step = 1 if int(p.get('step', 1)) >= 0 else -1
                 self.tgt = (0 if step > 0 else len(TARGETS) - 1) if self.tgt is None else (self.tgt + step) % len(TARGETS)
                 self.tgt_port, self.tgt_range = None, 2000.0
+        elif topic == 'cmd/undock':
+            self.docked = False
         elif topic == 'cmd/control_from':
             self.ctrl_port = bool(p.get('port'))
         elif topic == 'cmd/node':
@@ -141,6 +144,8 @@ class Plant:
         self.t += dt
         if self.tgt is not None:
             self.tgt_range = max(30.0, self.tgt_range - self.closing() * dt)
+            if self.tgt_port is not None and self.tgt_range <= 30.0:      # the scripted approach ends docked
+                self.docked, self.tgt, self.tgt_port = True, None, None
         if self.warp_to is not None:
             left = self.warp_to - self.t
             self.warp = max([i for i, r in enumerate(WARP) if r * 4 <= left] or [0])
@@ -238,10 +243,10 @@ class Plant:
 
     def target(self):
         if self.tgt is None:
-            return {'set': False, 'ctrl_port': self.ctrl_port}
+            return {'set': False, 'ctrl_port': self.ctrl_port, 'docked': self.docked}
         c = self.closing()
         out = {'set': True, 'name': TARGETS[self.tgt], 'range': round(self.tgt_range, 2), 'closing': round(c, 3),
-               'los_rate': 0.5, 'rel_v': round(c, 3), 'ctrl_port': self.ctrl_port}
+               'los_rate': 0.5, 'rel_v': round(c, 3), 'ctrl_port': self.ctrl_port, 'docked': self.docked}
         if self.tgt_port is not None:
             out['port'] = {'axial': round(self.tgt_range, 3), 'x': 0.1, 'z': -0.05, 'v_axial': -round(c, 4), 'vx': 0.0, 'vz': 0.0,
                            'angle': 2.0, 'from_port': self.ctrl_port, 'right': 0.1, 'up': 0.05, 'fwd': round(self.tgt_range, 3),

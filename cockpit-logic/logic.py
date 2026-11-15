@@ -88,7 +88,8 @@ LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'led_sas
 TOGGLE_CMDS = {'sas': 'cmd/sas', 'rcs': 'cmd/rcs', 'gear': 'cmd/gear', 'lights': 'cmd/lights', 'brakes': 'cmd/brakes',
                'solar': 'cmd/solar'}
 SYS_LAMPS = ['led_solar', 'led_brakes', 'lamp_chute', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause']
-RDV_LAMPS = ['led_tgt', 'led_port', 'led_km', 'lamp_overspeed', 'lamp_capture', 'lamp_aligned', 'led_ctrl_port']
+RDV_LAMPS = ['led_tgt', 'led_port', 'led_km', 'lamp_overspeed', 'lamp_capture', 'lamp_aligned', 'led_ctrl_port', 'lamp_docked',
+             'led_undock_arm']
 RDV_DISPS = ['disp_range', 'disp_closing', 'disp_gate', 'disp_los', 'disp_roll', 'disp_yaw', 'disp_pitch', 'disp_right',
              'disp_up', 'disp_vright', 'disp_vup', 'disp_axial', 'disp_vaxial']
 PANEL_WINS = {'sas', 'rcs', 'lights'}     # re-sent while the game disagrees; gear: game wins (lamp only)
@@ -248,6 +249,8 @@ class Cockpit:
             out += self._cmd('cmd/target', {'clear': True}, force=True)
         elif ctl == 'port_next' and pressed:
             out += self._cmd('cmd/target', {'port': 1}, force=True)
+        elif ctl == 'undock' and pressed and self.inputs.get('undock_arm'):
+            out += self._cmd('cmd/undock', {}, force=True)
         elif ctl == 'ctrl_port' and changed:
             out += self._cmd('cmd/control_from', {'port': bool(val)}, force=True)
         elif ctl == 'warp_to' and pressed:
@@ -695,6 +698,7 @@ class Cockpit:
         cp, sw = tg.get('ctrl_port'), bool(self.inputs.get('ctrl_port', 0))
         lamps = {'led_tgt': (on, False), 'led_port': (bool(port), False), 'led_km': (km, False),
                  'lamp_overspeed': (over, True), 'lamp_capture': (cap, False), 'lamp_aligned': (aligned, False),
+                 'lamp_docked': (bool(tg.get('docked')), False), 'led_undock_arm': (bool(self.inputs.get('undock_arm')), False),
                  'led_ctrl_port': (False, False) if cp is None else (bool(cp) or sw, bool(cp) != sw)}
         for l, (lit, b) in lamps.items():
             o(l, {'on': lit, 'blink': lit and b})

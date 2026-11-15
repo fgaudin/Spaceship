@@ -222,6 +222,41 @@
           ]
         }
       ]
+    },
+    {
+      "title": "DOCKED",
+      "items": [
+        {
+          "type": "annunciator",
+          "id": "docked_box",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_docked",
+              "label": "DOCKED",
+              "color": "white"
+            }
+          ]
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "undock_arm",
+          "label": "UNDOCK ARM",
+          "in": "undock_arm",
+          "led": {
+            "out": "led_undock_arm",
+            "color": "amber"
+          }
+        },
+        {
+          "type": "lamp_button",
+          "id": "undock",
+          "label": "UNDOCK",
+          "color": "amber",
+          "in": "undock",
+          "out": "led_undock_arm"
+        }
+      ]
     }
   ]
 }
