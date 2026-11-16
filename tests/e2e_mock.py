@@ -95,7 +95,7 @@ wait(lambda: not (out('cw_no_link') or {}).get('on'), timeout=6, what='link back
 check('NO LINK clears', True)
 
 inp('cb_main', 0)
-check('main bus off: displays blank', out('disp_a') == {'text': '', 'blank': True})
+check('main bus off: displays blank', out('disp_a') == {'text': '', 'blank': True, 'blink': False})
 wait(lambda: seen.get('tlm/vessel', {}).get('throttle') == 0.0, what='throttle cut')
 check('main bus off: throttle cut', True)
 inp('cb_main', 1)

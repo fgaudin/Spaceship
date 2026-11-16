@@ -1,0 +1,29 @@
+"""Text for 7-segment displays. A decimal point shares its digit, so "12.5" takes three digits."""
+import math
+
+
+def fit_number(value, decimals, digits, signed=False):
+    """`value` with at most `decimals` decimals, dropping decimals until it fits in `digits` digits.
+    A sign takes one digit. Dashes when there is no value; EEE when even the whole number does not fit."""
+    if value is None or not math.isfinite(value):
+        return '-' * digits
+    for kept_decimals in range(decimals, -1, -1):
+        text = f'{value:+.{kept_decimals}f}' if signed else f'{value:.{kept_decimals}f}'
+        if len(text.replace('.', '')) <= digits:
+            return text
+    return 'E' * digits
+
+
+def format_event_time(seconds):
+    """Event timer: -mm.ss before the event, mm.ss after it; hours as hHmm past 99 minutes."""
+    magnitude = abs(seconds)
+    sign = '-' if seconds < 0 else ''
+    if magnitude >= 6000:
+        return f'{sign}{int(magnitude // 3600)}H{int(magnitude // 60 % 60):02d}'
+    return f'{sign}{int(magnitude // 60):02d}.{int(magnitude % 60):02d}'
+
+
+def format_mission_time(seconds):
+    """Mission elapsed time as hh.mm.ss (hours wrap at 100)."""
+    seconds = max(0, int(seconds))
+    return f'{seconds // 3600 % 100:02d}.{seconds // 60 % 60:02d}.{seconds % 60:02d}'

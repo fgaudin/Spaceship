@@ -1,8 +1,8 @@
 """DSKY logic, alone and inside the cockpit (P30 → P40 → Δv cutoff on the throttle)."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from dsky import Dsky, reg  # noqa: E402
-from logic import Cockpit  # noqa: E402
+from cockpit.dsky import Dsky, reg  # noqa: E402
+from cockpit import Cockpit  # noqa: E402
 
 TLM = {'tlm/time': {'met': 3600 + 120.0}, 'tlm/flight': {'alt': 80000.0, 'vs': 1.2, 'speed': 2279.0, 'lat': 0.1, 'lon': -74.5},
        'tlm/orbit': {'apo': 81000.0, 'peri': 79000.0, 't_apo': 754.0}, 'tlm/attitude': {'pitch': 0, 'heading': 90, 'roll': 0}}

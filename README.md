@@ -45,8 +45,8 @@ behind SAVE ARM).
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
 flamed out or gone) with a count of burning engines; CUTOFF (throttle to 0, held until the lever is back at idle);
 THRUST LIMIT knob and GIMBAL LOCK; two event lights, 0.05 G (drag is felt with the engine off while descending: the
-entry has begun) and CONTACT (landed, or a leg or wheel touches the ground); ABORT MODE selector (what ABORT does: `ABORT_SEQ` in
-[cockpit-logic/logic.py](cockpit-logic/logic.py)); SAS modes TGT, A-TGT and MNVR.
+entry has begun) and CONTACT (landed, or a leg or wheel touches the ground); ABORT MODE selector (what ABORT does: `ABORT_SEQUENCES`
+in [cockpit-logic/cockpit/settings.py](cockpit-logic/cockpit/settings.py)); SAS modes TGT, A-TGT and MNVR.
 
 **CMP** (I/O panel, burn computer): one PAD, one display per field (TIG, Δv prograde / normal / radial). Press a field's
 button, key the value (TIG as hhmmss, Δv in m/s; keyboard: digits, `.`, `-`, Enter, Backspace), ENTER stores it and
@@ -85,6 +85,14 @@ three fly-to error needles (to prograde or retrograde, ±5° or ±50° full scal
 the telemetry is older than 2 s. Bezel keys N, S, R, M. `fdai.html?demo=1` runs without a broker.
 
 To fly the mock: CB MAIN BUS on, open the ENG ARM guard and arm, push the throttle, open STAGE ARM and arm, press STAGE.
+
+### Where the code is
+| Part | Files |
+|---|---|
+| Cockpit logic | [cockpit-logic/cockpit/](cockpit-logic/cockpit/): `core.py` (the `Cockpit` class: messages in, outputs out), `settings.py` (every threshold and table), `alarms.py` (caution and warning), `burn_computer.py`, `node_mirror.py` (PAD ↔ KSP maneuver node), `engines.py` (engine status matrix), `event_timer.py`, `panels/` (one module per panel: its inputs and its outputs), `messages.py` and `display_format.py` (payloads and number formats). [service.py](cockpit-logic/service.py) is the MQTT shell. |
+| KSP gateway | [gateway-ksp/gateway.py](gateway-ksp/gateway.py) (main loop) and [gateway-ksp/ksp/](gateway-ksp/ksp/): `vessel_link.py` (kRPC connection, streams, telemetry payloads), `parts_watch.py` (engines, stage propellant, heat, ground contact, docking ports), `target.py` (rendezvous and docking geometry, target selection, undocking), `commands.py` (`cmd/*` → kRPC), `streams.py`. |
+| Mock plant | [plant-mock/](plant-mock/): `simulation.py` (the model), `vehicle.py` (planet and launcher constants), `plant.py` (the service). |
+| Virtual panel | [panels/virtual/](panels/virtual/): `panel.js` (page, bus, keyboard), `widgets.js` (one builder per item type), `seven_segment.js`. |
 
 ### Rules the cockpit logic implements
 - ENG ARM gates the throttle; STAGE needs STAGE ARM (and an edge, holding does not stage twice); ABORT needs ABORT ARM.
