@@ -6,10 +6,10 @@
    DOCKING  range, closing speed, line-of-sight rate and the course's braking gate (ρ / 400 s, floor 0.05 m/s);
             under 100 m with a targeted port: lateral offset cross-pointer, axial distance and speed, capture envelope
    ?demo=1 runs a synthetic state without a broker. */
+import { connectBus, parse, showDemo } from './bus.js';
+
 (() => {
-  'use strict';
   const params = new URLSearchParams(location.search);
-  const BROKER = params.get('broker') || `ws://${location.hostname || 'localhost'}:9001`;
   const DEMO = params.has('demo');
   const $ = (id) => document.getElementById(id);
   const cv = $('mfd'), g = cv.getContext('2d');
@@ -260,21 +260,21 @@
   paint();
 
   // ---------- bus ----------
-  const dotEl = $('conn-dot'), ctext = $('conn-text');
-  if (DEMO) { dotEl.className = 'dot up'; ctext.textContent = 'demo (no bus)'; $('plant').textContent = 'plant: demo'; }
+  if (DEMO) { showDemo(); $('plant').textContent = 'plant: demo'; }
   else {
-    const client = mqtt.connect(BROKER, { clientId: `panel-mfd-${Math.random().toString(16).slice(2, 8)}`, reconnectPeriod: 1000, connectTimeout: 4000,
-      will: { topic: 'panel/mfd/status', payload: JSON.stringify({ online: false }), qos: 1, retain: true } });
-    client.on('connect', () => {
-      dotEl.className = 'dot up'; ctext.textContent = `bus ${BROKER}`;
-      client.subscribe(['tlm/#', 'gateway/status'], { qos: 0 });
-      client.publish('panel/mfd/status', JSON.stringify({ online: true, fw: 'mfd-glass-0.1' }), { qos: 1, retain: true });
-    });
-    client.on('close', () => { dotEl.className = 'dot down'; ctext.textContent = 'bus disconnected'; });
-    client.on('message', (topic, buf) => {
-      let p; try { p = JSON.parse(buf.toString()); } catch { return; }
-      if (topic === 'gateway/status') { $('plant').textContent = `plant: ${p.plant || '?'}${p.connected ? '' : ' (down)'}`; return; }
-      T[topic] = p; lastRx = performance.now();
+    connectBus({
+      name: 'panel-mfd',
+      will: { topic: 'panel/mfd/status', payload: { online: false } },
+      onConnect: (client) => {
+        client.subscribe(['tlm/#', 'gateway/status'], { qos: 0 });
+        client.publish('panel/mfd/status', JSON.stringify({ online: true, fw: 'mfd-glass-0.1' }), { qos: 1, retain: true });
+      },
+      onMessage: (topic, text) => {
+        const p = parse(text);
+        if (p === undefined) return;
+        if (topic === 'gateway/status') { $('plant').textContent = `plant: ${p.plant || '?'}${p.connected ? '' : ' (down)'}`; return; }
+        T[topic] = p; lastRx = performance.now();
+      },
     });
   }
   requestAnimationFrame(frame);

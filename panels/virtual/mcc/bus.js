@@ -6,7 +6,8 @@
      mcc/loop/<role>   that console     {"text", "met"} (not retained): a note on the flight director's loop
    MCC never subscribes to sim/*: flight controllers find failures from what the vehicle does, as in Apollo. */
 
-const brokerUrl = new URLSearchParams(location.search).get('broker') || `ws://${location.hostname || 'localhost'}:9001`;
+import { connectBus, parse } from '../bus.js';
+
 const SUBSCRIPTIONS = ['tlm/#', 'cw/state', 'cmp/pad', 'gateway/status', 'cockpit/status', 'panel/+/status',
   'panel/cmp/out/lamp_uplink', 'panel/eng/in/abort_mode', 'panel/+/in/#', 'mcc/#'];
 
@@ -14,18 +15,16 @@ export const store = {};                // topic → last payload
 export const receivedAt = {};           // topic → Date.now() of the last message
 const listeners = [];
 
-export const client = mqtt.connect(brokerUrl, { clientId: `mcc-${Math.random().toString(16).slice(2, 8)}`, reconnectPeriod: 1000 });
-client.on('connect', () => {
-  client.subscribe(SUBSCRIPTIONS, { qos: 0 });
-  setConnection(true, `bus ${brokerUrl}`);
-});
-client.on('close', () => setConnection(false, 'bus disconnected'));
-client.on('message', (topic, buffer, packet) => {
-  let payload;
-  try { payload = JSON.parse(buffer.toString() || '{}'); } catch { return; }
-  store[topic] = payload;
-  receivedAt[topic] = Date.now();
-  for (const listener of listeners) listener(topic, payload, packet.retain);
+export const client = connectBus({
+  name: 'mcc',
+  onConnect: (connection) => connection.subscribe(SUBSCRIPTIONS, { qos: 0 }),
+  onMessage: (topic, text, packet) => {
+    const payload = parse(text);
+    if (payload === undefined) return;
+    store[topic] = payload;
+    receivedAt[topic] = Date.now();
+    for (const listener of listeners) listener(topic, payload, packet.retain);
+  },
 });
 
 /* listener(topic, payload, retained) for every message: for consoles that keep their own history (events, feeds). */
@@ -33,13 +32,6 @@ export function onMessage(listener) { listeners.push(listener); }
 
 export function publish(topic, payload, retain = false) {
   client.publish(topic, JSON.stringify(payload), { qos: 1, retain });
-}
-
-function setConnection(up, text) {
-  const dot = document.getElementById('conn-dot');
-  if (dot) dot.className = `dot ${up ? 'up' : 'down'}`;
-  const label = document.getElementById('conn-text');
-  if (label) label.textContent = text;
 }
 
 /* ---------- reading the flight ---------- */

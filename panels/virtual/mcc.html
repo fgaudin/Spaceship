@@ -10,11 +10,9 @@
 <link rel="stylesheet" href="mcc.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">CAPSULE <span>Mission Control</span></div>
-  <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
+<header class="topbar" data-subtitle="Mission Control">
   <nav id="tabs" class="nav mcc-tabs" aria-label="Consoles"></nav>
-  <div class="links"><span id="clock" class="mcc-clock">MET ---:--:--</span><a class="navlink" href="simsup.html" title="Instructor station">SIMSUP</a></div>
+  <div class="links"><span id="clock" class="mcc-clock">MET ---:--:--</span></div>
 </header>
 
 <main>
@@ -38,6 +36,7 @@
 </footer>
 
 <script src="vendor/mqtt.min.js"></script>
+<script type="module" src="shell.js"></script>
 <script type="module" src="mcc/mcc.js"></script>
 </body>
 </html>

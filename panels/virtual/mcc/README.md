@@ -54,7 +54,7 @@ Every console except FLIGHT has the same footer: GO / NO-GO for the open poll, a
 |---|---|
 | `../mcc.html`, `../mcc.css` | The page and its styles (colours from `panel.css`). |
 | `mcc.js` | Tabs (toggles), the consoles held and remembered, the poll banner and footer (answer, loop), the update loop (twice a second). |
-| `bus.js` | The one MQTT connection, the store of the last payload per topic, small readers (`vessel()`, `orbit()`, `linkUp()`…). |
+| `bus.js` | The MCC's store of the last payload per topic and small readers (`vessel()`, `orbit()`, `linkUp()`…), on the connection of the shared `../bus.js`. The top bar and the page navigation come from the shared `../shell.js`. |
 | `roster.js` | The consoles in tab order. Adding one: write `consoles/<id>.js` with `mount(root)` and `update()`, add it here. |
 | `consoles/*.js` | One module per console. |
 | `ui.js`, `bodies.js` | Formatting and DOM helpers; radius, atmosphere and μ of Kerbin, the Mun and Minmus. |

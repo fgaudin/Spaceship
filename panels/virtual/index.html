@@ -8,10 +8,7 @@
 <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">CAPSULE <span>virtual panel</span></div>
-  <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
-  <nav id="nav" class="nav" aria-label="Panels"></nav>
+<header class="topbar" data-subtitle="virtual panel">
   <div class="links">
     <span id="plant">plant: ?</span>
     <span id="cockpit">cockpit: ?</span>
@@ -41,6 +38,7 @@
 </section>
 
 <script src="vendor/mqtt.min.js"></script>
+<script type="module" src="shell.js"></script>
 <script type="module" src="panel.js"></script>
 </body>
 </html>

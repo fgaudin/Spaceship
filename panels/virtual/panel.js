@@ -4,14 +4,9 @@
 
    URL: index.html?panel=<id>&broker=ws://host:9001 */
 
+import { connectBus, parse } from './bus.js';
 import { createElement, createWidgetBuilders } from './widgets.js';
 
-const PANEL_LINKS = [       // the navigation bar: [link, label, panel id]
-  ['index.html', 'ENG', 'eng'], ['index.html?panel=sys', 'SYS', 'sys'], ['index.html?panel=cmp', 'CMP', 'cmp'],
-  ['index.html?panel=rdv', 'RDV', 'rdv'], ['index.html?panel=com', 'COM', 'com'],
-  ['index.html?panel=solo', 'SOLO', 'solo'], ['index.html?panel=lab', 'LAB', 'lab'],
-  ['fdai.html', 'FDAI', 'fdai'], ['mfd.html', 'MFD', 'mfd'], ['cam.html', 'CAM', 'cam'], ['simsup.html', 'SIMSUP', 'simsup'], ['mcc.html', 'MCC', 'mcc'],
-];
 const RESTORE_WINDOW_MS = 700;      // after connecting, time given to the broker to send back the retained positions
 const STATUS_EVERY_MS = 5000;
 const SNIFFER_MAX_LINES = 300;
@@ -26,7 +21,6 @@ const KEYPAD_SHORTCUTS = {
 
 const urlParameters = new URLSearchParams(location.search);
 const panelId = urlParameters.get('panel') || 'eng';
-const brokerUrl = urlParameters.get('broker') || `ws://${location.hostname || 'localhost'}:9001`;
 const inputTopicPrefix = `panel/${panelId}/in/`;
 const outputTopicPrefix = `panel/${panelId}/out/`;
 const statusTopic = `panel/${panelId}/status`;
@@ -48,16 +42,6 @@ function fingerprint(text) {
     hash = Math.imul(hash, 16777619);
   }
   return (hash >>> 0).toString(16);
-}
-
-function buildNavigation() {
-  const navigation = document.getElementById('nav');
-  if (!navigation) return;
-  for (const [link, label, id] of PANEL_LINKS) {
-    const anchor = createElement('a', 'navlink', { href: link, textContent: label });
-    if (id === panelId) anchor.setAttribute('aria-current', 'page');
-    navigation.appendChild(anchor);
-  }
 }
 
 /* One plate per section of the definition, one widget per item. */
@@ -111,8 +95,6 @@ function createSniffer(onToggle) {
 }
 
 function connectToBus(definition) {
-  const connectionDot = document.getElementById('conn-dot');
-  const connectionText = document.getElementById('conn-text');
   const sniffer = createSniffer((open) => {
     if (!client.connected) return;
     if (open) client.subscribe(SNIFFER_ONLY_TOPICS, { qos: 1 });
@@ -124,15 +106,15 @@ function connectToBus(definition) {
     online: true, fw: definition.fw, config: definitionFingerprint, uptime: Math.round((Date.now() - startedAt) / 1000),
   }), { qos: 1, retain: true });
 
-  // `mqtt` is the global of vendor/mqtt.min.js. The "will" tells the bus the panel is gone if the page closes.
-  client = mqtt.connect(brokerUrl, {
-    clientId: `panel-${panelId}-${Math.random().toString(16).slice(2, 8)}`, reconnectPeriod: 1000, connectTimeout: 4000,
-    will: { topic: statusTopic, payload: JSON.stringify({ online: false }), qos: 1, retain: true },
+  // The "will" tells the bus the panel is gone if the page closes.
+  client = connectBus({
+    name: `panel-${panelId}`,
+    will: { topic: statusTopic, payload: { online: false } },
+    onConnect,
+    onMessage,
   });
 
-  client.on('connect', () => {
-    connectionDot.className = 'dot up';
-    connectionText.textContent = `bus ${brokerUrl}`;
+  function onConnect() {
     restoringPositions = true;
     client.subscribe([`${inputTopicPrefix}#`, `${outputTopicPrefix}#`, 'gateway/status', 'cockpit/status'], { qos: 1 });
     if (sniffer.isOpen()) client.subscribe(SNIFFER_ONLY_TOPICS, { qos: 1 });
@@ -143,15 +125,12 @@ function connectToBus(definition) {
       for (const [name, input] of registry.inputs) if (input.retained) publishInput(name, input.read(), true);
     }, RESTORE_WINDOW_MS);
     publishStatus();
-  });
-  client.on('close', () => { connectionDot.className = 'dot down'; connectionText.textContent = 'bus disconnected'; });
-  client.on('error', (error) => { connectionText.textContent = `bus error: ${error.message}`; });
+  }
 
-  client.on('message', (topic, buffer, packet) => {
-    const payloadText = buffer.toString();
+  function onMessage(topic, payloadText, packet) {
     sniffer.sniff(topic, payloadText);
-    let payload = {};
-    try { payload = payloadText ? JSON.parse(payloadText) : {}; } catch { return; }
+    const payload = parse(payloadText);
+    if (payload === undefined) return;
     if (topic.startsWith(outputTopicPrefix)) {
       const draw = registry.outputs.get(topic.slice(outputTopicPrefix.length));
       if (draw) draw(payload);
@@ -165,7 +144,7 @@ function connectToBus(definition) {
     } else if (topic === 'cockpit/status') {
       document.getElementById('cockpit').textContent = `cockpit: ${payload.online ? '✓' : '✗'}`;
     }
-  });
+  }
   setInterval(() => { if (client.connected) publishStatus(); }, STATUS_EVERY_MS);
 }
 
@@ -210,7 +189,6 @@ function wireKeyboard() {
 }
 
 const definition = await (await fetch(`panels/${panelId}.json`, { cache: 'no-store' })).json();
-buildNavigation();
 buildPanel(definition);
 connectToBus(definition);
 wireInstructorBench();

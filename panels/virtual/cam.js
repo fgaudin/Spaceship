@@ -8,6 +8,8 @@
    URL: cam.html?broker=ws://host:9001&kerbcast=http://host:8088
    Kerbcast listens on this machine only unless its BindAddress setting is changed. */
 
+import { connectBus } from './bus.js';
+
 const CAMERA_LIST_EVERY_MS = 3000;
 const RETRY_AFTER_MS = 3000;
 const ICE_GATHERING_TIMEOUT_MS = 2000;
@@ -15,7 +17,6 @@ const STALLED_AFTER_MS = 4000;          // no new picture for this long: NO SIGN
 
 const urlParameters = new URLSearchParams(location.search);
 const host = location.hostname || 'localhost';
-const brokerUrl = urlParameters.get('broker') || `ws://${host}:9001`;
 const kerbcastUrl = urlParameters.get('kerbcast') || `http://${host}:8088`;
 
 const video = document.getElementById('video');
@@ -168,25 +169,20 @@ function watchPictures() {
 }
 
 function connectToBus() {
-  const connectionDot = document.getElementById('conn-dot');
-  const connectionText = document.getElementById('conn-text');
-  client = mqtt.connect(brokerUrl, {
-    clientId: `camera-monitor-${Math.random().toString(16).slice(2, 8)}`, reconnectPeriod: 1000, connectTimeout: 4000,
-    will: { topic: 'cam/status', payload: JSON.stringify({ online: false, playing: false }), qos: 1, retain: true },
-  });
-  client.on('connect', () => {
-    connectionDot.className = 'dot up';
-    connectionText.textContent = `bus ${brokerUrl}`;
-    client.subscribe('cam/select', { qos: 1 });
-    publish('cam/status', { online: true, playing });
-    publishedList = '';                 // publish the list again on the next refresh
-    refreshCameraList();
-  });
-  client.on('close', () => { connectionDot.className = 'dot down'; connectionText.textContent = 'bus disconnected'; });
-  client.on('message', (topic, buffer) => {
-    if (topic !== 'cam/select') return;
-    try { wantedCameraId = JSON.parse(buffer.toString()).id ?? null; } catch { return; }
-    showWantedCamera();
+  client = connectBus({
+    name: 'camera-monitor',
+    will: { topic: 'cam/status', payload: { online: false, playing: false } },
+    onConnect: (connection) => {
+      connection.subscribe('cam/select', { qos: 1 });
+      publish('cam/status', { online: true, playing });
+      publishedList = '';               // publish the list again on the next refresh
+      refreshCameraList();
+    },
+    onMessage: (topic, text) => {
+      if (topic !== 'cam/select') return;
+      try { wantedCameraId = JSON.parse(text).id ?? null; } catch { return; }
+      showWantedCamera();
+    },
   });
 }
 

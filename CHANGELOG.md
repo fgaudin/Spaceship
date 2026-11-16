@@ -3,6 +3,15 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-16 — shared top bar and bus connection for the web pages
+
+- `panels/virtual/shell.js` builds every page's top bar (brand, bus light, navigation) from one list of pages; each
+  page's HTML keeps only its own status items. Adding a page was editing five headers; now it is one line.
+- `panels/virtual/bus.js` is the one MQTT connection helper (broker address, client id, reconnection, the light),
+  used by the I/O panels, FDAI, MFD, the camera monitor, SimSup and MCC. FDAI and MFD became ES modules for it.
+- Checked in a browser: every page loads without errors, with the navigation and the light; MCC's multi-console
+  poll test passes.
+
 ## 2026-11-16 — SOLO PADs, MCC polls and shared consoles
 
 - **SOLO panel and flight-dynamics service** (`flight-dynamics/`): for a pilot flying without Mission Control,

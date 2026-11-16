@@ -138,7 +138,7 @@ To fly the mock: CB MAIN BUS on, open the ENG ARM guard and arm, push the thrott
 | Mission Control | [panels/virtual/mcc/](panels/virtual/mcc/): `mcc.js` (tabs, poll, loop), `bus.js`, `roster.js`, one module per console in `consoles/`. Architecture: [mcc/README.md](panels/virtual/mcc/README.md). |
 | SimSup | [simsup/](simsup/): `simsup_core.py` (the logic), `service.py`, `scenarios.json`; the page is `panels/virtual/simsup.*`. Architecture: [simsup/README.md](simsup/README.md). |
 | Mock plant | [plant-mock/](plant-mock/): `simulation.py` (the model), `vehicle.py` (planet and launcher constants), `plant.py` (the service). |
-| Virtual panel | [panels/virtual/](panels/virtual/): `panel.js` (page, bus, keyboard), `widgets.js` (one builder per item type), `seven_segment.js`; `cam.js` (camera monitor), `fdai.js`, `mfd.js`. |
+| Virtual panel | [panels/virtual/](panels/virtual/): `shell.js` (every page's top bar and navigation, from one list of pages), `bus.js` (every page's bus connection), `panel.js` (I/O panels: drawing, inputs, keyboard), `widgets.js` (one builder per item type), `seven_segment.js`; `cam.js` (camera monitor), `fdai.js`, `mfd.js`, `simsup.js`, `mcc/`. A new page: its HTML header holds only its own status items, it loads `shell.js`, and it gets one line in `PAGES` in `shell.js`. |
 
 ### Rules the cockpit logic implements
 - ENG ARM gates the throttle; STAGE needs STAGE ARM (and an edge, holding does not stage twice); ABORT needs ABORT ARM.

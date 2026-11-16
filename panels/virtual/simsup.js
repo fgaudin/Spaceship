@@ -3,7 +3,8 @@
 
    URL: simsup.html?broker=ws://host:9001 */
 
-const brokerUrl = new URLSearchParams(location.search).get('broker') || `ws://${location.hostname || 'localhost'}:9001`;
+import { connectBus, parse } from './bus.js';
+
 const TRIGGERS = [['now', 'now'], ['met', 'at MET s'], ['alt_below', 'below m'], ['alt_above', 'above m'], ['stage', 'at stage']];
 const STALE_AFTER_MS = 2000;
 
@@ -23,7 +24,7 @@ const number = (value, decimals = 0) => (value == null || !Number.isFinite(value
 
 const telemetry = {};
 let catalogue = [], state = { active: [], armed: [], debrief: [], frozen: false }, log = [], telemetryAt = 0;
-const client = mqtt.connect(brokerUrl, { clientId: `simsup-page-${Math.random().toString(16).slice(2, 8)}`, reconnectPeriod: 1000 });
+let client = null;
 const send = (request) => client.publish('sim/simsup/cmd', JSON.stringify(request), { qos: 1 });
 
 /* ---------- flight and what the crew sees ---------- */
@@ -193,15 +194,9 @@ element('export').addEventListener('click', exportLog);
 const services = { plant: '?', cockpit: '?', simsup: '?' };
 const drawServices = () => { element('services').textContent = `plant ${services.plant} · cockpit ${services.cockpit} · simsup ${services.simsup}`; };
 
-client.on('connect', () => {
-  element('conn-dot').className = 'dot up';
-  element('conn-text').textContent = `bus ${brokerUrl}`;
-  client.subscribe(['sim/simsup/#', 'tlm/time', 'tlm/flight', 'tlm/vessel', 'cw/state', 'gateway/status', 'cockpit/status'], { qos: 0 });
-});
-client.on('close', () => { element('conn-dot').className = 'dot down'; element('conn-text').textContent = 'bus disconnected'; });
-client.on('message', (topic, buffer) => {
-  let payload;
-  try { payload = JSON.parse(buffer.toString()); } catch { return; }
+function onMessage(topic, text) {
+  const payload = parse(text);
+  if (payload === undefined) return;
   if (topic.startsWith('tlm/')) { telemetry[topic] = payload; telemetryAt = Date.now(); return; }
   if (topic === 'cw/state') drawAlarms(payload);
   else if (topic === 'sim/simsup/scenarios') { catalogue = payload.failures || []; buildFailures(); drawScenarios(payload.scenarios || []); services.simsup = '✓'; drawServices(); }
@@ -209,5 +204,12 @@ client.on('message', (topic, buffer) => {
   else if (topic === 'sim/simsup/log') { log = payload.log || []; drawLog(); }
   else if (topic === 'gateway/status') { services.plant = payload.connected ? `${payload.plant} ✓` : '✗'; drawServices(); }
   else if (topic === 'cockpit/status') { services.cockpit = payload.online ? '✓' : '✗'; drawServices(); }
+}
+
+client = connectBus({
+  name: 'simsup-page',
+  onConnect: (connection) => connection.subscribe(['sim/simsup/#', 'tlm/time', 'tlm/flight', 'tlm/vessel', 'cw/state',
+    'gateway/status', 'cockpit/status'], { qos: 0 }),
+  onMessage,
 });
 setInterval(drawFlight, 500);

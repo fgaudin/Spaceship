@@ -5,10 +5,10 @@
    pitch θ and roll φ (right wing down positive). The ball is seen from behind the nose: a pixel (x right, y up) of the
    unit disc looks along d = x·r + y·u + z·f with z = √(1 − x² − y²); its elevation and azimuth pick the colour.
    ?demo=1 runs without a broker; ?broker=ws://host:9001 overrides the broker. */
+import { connectBus, parse, showDemo } from './bus.js';
+
 (() => {
-  'use strict';
   const params = new URLSearchParams(location.search);
-  const BROKER = params.get('broker') || `ws://${location.hostname || 'localhost'}:9001`;
   const DEMO = params.has('demo');
   const D2R = Math.PI / 180, R2D = 180 / Math.PI;
   const $ = (id) => document.getElementById(id);
@@ -317,26 +317,22 @@
   paint();
 
   // ---------- bus ----------
-  const dotEl = $('conn-dot'), ctext = $('conn-text');
-  if (DEMO) { dotEl.className = 'dot up'; ctext.textContent = 'demo (no bus)'; $('plant').textContent = 'plant: demo'; }
+  const statusTopic = 'panel/fdai/status';
+  if (DEMO) { showDemo(); $('plant').textContent = 'plant: demo'; }
   else {
-    const statusTopic = 'panel/fdai/status';
-    const client = mqtt.connect(BROKER, {
-      clientId: `panel-fdai-${Math.random().toString(16).slice(2, 8)}`, reconnectPeriod: 1000, connectTimeout: 4000,
-      will: { topic: statusTopic, payload: JSON.stringify({ online: false }), qos: 1, retain: true },
-    });
-    client.on('connect', () => {
-      dotEl.className = 'dot up'; ctext.textContent = `bus ${BROKER}`;
-      client.subscribe(['tlm/attitude', 'gateway/status'], { qos: 0 });
-      client.publish(statusTopic, JSON.stringify({ online: true, fw: 'fdai-glass-0.1' }), { qos: 1, retain: true });
-    });
-    client.on('close', () => { dotEl.className = 'dot down'; ctext.textContent = 'bus disconnected'; });
-    client.on('error', (e) => { ctext.textContent = `bus error: ${e.message}`; });
-    client.on('message', (topic, buf) => {
-      let p;
-      try { p = JSON.parse(buf.toString()); } catch { return; }
-      if (topic === 'tlm/attitude') sample(p, performance.now() / 1000);
-      else if (topic === 'gateway/status') $('plant').textContent = `plant: ${p.plant || '?'}${p.connected ? '' : ' (down)'}`;
+    connectBus({
+      name: 'panel-fdai',
+      will: { topic: statusTopic, payload: { online: false } },
+      onConnect: (client) => {
+        client.subscribe(['tlm/attitude', 'gateway/status'], { qos: 0 });
+        client.publish(statusTopic, JSON.stringify({ online: true, fw: 'fdai-glass-0.1' }), { qos: 1, retain: true });
+      },
+      onMessage: (topic, text) => {
+        const p = parse(text);
+        if (p === undefined) return;
+        if (topic === 'tlm/attitude') sample(p, performance.now() / 1000);
+        else if (topic === 'gateway/status') $('plant').textContent = `plant: ${p.plant || '?'}${p.connected ? '' : ' (down)'}`;
+      },
     });
   }
   requestAnimationFrame(frame);

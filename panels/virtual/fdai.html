@@ -9,16 +9,7 @@
 <link rel="stylesheet" href="fdai.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">CAPSULE <span>FDAI · glass panel</span></div>
-  <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
-  <nav class="nav" aria-label="Panels">
-    <a class="navlink" href="index.html">ENG</a><a class="navlink" href="index.html?panel=sys">SYS</a>
-    <a class="navlink" href="index.html?panel=cmp">CMP</a><a class="navlink" href="index.html?panel=rdv">RDV</a>
-    <a class="navlink" href="index.html?panel=com">COM</a><a class="navlink" href="index.html?panel=solo">SOLO</a><a class="navlink" href="index.html?panel=lab">LAB</a>
-    <a class="navlink" href="fdai.html" aria-current="page">FDAI</a>
-    <a class="navlink" href="mfd.html">MFD</a><a class="navlink" href="cam.html">CAM</a><a class="navlink" href="simsup.html">SIMSUP</a><a class="navlink" href="mcc.html">MCC</a>
-  </nav>
+<header class="topbar" data-subtitle="FDAI · glass panel">
   <div class="links"><span id="plant">plant: ?</span></div>
 </header>
 
@@ -46,6 +37,7 @@
 </main>
 
 <script src="vendor/mqtt.min.js"></script>
-<script src="fdai.js"></script>
+<script type="module" src="shell.js"></script>
+<script type="module" src="fdai.js"></script>
 </body>
 </html>
