@@ -31,13 +31,6 @@ def press(panel, ctl):
     inp(panel, ctl, 0, retain=False)
 
 
-def key(seq):
-    for k in seq.split():
-        cli.publish('panel/dsky/in/key', json.dumps({'v': k}), qos=1)
-        time.sleep(0.15)
-    time.sleep(0.4)
-
-
 def out(panel, name):
     return seen.get(f'panel/{panel}/out/{name}', {})
 
@@ -75,7 +68,7 @@ v.control.throttle = 0.0
 print(f'loaded {SAVE}: {v.name}, {v.situation.name}, {v.orbit.body.name}', flush=True)
 for p, c, val in (('eng', 'cb_main', 1), ('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0), ('eng', 'abort_arm', 0),
                   ('eng', 'throttle', 0), ('eng', 'sas', 0), ('eng', 'rcs', 0), ('eng', 'lights', 0), ('eng', 'sas_mode', 0),
-                  ('sys', 'cb_dsky', 1), ('sys', 'solar', 0), ('sys', 'brakes', 0), ('sys', 'evt_src', 0), ('sys', 'chute_arm', 0),
+                  ('sys', 'solar', 0), ('sys', 'brakes', 0), ('sys', 'evt_src', 0), ('sys', 'chute_arm', 0),
                   ('eng', 'abort_mode', 0), ('eng', 'thrust_lim', 1), ('eng', 'gimbal_lock', 0), ('cmp', 'burn_arm', 0),
                   ('rdv', 'ctrl_port', 0), ('sys', 'pause', 0), ('sys', 'save_arm', 0)):
     inp(p, c, val)
@@ -158,21 +151,6 @@ check('warp rate on the panel', wait(lambda: float(out('sys', 'disp_warp').get('
 press('sys', 'warp_stop')
 check('STOP WARP → 1×', wait(lambda: sc.rails_warp_factor == 0 and sc.warp_rate == 1, 8))
 v.control.throttle = 0.0
-
-# ---------- DSKY ----------
-key('RSET VERB 3 4 ENTR VERB 1 6 NOUN 6 2 ENTR')
-r3 = out('dsky', 'dsky_r3_disp').get('text', '')
-check('DSKY V16 N62: altitude in R3', wait(lambda: abs(float(out('dsky', 'dsky_r3_disp')['text']) - v.flight().mean_altitude / 1000) < 1), r3)
-key('VERB 8 2 ENTR')
-check('DSKY V82: apoapsis in R1', wait(lambda: abs(float(out('dsky', 'dsky_r1_disp')['text']) - v.orbit.apoapsis_altitude / 1000) < 1),
-      out('dsky', 'dsky_r1_disp'))
-met = seen['tlm/time']['met']
-cli.publish('dsky/uplink', json.dumps({'tig_met': met + 600, 'dv': [12.3, 0, 0]}), qos=1)
-check('uplink lights UPLINK ACTY', wait(lambda: out('dsky', 'dsky_uplink').get('on'), 4))
-key('VERB 3 7 ENTR 4 0 ENTR')
-check('P40 with the uplinked PAD: VG 12.3', wait(lambda: out('dsky', 'dsky_r2_disp').get('text') == '+0012.3'), out('dsky', 'dsky_r2_disp'))
-key('VERB 3 4 ENTR')
-check('DSKY no NO ATT lamp', not out('dsky', 'dsky_no_att').get('on'))
 
 # ---------- target (set through kRPC: there is no target selector on a panel yet) ----------
 others = [w for w in sc.vessels if w != v and w.orbit.body == v.orbit.body and w.type.name != 'debris']

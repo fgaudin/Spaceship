@@ -15,7 +15,7 @@ Priority: **A** = cannot fly the mission without it, **B** = needed to fly it by
 - **Glass kept to a minimum.** Everything that can be digits, bars, lamps or LEDs is. Three non-glass display types
   cover what looked like it needed a screen: 7-segment digits, an alphanumeric LED row (target name) and an LED matrix
   (engine status). Glass remains for the attitude ball, and optionally one shared screen for the orbit drawing.
-- **The DSKY will go.** The burn computer (CMP: one display per PAD field, a numeric keypad, UPLINK ACCEPT) replaces it.
+- **The DSKY is gone** (removed 2026-11-16; the sections below that mention it are the original plan). The burn computer (CMP: one display per PAD field, a numeric keypad, UPLINK ACCEPT) replaces it.
 
 Built as virtual panels so far: 4 to 8 and 13 to 16 (ENG, SYS), 1 as the burn computer (CMP), the I/O part of 12 (RDV),
 2 and 9 to 12 on glass (FDAI, MFD). The glass versions of 9 to 12 are candidates to drop once the I/O panels are flown.

@@ -42,11 +42,17 @@ ALARMS = {
 DESCENDING_SITUATIONS = ('flying', 'sub_orbital')
 
 
+def injected_false_alarms(cockpit):
+    """The alarms SimSup lights with no cause; the instructor may name one by id (cw_q) or by legend (HIGH Q)."""
+    asked = {name.strip().lower() for name in cockpit.injected_failures.false_alarms()}
+    return {name for name, alarm in ALARMS.items() if name in asked or alarm.legend.lower() in asked}
+
+
 def active_alarms(cockpit):
     """The set of active alarm names. Without a link nothing else can be trusted, so NO LINK stands alone."""
     if not cockpit.telemetry_is_fresh() or not cockpit.link_up:
         return {'cw_no_link'}
-    active = set()
+    active = injected_false_alarms(cockpit)
     _vehicle_alarms(cockpit, active)
     _descent_alarms(cockpit, active)
     _orbit_alarms(cockpit, active)
@@ -100,7 +106,7 @@ def _vehicle_alarms(cockpit, active):
         active.add('cw_comm')
     # SAS switch against the game for a while (not while an abort holds SAS on against the switch)
     sas_disagrees = ('sas' in vessel and 'sas' in cockpit.inputs and 'sas' not in cockpit.forced_switches
-                     and bool(vessel['sas']) != bool(cockpit.inputs['sas']))
+                     and bool(vessel['sas']) != cockpit.switch_wanted('sas'))
     if cockpit.has_lasted('sas_disagree', sas_disagrees, S.SAS_DISAGREE_AFTER_S):
         active.add('cw_sas_dis')
 
@@ -129,8 +135,10 @@ def _orbit_alarms(cockpit, active):
     orbit = cockpit.orbit
     safe_periapsis = S.SAFE_PERIAPSIS_M.get(orbit.get('body'))
     periapsis = orbit.get('peri')
-    if cockpit.vessel.get('situation') == 'orbiting' and safe_periapsis is not None and periapsis is not None \
-            and periapsis < safe_periapsis:
+    # Not while thrusting: at the end of an orbit insertion the periapsis is still on its way up.
+    coasting = not cockpit.vessel.get('thrust')
+    if cockpit.vessel.get('situation') == 'orbiting' and coasting and safe_periapsis is not None \
+            and periapsis is not None and periapsis < safe_periapsis:
         active.add('cw_peri')
     time_to_soi_change = orbit.get('t_soi')
     if time_to_soi_change is not None and 0 < time_to_soi_change < S.SOI_CHANGE_WITHIN_S:

@@ -1,0 +1,74 @@
+{
+  "id": "com",
+  "title": "COMMUNICATIONS",
+  "fw": "virtual-0.1",
+  "sections": [
+    {
+      "title": "LINK",
+      "items": [
+        {
+          "type": "annunciator",
+          "id": "link",
+          "label": "LINK",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_aos",
+              "label": "AOS",
+              "color": "green"
+            },
+            {
+              "out": "lamp_los",
+              "label": "LOS",
+              "color": "red"
+            }
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_signal",
+          "label": "SIGNAL",
+          "segments": 10,
+          "out": "bar_signal"
+        },
+        {
+          "type": "alpha",
+          "id": "txt_via",
+          "label": "VIA",
+          "out": "txt_via",
+          "chars": 12
+        },
+        {
+          "type": "seg7",
+          "id": "disp_hops",
+          "label": "HOPS",
+          "digits": 1,
+          "out": "disp_hops"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_link_time",
+          "label": "IN THIS STATE MIN.SEC",
+          "digits": 5,
+          "out": "disp_link_time",
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "title": "ANTENNA",
+      "items": [
+        {
+          "type": "toggle",
+          "id": "antenna",
+          "label": "ANTENNA DEPLOY",
+          "in": "antenna",
+          "led": {
+            "out": "led_antenna",
+            "color": "green"
+          }
+        }
+      ]
+    }
+  ]
+}

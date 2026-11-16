@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capsule · Mission Control</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="panel.css">
+<link rel="stylesheet" href="fdai.css">
+<link rel="stylesheet" href="mcc.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">CAPSULE <span>Mission Control</span></div>
+  <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
+  <nav id="tabs" class="nav mcc-tabs" aria-label="Consoles"></nav>
+  <div class="links"><span id="clock" class="mcc-clock">MET ---:--:--</span><a class="navlink" href="simsup.html" title="Instructor station">SIMSUP</a></div>
+</header>
+
+<main>
+  <section id="poll-banner" class="mcc-poll-banner" hidden aria-live="assertive" aria-label="Go / no-go poll">
+    <div class="question"><span id="poll-banner-label" class="label">FLIGHT POLL</span><strong id="poll-banner-question"></strong></div>
+    <div class="answers">
+      <button id="banner-go" class="mcc-big go" type="button">GO</button>
+      <button id="banner-nogo" class="mcc-big nogo" type="button">NO-GO</button>
+    </div>
+  </section>
+  <div id="consoles"></div>
+</main>
+
+<footer class="mcc-footer" aria-label="My consoles">
+  <span id="my-roles" class="mcc-my-roles" title="The consoles this laptop holds: click the tabs to change"></span>
+  <div class="mcc-footer-poll"><span id="poll-question">no poll</span>
+    <button id="answer-go" class="mcc-btn go" type="button">GO</button>
+    <button id="answer-nogo" class="mcc-btn nogo" type="button">NO-GO</button></div>
+  <form id="loop-form" class="mcc-inline"><input id="loop-text" placeholder="on the loop, to FLIGHT…" aria-label="Note for the flight director's loop" autocomplete="off">
+    <button class="mcc-btn" type="submit">SEND</button></form>
+</footer>
+
+<script src="vendor/mqtt.min.js"></script>
+<script type="module" src="mcc/mcc.js"></script>
+</body>
+</html>

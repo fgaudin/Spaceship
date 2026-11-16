@@ -16,6 +16,7 @@ from vehicle import STAGES
 SWITCH_COMMANDS = {'cmd/sas': 'sas', 'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
                    'cmd/brakes': 'brakes'}
 GROUND_SITUATIONS = ('pre_launch', 'landed', 'crashed')
+ACTION_GROUP_COUNT = 10
 ON_THE_PAD = -1                 # value of `firing_stage` before the first staging
 KICK_ANGLE = math.radians(3)    # the gravity turn starts with a 3° lean to the east ...
 KICK_UNTIL_SPEED, KICK_UNTIL_ALTITUDE = 60.0, 500.0     # ... held until 60 m/s and 500 m
@@ -52,8 +53,12 @@ class Plant:
         self.throttle, self.thrust_limit, self.gimbal_locked = 0.0, 1.0, False
         self.sas, self.rcs, self.gear, self.lights, self.brakes = False, False, True, False, False
         self.sas_mode = 'stability'
+        self.speed_mode = 'surface'
         self.solar_deployed, self.parachute = False, 'stowed'
+        self.antenna_deployed = False
+        self.action_groups = [False] * ACTION_GROUP_COUNT
         self.warp_index, self.warp_to_time, self.paused = 0, None, False
+        self.frozen = False                     # the instructor's freeze (sim/freeze), apart from the crew's PAUSE
         self.maneuver_node = None
         # the scripted target
         self.target_index, self.target_port_index = None, None
@@ -68,6 +73,8 @@ class Plant:
             self.throttle = clamp(float(request.get('v', 0)), 0.0, 1.0)
         elif topic == 'cmd/thrust_limit':
             self.thrust_limit = clamp(float(request.get('v', 1)), 0.0, 1.0)
+        elif topic == 'cmd/gimbal' and 'gimbal_stuck' in self.failures:
+            pass
         elif topic == 'cmd/gimbal':
             self.gimbal_locked = bool(request.get('locked'))
         elif topic == 'cmd/sas_mode':
@@ -78,6 +85,17 @@ class Plant:
             self.throttle, self.stages_attached, self.firing_stage = 0.0, 0, len(STAGES)
         elif topic == 'cmd/solar':
             self.solar_deployed = bool(request.get('on'))
+        elif topic == 'cmd/speed_mode':
+            if request.get('mode') in ('orbit', 'surface', 'target'):
+                self.speed_mode = request['mode']
+        elif topic == 'cmd/antenna':
+            self.antenna_deployed = bool(request.get('on'))
+        elif topic == 'cmd/action_group':
+            number = int(request.get('n', 0))
+            if 1 <= number <= ACTION_GROUP_COUNT:
+                self.action_groups[number - 1] = not self.action_groups[number - 1]
+        elif topic == 'cmd/chute' and 'chute_fail' in self.failures:
+            pass                                    # the instructor broke them
         elif topic == 'cmd/chute':
             if self.parachute == 'stowed':
                 self.parachute = 'deployed'
@@ -97,6 +115,8 @@ class Plant:
             self._warp(request)
         elif topic == 'sim/reset':
             self.reset()
+        elif topic == 'sim/freeze':
+            self.frozen = bool(request.get('on'))
         elif topic.startswith('sim/failures/'):
             failure = topic.split('/')[-1]
             (self.failures.add if request.get('on') else self.failures.discard)(failure)
@@ -191,7 +211,7 @@ class Plant:
         air_velocity = (self.velocity_x - V.ROTATION_RATE * self.y, self.velocity_y + V.ROTATION_RATE * self.x)
         airspeed = math.hypot(*air_velocity)
         in_atmosphere = altitude < V.ATMOSPHERE_TOP
-        pressure = V.SEA_LEVEL_PRESSURE * math.exp(-altitude / V.PRESSURE_SCALE_HEIGHT) if in_atmosphere else 0.0
+        pressure = self.static_pressure()
         density = V.SEA_LEVEL_DENSITY * math.exp(-altitude / V.DENSITY_SCALE_HEIGHT) if in_atmosphere else 0.0
         mass = self.mass()
         gravity = V.GRAVITATIONAL_PARAMETER / radius ** 2
@@ -302,7 +322,8 @@ class Plant:
         return {'body': 'Kerbin',
                 'apo': apoapsis_radius - V.RADIUS if math.isfinite(apoapsis_radius) else None,
                 'peri': periapsis_radius - V.RADIUS, 'a': semi_major_axis, 'e': eccentricity, 'i': 0.0,
-                'nu': round(true_anomaly, 3),
+                'nu': round(true_anomaly, 3), 'ut': round(self.time, 2),
+                'lan': 0.0, 'argp': 0.0,            # in the plane: only the circularisation PAD uses the mock's orbit
                 'period': 2 * math.pi * math.sqrt(semi_major_axis ** 3 / mu) if closed else None,
                 't_soi': None, **self._times_to_apsides(semi_major_axis, eccentricity, true_anomaly)}
 
@@ -332,13 +353,20 @@ class Plant:
         mission_time = self.time - self.liftoff_time if self.liftoff_time is not None else 0.0
         moving = math.hypot(vertical_speed, horizontal_speed) > 1
         prograde = {'pitch': round(math.degrees(math.atan2(vertical_speed, horizontal_speed)), 2), 'heading': 90.0}
+        # the same velocity along the vessel's axes: the mock flies in one plane, nose `pitch` above the east
+        nose_up, nose_east = math.sin(math.radians(self.pitch)), math.cos(math.radians(self.pitch))
+        velocity_forward = vertical_speed * nose_up + horizontal_speed * nose_east
+        velocity_down = -(vertical_speed * nose_east - horizontal_speed * nose_up)
+        link_up = 'comm_lost' not in self.failures
         return {
             'tlm/time': {'ut': round(self.time, 2), 'met': round(mission_time, 2), 'warp': self.warp_rate(),
-                         'paused': self.paused},
+                         'paused': self.paused or self.frozen},
             'tlm/flight': {'alt': round(altitude, 1), 'radar': round(altitude, 1), 'vs': round(vertical_speed, 2),
                            'hs': round(horizontal_speed, 2), 'speed': round(math.hypot(*air_velocity), 2),
                            'q': round(self.dynamic_pressure, 1), 'g': round(self.g_force, 3),
                            'vn': 0.0, 've': round(horizontal_speed, 2), 'lat': 0.0,
+                           'v_right': 0.0, 'v_fwd': round(velocity_forward, 2), 'v_down': round(velocity_down, 2),
+                           'p': round(self.static_pressure(), 1),
                            'lon': round(math.degrees(math.atan2(self.x, self.y) - V.ROTATION_RATE * self.time), 4)},
             'tlm/vessel': self._vessel_telemetry(),
             # the mock flies due east; the nose pitch is the one it steers
@@ -349,7 +377,11 @@ class Plant:
             'tlm/target': self._target_telemetry(),
             'tlm/engines': self._engine_telemetry(),
             'tlm/thermal': {'max': 0.9 if 'overheat' in self.failures else 0.2},
-            'tlm/node': {'set': True, **self.maneuver_node, 'att_err': 1.0} if self.maneuver_node else {'set': False},
+            'tlm/node': ({'set': True, **self.maneuver_node, 'att_err': 1.0, 'yaw': 0.6, 'pitch': -0.8}
+                         if self.maneuver_node else {'set': False}),
+            'tlm/comm': {'link': link_up, 'strength': 0.8 if link_up else 0.0, 'hops': 1 if link_up else 0,
+                         'via': 'KSC' if link_up else None, 'antenna': self.antenna_deployed},
+            'tlm/groups': {'on': list(self.action_groups)},
         }
 
     def _roll(self, mission_time):
@@ -359,21 +391,22 @@ class Plant:
         progress = clamp((mission_time - ROLL_PROGRAM_START_S) / ROLL_PROGRAM_LENGTH_S, 0.0, 1.0)
         return round(progress * 90.0 - 90.0, 2)
 
+    def ksp_stage_number(self):
+        """KSP counts stages down: 4 on the pad, 3 with the first stage lit, ..."""
+        if self.firing_stage == ON_THE_PAD:
+            return len(STAGES) + 1
+        return len(STAGES) - self.firing_stage
+
     def _vessel_telemetry(self):
         stage = self.firing_stage_or_none()
         available_thrust = 0.0
         if self.can_thrust():
             available_thrust = stage.vacuum_thrust * self.thrust_limit * self.working_engine_fraction()
-        # KSP counts stages down: 4 on the pad, 3 with the first stage lit, ...
-        if self.firing_stage == ON_THE_PAD:
-            ksp_stage_number = len(STAGES) + 1
-        else:
-            ksp_stage_number = len(STAGES) - self.firing_stage
         return {'name': 'Mock X', 'mass': round(self.mass(), 1), 'thrust': round(self.thrust, 1),
                 'thrust_avail': available_thrust, 'isp': stage.vacuum_isp if stage else 0,
-                'situation': self.situation, 'stage': ksp_stage_number, 'throttle': self.throttle,
+                'situation': self.situation, 'stage': self.ksp_stage_number(), 'throttle': self.throttle,
                 'sas': self.sas, 'rcs': self.rcs, 'gear': self.gear, 'lights': self.lights, 'brakes': self.brakes,
-                'sas_mode': self.sas_mode, 'solar': self.solar_deployed, 'chute': self.parachute,
+                'sas_mode': self.sas_mode, 'speed_mode': self.speed_mode, 'solar': self.solar_deployed, 'chute': self.parachute,
                 'comm': 'comm_lost' not in self.failures, 'has_gear': False,
                 'contact': self.situation in ('pre_launch', 'landed')}
 
@@ -402,9 +435,16 @@ class Plant:
                              'v_right': -0.01, 'v_up': 0.0, 'yaw': 1.5, 'pitch': -0.5, 'roll': 4.0}
         return state
 
+    def static_pressure(self):
+        altitude = math.hypot(self.x, self.y) - V.RADIUS
+        if altitude >= V.ATMOSPHERE_TOP:
+            return 0.0
+        return V.SEA_LEVEL_PRESSURE * math.exp(-altitude / V.PRESSURE_SCALE_HEIGHT)
+
     def _engine_telemetry(self):
         """Every engine still on the vehicle; those of the firing stage are lit."""
         engines = []
+        pressure = self.static_pressure()
         first_attached = len(STAGES) - self.stages_attached
         for index in range(first_attached, len(STAGES)):
             stage = STAGES[index]
@@ -417,6 +457,10 @@ class Plant:
                 # with the failure engine_one_out, the second engine of the cluster is the one that stops
                 failed = lit and 'engine_one_out' in self.failures and engine_count > 1 and number == 1
                 thrust = self.thrust / working_count if lit and has_fuel and not failed else 0.0
+                # the mock's engines burn propellant at a fixed rate: their thrust follows the specific impulse
+                rated = full_thrust_each * stage.specific_impulse_at(pressure) / stage.vacuum_isp if has_fuel else 0.0
                 engines.append({'x': x, 'z': z, 'stage': len(STAGES) - index, 'on': lit, 'fuel': has_fuel,
-                                'max': round(full_thrust_each if has_fuel else 0.0, 1), 'thrust': round(thrust, 1)})
-        return {'engines': engines, 'limit': self.thrust_limit, 'gimbal_locked': self.gimbal_locked}
+                                'max': round(full_thrust_each if has_fuel else 0.0, 1), 'thrust': round(thrust, 1),
+                                'rated': round(rated, 1), 'isp_vac': stage.vacuum_isp, 'isp_sl': stage.sea_level_isp})
+        return {'engines': engines, 'stage': self.ksp_stage_number(), 'limit': self.thrust_limit,
+                'gimbal_locked': self.gimbal_locked}

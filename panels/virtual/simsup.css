@@ -1,0 +1,50 @@
+/* SimSup: the instructor's page. Tokens from panel.css; flag and nav from fdai.css. */
+.ss { display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(18rem, 1.2fr) minmax(22rem, 1.6fr) minmax(24rem, 2fr);
+  gap: 1rem; padding: 1rem; align-items: start; }
+@media (max-width: 90rem) { .ss { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 48rem) { .ss { grid-template-columns: 1fr; padding: 1rem 16px; } }
+.ss-box { background: linear-gradient(160deg, var(--plate-hi), var(--plate) 35%, var(--plate-lo)); border: 1px solid #000;
+  border-radius: 6px; padding: .8rem 1rem 1rem; box-shadow: inset 0 1px 0 #ffffff14, 0 4px 14px #0008; min-width: 0; }
+.ss h2, .ss h3 { margin: .2rem 0 .6rem; font-size: .78rem; letter-spacing: .2em; color: var(--legend); font-weight: 600;
+  display: flex; align-items: center; gap: .6rem; }
+.ss h3 { margin-top: 1rem; color: var(--legend-dim); }
+.ss-figures { display: grid; grid-template-columns: auto 1fr; gap: .25rem .8rem; margin: 0 0 .8rem; font-size: .85rem; }
+.ss-figures dt { color: var(--legend-dim); }
+.ss-figures dd { margin: 0; font-variant-numeric: tabular-nums; color: var(--seg-green); font-family: ui-monospace, monospace; }
+.ss-btn { font: inherit; font-size: .75rem; letter-spacing: .1em; padding: .4rem .8rem; color: var(--legend); cursor: pointer;
+  background: linear-gradient(#3b4046, #23272b); border: 1px solid #000; border-radius: 4px; box-shadow: inset 0 1px 0 #ffffff22; }
+.ss-btn:hover, .ss-btn:focus-visible { border-color: var(--amber); outline: none; }
+.ss-btn.ss-small { padding: .2rem .5rem; font-size: .66rem; margin-left: auto; }
+.ss-btn.on { background: linear-gradient(#a3201a, #6d1410); color: #fff; }
+.ss-freeze.on { background: linear-gradient(#2d5fa8, #1b3b6b); }
+.ss-alarms { display: flex; flex-wrap: wrap; gap: .3rem; min-height: 1.6rem; }
+.ss-alarms span { font-size: .66rem; letter-spacing: .08em; padding: .25rem .45rem; border-radius: 3px; background: #4a3a10;
+  color: var(--amber); border: 1px solid #000; }
+.ss-alarms span.unacked { background: var(--amber); color: #111; }
+.ss-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: .5rem; }
+.ss-list li { background: #00000033; border-radius: 4px; padding: .5rem .6rem; font-size: .8rem; line-height: 1.4; }
+.ss-list li strong { color: var(--legend); display: block; }
+.ss-list li p { margin: .2rem 0 .4rem; color: var(--legend-dim); font-size: .75rem; }
+.ss-empty { color: var(--legend-dim); font-size: .75rem; font-style: italic; }
+.ss-inline { display: flex; gap: .4rem; align-items: center; margin: .6rem 0; flex-wrap: wrap; font-size: .75rem;
+  color: var(--legend-dim); }
+.ss input, .ss select { font: inherit; font-size: .78rem; background: #0b0c0d; color: var(--ink); border: 1px solid #444;
+  border-radius: 3px; padding: .3rem .4rem; min-width: 0; }
+.ss input:focus-visible, .ss select:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+.ss-group { margin-bottom: .8rem; }
+.ss-group h3 { margin: .4rem 0; }
+.ss-failure { display: grid; grid-template-columns: 1fr auto; gap: .3rem .6rem; padding: .5rem .6rem; border-radius: 4px;
+  background: #00000033; margin-bottom: .4rem; font-size: .78rem; }
+.ss-failure.active { background: #5a1512; box-shadow: inset 3px 0 0 var(--red); }
+.ss-failure .where { font-size: .6rem; letter-spacing: .1em; color: var(--legend-dim); text-transform: uppercase; }
+.ss-failure .controls { grid-column: 1 / -1; display: flex; gap: .35rem; flex-wrap: wrap; align-items: center; }
+.ss-failure .controls input { width: 7.5rem; }
+.ss-failure .controls input.value { width: 5rem; }
+.ss-table { width: 100%; border-collapse: collapse; font-size: .75rem; margin-bottom: 1rem; }
+.ss-table th { text-align: left; color: var(--legend-dim); font-weight: 400; border-bottom: 1px solid #444; padding: .2rem; }
+.ss-table td { padding: .25rem .2rem; border-bottom: 1px solid #ffffff10; font-variant-numeric: tabular-nums; }
+.ss-logs { list-style: none; margin: 0; padding: 0; max-height: 34rem; overflow: auto; font: .72rem/1.45 ui-monospace, monospace; }
+.ss-logs li { display: grid; grid-template-columns: 4.5rem 4.6rem 1fr; gap: .4rem; padding: .1rem 0; border-bottom: 1px solid #ffffff08; }
+.ss-logs .kind-failure { color: var(--red); } .ss-logs .kind-alarm { color: var(--amber); }
+.ss-logs .kind-crew { color: var(--seg-green); } .ss-logs .kind-command { color: var(--legend-dim); }
+.ss-logs .kind-simsup, .ss-logs .kind-note { color: #8cc4ff; }

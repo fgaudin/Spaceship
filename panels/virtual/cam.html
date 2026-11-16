@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capsule · camera monitor</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="panel.css">
+<link rel="stylesheet" href="fdai.css">
+<link rel="stylesheet" href="cam.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">CAPSULE <span>camera monitor · glass panel</span></div>
+  <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
+  <nav class="nav" aria-label="Panels">
+    <a class="navlink" href="index.html">ENG</a><a class="navlink" href="index.html?panel=sys">SYS</a>
+    <a class="navlink" href="index.html?panel=cmp">CMP</a><a class="navlink" href="index.html?panel=rdv">RDV</a>
+    <a class="navlink" href="index.html?panel=com">COM</a><a class="navlink" href="index.html?panel=solo">SOLO</a><a class="navlink" href="index.html?panel=lab">LAB</a>
+    <a class="navlink" href="fdai.html">FDAI</a>
+    <a class="navlink" href="mfd.html">MFD</a><a class="navlink" href="cam.html" aria-current="page">CAM</a><a class="navlink" href="simsup.html">SIMSUP</a><a class="navlink" href="mcc.html">MCC</a>
+  </nav>
+  <div class="links"><span id="source">kerbcast: ?</span></div>
+</header>
+
+<main class="cam-wrap">
+  <section class="plate cam-plate" aria-label="Camera monitor">
+    <span class="plate-title">MONITOR</span>
+    <div class="cam-screen">
+      <video id="video" autoplay muted playsinline></video>
+      <div id="caption" class="cam-caption"></div>
+      <div id="flag" class="flag">NO SIGNAL</div>
+    </div>
+    <p class="fdai-note">A display only. The camera is chosen on the LAB panel (CAM ◂ ▸), which publishes
+      <code>cam/select</code>; this page publishes the cameras it can show on <code>cam/list</code>.
+      The picture comes from the Kerbcast mod in KSP.</p>
+  </section>
+</main>
+
+<script src="vendor/mqtt.min.js"></script>
+<script type="module" src="cam.js"></script>
+</body>
+</html>

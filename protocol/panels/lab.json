@@ -1,0 +1,280 @@
+{
+  "id": "lab",
+  "title": "LAB · EXPERIMENTAL PANELS",
+  "fw": "virtual-0.1",
+  "sections": [
+    {
+      "title": "CROSS-POINTER",
+      "items": [
+        {
+          "type": "matrix",
+          "id": "mx_xp",
+          "label": "FLY TO THE DOT",
+          "out": "mx_xp",
+          "rows": 9,
+          "cols": 9
+        },
+        {
+          "type": "rotary",
+          "id": "xp_mode",
+          "label": "SHOWS",
+          "in": "xp_mode",
+          "positions": [
+            "NODE",
+            "RETRO",
+            "PRO",
+            "PORT",
+            "OFFSET",
+            "DRIFT"
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_xp_right",
+          "label": "RIGHT",
+          "digits": 5,
+          "out": "disp_xp_right"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_xp_up",
+          "label": "UP",
+          "digits": 5,
+          "out": "disp_xp_up"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_xp_scale",
+          "label": "FULL SCALE",
+          "digits": 3,
+          "out": "disp_xp_scale",
+          "color": "green"
+        },
+        {
+          "type": "annunciator",
+          "id": "xp_null_box",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_xp_null",
+              "label": "NULL",
+              "color": "green"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "LANDING",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_radar",
+          "label": "RADAR ALT M",
+          "digits": 6,
+          "out": "disp_radar"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ld_vs",
+          "label": "V/S M/S",
+          "digits": 5,
+          "out": "disp_ld_vs"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ld_hs",
+          "label": "H/S M/S",
+          "digits": 5,
+          "out": "disp_ld_hs"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_impact",
+          "label": "TO GROUND S",
+          "digits": 4,
+          "out": "disp_impact",
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_brake_alt",
+          "label": "BRAKE HEIGHT M",
+          "digits": 6,
+          "out": "disp_brake_alt",
+          "color": "green"
+        },
+        {
+          "type": "annunciator",
+          "id": "brake_box",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_brake",
+              "label": "BRAKE",
+              "color": "amber"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "NAVIGATION",
+      "items": [
+        {
+          "type": "alpha",
+          "id": "txt_body",
+          "label": "BODY",
+          "out": "txt_body",
+          "chars": 8
+        },
+        {
+          "type": "seg7",
+          "id": "disp_lat",
+          "label": "LAT ° (+ NORTH)",
+          "digits": 5,
+          "out": "disp_lat"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_lon",
+          "label": "LON ° (+ EAST)",
+          "digits": 6,
+          "out": "disp_lon"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_incl",
+          "label": "INCLINATION °",
+          "digits": 5,
+          "out": "disp_incl",
+          "color": "green"
+        }
+      ]
+    },
+    {
+      "title": "ACTION GROUPS",
+      "class": "pairs",
+      "items": [
+        {
+          "type": "lamp_button",
+          "id": "ag_1",
+          "label": "AG 1",
+          "color": "amber",
+          "in": "ag_1",
+          "out": "lamp_ag_1"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_2",
+          "label": "AG 2",
+          "color": "amber",
+          "in": "ag_2",
+          "out": "lamp_ag_2"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_3",
+          "label": "AG 3",
+          "color": "amber",
+          "in": "ag_3",
+          "out": "lamp_ag_3"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_4",
+          "label": "AG 4",
+          "color": "amber",
+          "in": "ag_4",
+          "out": "lamp_ag_4"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_5",
+          "label": "AG 5",
+          "color": "amber",
+          "in": "ag_5",
+          "out": "lamp_ag_5"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_6",
+          "label": "AG 6",
+          "color": "amber",
+          "in": "ag_6",
+          "out": "lamp_ag_6"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_7",
+          "label": "AG 7",
+          "color": "amber",
+          "in": "ag_7",
+          "out": "lamp_ag_7"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_8",
+          "label": "AG 8",
+          "color": "amber",
+          "in": "ag_8",
+          "out": "lamp_ag_8"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_9",
+          "label": "AG 9",
+          "color": "amber",
+          "in": "ag_9",
+          "out": "lamp_ag_9"
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_10",
+          "label": "AG 10",
+          "color": "amber",
+          "in": "ag_10",
+          "out": "lamp_ag_10"
+        }
+      ]
+    },
+    {
+      "title": "CAMERA",
+      "items": [
+        {
+          "type": "alpha",
+          "id": "txt_cam",
+          "label": "ON THE MONITOR",
+          "out": "txt_cam",
+          "chars": 16
+        },
+        {
+          "type": "seg7",
+          "id": "disp_cam",
+          "label": "CAMERA",
+          "digits": 2,
+          "out": "disp_cam"
+        },
+        {
+          "type": "led",
+          "id": "led_cam_live",
+          "label": "LIVE",
+          "out": "led_cam_live",
+          "color": "green"
+        },
+        {
+          "type": "button",
+          "id": "cam_prev",
+          "label": "◂ CAM",
+          "in": "cam_prev"
+        },
+        {
+          "type": "button",
+          "id": "cam_next",
+          "label": "CAM ▸",
+          "in": "cam_next"
+        }
+      ]
+    }
+  ]
+}

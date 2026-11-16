@@ -65,7 +65,7 @@ def time_from_selected_event(cockpit):
     source = cockpit.selected('evt_src', S.EVENT_TIMER_SOURCES)
     if source == 'TIG':
         mission_time = cockpit.clock.get('met')
-        ignition_time = cockpit.burn_computer.pad['tig'] if cockpit.burn_computer.has_pad() else cockpit.dsky.pad['tig']
+        ignition_time = cockpit.burn_computer.pad['tig']
         return None if mission_time is None or ignition_time is None else mission_time - ignition_time
     time_to_event = {'APO': 't_apo', 'PERI': 't_peri', 'SOI': 't_soi'}.get(source)
     if time_to_event and cockpit.orbit.get(time_to_event) is not None:
@@ -126,11 +126,12 @@ def _render_electrical_and_propellant(cockpit, outputs, fresh):
 
 
 def stage_delta_v(cockpit):
-    """Δv left in the current stage: the rocket equation on its propellant (course TM-4). None when unknown."""
+    """Δv left in the current stage, or before ignition in the next one: the rocket equation on its propellant
+    (course TM-4). None when unknown."""
     stage = cockpit.resources.get('stage', {})
     units = sum(stage.get(name, {}).get('amount', 0.0) for name in ('LiquidFuel', 'Oxidizer', 'SolidFuel'))
     propellant_mass = S.PROPELLANT_KG_PER_UNIT * units
-    mass, specific_impulse = cockpit.vessel.get('mass'), cockpit.vessel.get('isp')
+    mass, specific_impulse = cockpit.vessel.get('mass'), cockpit.propulsion()[1]
     if not (mass and specific_impulse) or mass <= propellant_mass:
         return None
     return specific_impulse * S.STANDARD_GRAVITY * math.log(mass / (mass - propellant_mass))
@@ -144,7 +145,8 @@ def thrust_to_weight(cockpit):
         return None
     gravitational_parameter, radius = body
     local_gravity = gravitational_parameter / (radius + altitude) ** 2
-    return (cockpit.vessel.get('thrust_avail') or 0.0) / (mass * local_gravity)
+    thrust = cockpit.propulsion()[0]
+    return thrust / (mass * local_gravity) if thrust is not None else None
 
 
 def _render_event_timer(cockpit, outputs, fresh):

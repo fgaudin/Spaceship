@@ -1,0 +1,70 @@
+{
+  "id": "solo",
+  "title": "SOLO · FLIGHT DYNAMICS",
+  "fw": "virtual-0.1",
+  "sections": [
+    {
+      "title": "PAD REQUEST",
+      "items": [
+        {
+          "type": "alpha",
+          "id": "txt_fd",
+          "label": "FLIGHT DYNAMICS",
+          "out": "txt_fd",
+          "chars": 16
+        },
+        {
+          "type": "annunciator",
+          "id": "fd_box",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_fd_sent",
+              "label": "PAD SENT",
+              "color": "green"
+            },
+            {
+              "out": "lamp_fd_refused",
+              "label": "REFUSED",
+              "color": "amber"
+            }
+          ]
+        },
+        {
+          "type": "button",
+          "id": "fd_circ",
+          "label": "CIRC",
+          "in": "fd_circ"
+        },
+        {
+          "type": "button",
+          "id": "fd_plane",
+          "label": "PLANE",
+          "in": "fd_plane"
+        },
+        {
+          "type": "button",
+          "id": "fd_rdv",
+          "label": "RDV TGT",
+          "in": "fd_rdv"
+        },
+        {
+          "type": "button",
+          "id": "fd_inject",
+          "label": "INJECT",
+          "in": "fd_inject"
+        },
+        {
+          "type": "rotary",
+          "id": "fd_body",
+          "label": "INJECT TO",
+          "in": "fd_body",
+          "positions": [
+            "MUN",
+            "MINMUS"
+          ]
+        }
+      ]
+    }
+  ]
+}

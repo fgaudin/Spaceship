@@ -11,9 +11,11 @@ from cockpit import Cockpit
 
 MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
 MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
-SUBSCRIPTIONS = ['panel/+/in/#', 'tlm/#', 'gateway/status', 'sim/reset', 'dsky/uplink', 'pad/uplink']
+SUBSCRIPTIONS = ['panel/+/in/#', 'tlm/#', 'gateway/status', 'sim/reset', 'pad/uplink', 'cam/list', 'cam/status',
+                 'sim/failures/#', 'fd/status']
 TICK_EVERY_S = 0.25             # periodic work of the cockpit: staleness, re-commands, displays
 INBOX_WAIT_S = 0.05
+TELEMETRY_GAP_LOGGED_ABOVE_S = 1.0  # to find what makes NO LINK come on
 
 
 def connect_to_broker(inbox):
@@ -50,9 +52,15 @@ def main():
     client = connect_to_broker(inbox)
     cockpit = Cockpit()
     next_tick_at = 0.0
+    last_telemetry_at = None
     while True:
         try:
             topic, payload = inbox.get(timeout=INBOX_WAIT_S)
+            if topic.startswith('tlm/'):
+                arrived = time.monotonic()
+                if last_telemetry_at is not None and arrived - last_telemetry_at > TELEMETRY_GAP_LOGGED_ABOVE_S:
+                    print(f'telemetry gap: {arrived - last_telemetry_at:.2f} s, then {topic}', flush=True)
+                last_telemetry_at = arrived
             if topic == 'sim/reset':
                 to_publish = cockpit.reset()
             else:

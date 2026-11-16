@@ -330,6 +330,40 @@
           ]
         },
         {
+          "type": "rotary",
+          "id": "speed_ref",
+          "label": "SPEED REF",
+          "in": "speed_ref",
+          "positions": [
+            "ORBIT",
+            "SURF",
+            "TGT"
+          ]
+        },
+        {
+          "type": "annunciator",
+          "id": "speed_ref_box",
+          "label": "NAVBALL",
+          "cols": 3,
+          "cells": [
+            {
+              "out": "lamp_ref_orbit",
+              "label": "ORBIT",
+              "color": "green"
+            },
+            {
+              "out": "lamp_ref_surface",
+              "label": "SURF",
+              "color": "green"
+            },
+            {
+              "out": "lamp_ref_target",
+              "label": "TGT",
+              "color": "green"
+            }
+          ]
+        },
+        {
           "type": "toggle",
           "id": "rcs",
           "label": "RCS",
@@ -337,6 +371,16 @@
           "led": {
             "out": "led_rcs",
             "color": "green"
+          }
+        },
+        {
+          "type": "toggle",
+          "id": "rcs_fine",
+          "label": "RCS FINE",
+          "in": "rcs_fine",
+          "led": {
+            "out": "led_rcs_fine",
+            "color": "amber"
           }
         },
         {

@@ -197,10 +197,11 @@ class BurnComputer:
         return mission_time - self.pad['tig']
 
     def burn_time(self, telemetry):
-        """Seconds of burn for the Δv to go at full thrust (rocket equation, course TM-4); None with no thrust."""
+        """Seconds of burn for the Δv to go at full thrust (rocket equation, course TM-4); None with no thrust.
+        Known as soon as a Δv is keyed, before the TIG: the crew needs it to centre the burn on its event."""
         vessel = telemetry.get('tlm/vessel', {})
         mass, thrust, specific_impulse = vessel.get('mass'), vessel.get('thrust_avail'), vessel.get('isp')
-        if not (mass and thrust and specific_impulse) or not self.has_pad():
+        if not (mass and thrust and specific_impulse) or self.delta_v_total() == 0:
             return None
         exhaust_velocity = specific_impulse * STANDARD_GRAVITY
         return mass * exhaust_velocity / thrust * (1 - math.exp(-max(0.0, self.delta_v_to_go()) / exhaust_velocity))
@@ -250,14 +251,15 @@ class BurnComputer:
         outputs.lamp('lamp_err', self.entry_error)
 
     def _render_pad_fields(self, outputs):
-        """The four PAD displays: a waiting uplink blinks; the field being keyed shows what is typed and a cursor."""
+        """The four PAD displays: a waiting uplink blinks; the field being keyed shows what is typed and a cursor.
+        A field just selected keeps its stored value until the first key (its LED says it is selected)."""
         shown = self.uplinked_pad or self.pad
         uplink_waiting = self.uplinked_pad is not None
         values = {'tig': format_mission_time(shown['tig']) if shown['tig'] is not None else '--.--.--'}
         for index, field in enumerate(FIELDS[1:]):
             values[field] = fit_number(shown['dv'][index], 1, 5, signed=True)
         for field in FIELDS:
-            if self.selected_field == field and not uplink_waiting:
+            if self.selected_field == field and self.typed and not uplink_waiting:
                 outputs.text(f'disp_{field}', self.typed + '_')
             else:
                 outputs.text(f'disp_{field}', values[field], blink=uplink_waiting)

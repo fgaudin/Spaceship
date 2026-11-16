@@ -40,18 +40,32 @@ class SlowFacts:
     inertial_frame: object      # does not turn with the planet or the vessel
     vessel_frame: object
     port_frame: object          # of the target port, or None
+    target_orbit: dict          # the target vessel's orbital elements, for the flight dynamics PADs, or None
 
     @classmethod
-    def read(cls, vessel, target_vessel, target_port):
+    def read(cls, space_center, vessel, target_vessel, target_port):
         return cls(target_vessel, target_port,
                    target_name=target_vessel.name if target_vessel is not None else None,
                    own_port=vessel.parts.controlling.docking_port,
                    inertial_frame=vessel.orbit.body.non_rotating_reference_frame,
                    vessel_frame=vessel.reference_frame,
-                   port_frame=target_port.reference_frame if target_port is not None else None)
+                   port_frame=target_port.reference_frame if target_port is not None else None,
+                   target_orbit=orbit_elements(space_center, target_vessel) if target_vessel is not None else None)
 
     def are_about(self, target_vessel, target_port):
         return self.target_vessel == target_vessel and self.target_port == target_port
+
+
+def orbit_elements(space_center, other_vessel):
+    """Orbital elements of another vessel (degrees) and the universal time they hold at: tlm/target "orbit"."""
+    try:
+        orbit = other_vessel.orbit
+        return {'body': orbit.body.name, 'a': orbit.semi_major_axis, 'e': orbit.eccentricity,
+                'i': math.degrees(orbit.inclination), 'lan': math.degrees(orbit.longitude_of_ascending_node),
+                'argp': math.degrees(orbit.argument_of_periapsis), 'nu': math.degrees(orbit.true_anomaly),
+                'ut': round(space_center.ut, 2)}
+    except Exception:           # landed, or out of reach
+        return None
 
 
 def target_telemetry(link, refresh_slow_facts):
@@ -62,7 +76,7 @@ def target_telemetry(link, refresh_slow_facts):
     target_vessel = space_center.target_vessel or (target_port.part.vessel if target_port is not None else None)
     facts = link.target_facts
     if refresh_slow_facts or facts is None or not facts.are_about(target_vessel, target_port):
-        facts = link.target_facts = SlowFacts.read(vessel, target_vessel, target_port)
+        facts = link.target_facts = SlowFacts.read(space_center, vessel, target_vessel, target_port)
     link.has_target = target_vessel is not None
     state = {'set': link.has_target, 'ctrl_port': facts.own_port is not None, 'docked': link.parts.docked()}
     if target_vessel is None:
@@ -78,7 +92,8 @@ def target_telemetry(link, refresh_slow_facts):
     if target_range > 1:
         line_of_sight_rate = round(math.degrees(length(across_line_of_sight) / target_range) * 60, 4)
     state.update({'name': facts.target_name, 'range': round(target_range, 2), 'closing': round(closing_speed, 3),
-                  'los_rate': line_of_sight_rate, 'rel_v': round(length(relative_velocity), 3)})
+                  'los_rate': line_of_sight_rate, 'rel_v': round(length(relative_velocity), 3),
+                  'orbit': facts.target_orbit})
     if target_port is not None:
         state['port'] = docking_geometry(space_center, vessel, facts)
     return state

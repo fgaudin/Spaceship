@@ -34,3 +34,5 @@ desktop.ini
 # local secrets
 .env
 .env.*
+
+NOTES.md

@@ -5,11 +5,15 @@ ENGINE_PANEL = 'eng'
 SYSTEMS_PANEL = 'sys'
 COMPUTER_PANEL = 'cmp'
 RENDEZVOUS_PANEL = 'rdv'
-DSKY_PANEL = 'dsky'
+COMM_PANEL = 'com'
+HAND_CONTROLLER_PANEL = 'hc'       # the hand controllers (USB joysticks), as a panel
+SOLO_PANEL = 'solo'           # PAD requests to the flight dynamics service, flying solo
+LAB_PANEL = 'lab'            # experimental panels
 
 # ---------- link to the plant ----------
 TELEMETRY_STALE_AFTER_S = 2.0       # older telemetry than this raises NO LINK and dashes the displays
 REASSERT_EVERY_S = 1.0              # a "panel wins" switch is re-commanded this often while the game disagrees
+SAS_MODE_RETRIES = 5                # a SAS mode the game does not take is sent again this many times
 SAS_DISAGREE_AFTER_S = 2.0          # SAS switch against the game for this long: SAS DISAGREE
 
 # Switches that simply mirror to a plant command: control name → command topic.
@@ -24,6 +28,7 @@ SAS_MODES = ['stability', 'prograde', 'retrograde', 'normal', 'antinormal', 'rad
 MAIN_DISPLAY_SOURCES = ['ALT', 'APO', 'PERI', 'VEL', 'V/S', 'MASS']
 EVENT_TIMER_SOURCES = ['MAN', 'TIG', 'APO', 'PERI', 'SOI']
 ABORT_MODES = ['PAD', 'ASCENT', 'ORBIT', 'DESCENT']
+SPEED_MODES = ['orbit', 'surface', 'target']    # the navball's speed reference: what PRO and RETRO follow
 
 # What ABORT does in each mode, in order. Steps:
 #   cut_throttle  throttle to 0, held until the lever is back at idle
@@ -40,7 +45,11 @@ ABORT_SEQUENCES = {
 }
 
 # ---------- engine and throttle ----------
+HAND_CONTROLLER_DEADBAND = 0.05     # a stick axis under this is zero
+FINE_CONTROL_SCALE = 0.3            # RCS FINE: the sticks command 30 % of their throw (KSP's precision mode is not in kRPC)
 THROTTLE_IDLE_BELOW = 0.05          # the lever must come back under this to release a throttle cut
+THROTTLE_DISAGREE_ABOVE = 0.005     # game throttle this far from the one commanded: command it again (a 0.02 trickle
+                                    # left after a save load gave 1 kN for minutes, and KSP will not time-warp then)
 THROTTLE_UP_ABOVE = 0.02            # lever position that counts as "throttle up"
 THRUST_LIMIT_STEP = 0.05            # the limiter knob moves the engines in steps of 5 %
 ENGINE_GRID_SIZE = 9                # engine status matrix: 9 × 9 LEDs
@@ -69,6 +78,7 @@ SAFE_PERIAPSIS_M = {'Kerbin': 70000.0, 'Mun': 7100.0, 'Minmus': 5800.0}
 # Gravitational parameter μ (m³/s²) and radius (m) of the bodies a Mun trip visits, for the TWR display.
 BODIES = {'Kerbin': (3.5316e12, 600000.0), 'Mun': (6.5138398e10, 200000.0), 'Minmus': (1.7658e9, 60000.0)}
 STANDARD_GRAVITY = 9.80665
+STANDARD_PRESSURE_PA = 101325.0
 PROPELLANT_KG_PER_UNIT = 5.0        # liquid fuel, oxidizer and solid fuel in KSP
 
 # ---------- rendezvous and docking (the course's docking chapter) ----------
@@ -82,6 +92,26 @@ CAPTURE_SPEED_MIN_M_S, CAPTURE_SPEED_MAX_M_S = 0.03, 0.3
 CAPTURE_LATERAL_MAX_M = 0.3
 CAPTURE_ANGLE_MAX_DEG = 10.0
 CAPTURE_LAMP_WITHIN_M = 10.0
+
+# ---------- radio link ----------
+STATION_NAME_CHARACTERS = 12        # the display of the first station or relay on the way
+
+# ---------- experimental panels ----------
+CROSS_POINTER_SIZE = 9              # LEDs on a side
+CROSS_POINTER_MODES = ['NODE', 'RETRO', 'PRO', 'PORT', 'OFFSET', 'DRIFT']
+# Full scales, finest first: the value at the edge of the matrix (four LEDs from the centre).
+CROSS_POINTER_ANGLE_SCALES_DEG = (4.0, 20.0, 90.0)
+CROSS_POINTER_OFFSET_SCALES_M = (1.0, 4.0, 20.0, 100.0)
+CROSS_POINTER_DRIFT_SCALES_M_S = (2.0, 10.0, 50.0, 250.0)
+CROSS_POINTER_MOVING_ABOVE_M_S = 1.0    # under this speed prograde and retrograde mean nothing
+# BRAKE lamp from 1.6 times the height needed to stop at full thrust, blinking from 1.3 times. Flown in KSP: the
+# height used was up to 7 % more than predicted (throttle latency, thrust off the vertical).
+BRAKE_SOON_MARGIN = 1.6
+BRAKE_NOW_MARGIN = 1.3
+BRAKE_ONLY_BELOW_VERTICAL_SPEED_M_S = 1.0   # the lamp stays dark unless descending faster than this
+ACTION_GROUP_COUNT = 10
+BODY_NAME_CHARACTERS = 8
+CAMERA_NAME_CHARACTERS = 16
 
 # ---------- time warp ----------
 WARP_TO_EVENT_LEAD_S = 60.0         # WARP TO EVT stops this long before the event

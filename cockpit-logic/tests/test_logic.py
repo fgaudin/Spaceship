@@ -253,6 +253,30 @@ def test_engine_matrix_layout_and_failures():
     assert c.published[O + 'mx_eng']['rows'][4] == '....g....' and not c.published[O + 'cw_eng_fail']['on']
 
 
+def test_boosters_flamed_out_then_staged_are_not_failures():
+    c = Cockpit(); fed(c)
+    core, boosters = eng(0, 0), [eng(1.3, 0, thrust=0, fuel=False), eng(-1.3, 0, thrust=0, fuel=False)]
+    before_staging = {'engines': [core, *boosters], 'stage': 3, 'limit': 1.0, 'gimbal_locked': False}
+    c.handle('tlm/engines', before_staging, 1)
+    fed(c, 1, vessel={'throttle': 1.0, 'stage': 3})
+    assert c.published[O + 'mx_eng']['rows'][4] == 'r...g...r' and c.published[O + 'cw_flameout']['on']
+    # staging: the vessel's stage number arrives before the new engine list
+    fed(c, 2, vessel={'throttle': 1.0, 'stage': 2})
+    assert not c.published[O + 'cw_eng_fail']['on']
+    c.handle('tlm/engines', {**before_staging, 'engines': [core], 'stage': 2}, 2.5)
+    fed(c, 4, vessel={'throttle': 1.0, 'stage': 2})
+    assert c.published[O + 'mx_eng']['rows'][4] == '....g....'
+    assert not c.published[O + 'cw_eng_fail']['on'] and not c.published[O + 'cw_flameout']['on']
+
+
+def test_spent_engine_still_attached_is_not_shown():
+    c = Cockpit(); fed(c)
+    # the first stage ran dry and stays attached while the engine of the next stage burns
+    engines(c, 1, [eng(1, 0, thrust=0, fuel=False, stage=3), eng(0, 0, stage=2)], stage=2)
+    assert c.published[O + 'mx_eng']['rows'][4] == '....g....'
+    assert not c.published[O + 'cw_flameout']['on'] and not c.published[O + 'cw_eng_fail']['on']
+
+
 def test_engines_next_to_ignite_show_white_before_ignition():
     c = Cockpit(); fed(c)
     engines(c, 1, [eng(0, 0, on=False, thrust=0, stage=3), eng(0, 0, on=False, thrust=0, stage=2)], stage=4, throttle=0.0)
@@ -358,7 +382,10 @@ def test_more_cautions():
     assert 'cw_chute' not in c.active_alarms()
     fed(c, 5, vessel={'comm': False})
     assert 'cw_comm' in c.active_alarms()
-    fed(c, 6, vessel={'situation': 'orbiting'})
+    fed(c, 6, vessel={'situation': 'orbiting'})                 # still thrusting: the periapsis is on its way up
+    c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 90000.0, 'peri': 40000.0, 't_soi': None}, 6)
+    assert 'cw_peri' not in c.active_alarms()
+    fed(c, 6, vessel={'situation': 'orbiting', 'thrust': 0.0})
     c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 90000.0, 'peri': 40000.0, 't_soi': None}, 6)
     assert 'cw_peri' in c.active_alarms() and 'cw_soi' not in c.active_alarms()
     c.handle('tlm/orbit', {'body': 'Mun', 'apo': 90000.0, 'peri': 40000.0, 't_soi': 90.0}, 7)
@@ -386,3 +413,112 @@ def test_undock_needs_arm_and_docked_lamp():
     c.handle('panel/rdv/in/undock', {'v': 0}, 2.1)
     c.handle('panel/rdv/in/undock_arm', {'v': 1}, 3)
     assert topics(c.handle('panel/rdv/in/undock', {'v': 1}, 4))['cmd/undock'] == {}
+
+
+def test_sas_mode_is_sent_again_when_the_game_drops_it():
+    c = Cockpit(); fed(c)
+    assert topics(c.handle(P + 'sas_mode', {'v': 9}, 0))['cmd/sas_mode'] == {'mode': 'maneuver'}
+    fed(c, 0.5, vessel={'sas': True, 'sas_mode': 'stability'})
+    assert 'cmd/sas_mode' not in topics(c.tick(0.6))                    # not within a second of the command
+    assert topics(c.tick(1.1))['cmd/sas_mode'] == {'mode': 'maneuver'}
+    fed(c, 1.5, vessel={'sas': True, 'sas_mode': 'maneuver'})
+    assert 'cmd/sas_mode' not in topics(c.tick(3.0))                    # the game agrees
+    # a mode the game refuses for good is not sent for ever
+    sent = 0
+    for second in range(4, 24):
+        sent += 'cmd/sas_mode' in topics(fed(c, second, vessel={'sas': True, 'sas_mode': 'stability'}))
+    assert sent == 5
+    # with SAS off the game reports no mode: nothing to do
+    fed(c, 30, vessel={'sas': False, 'sas_mode': None})
+    assert 'cmd/sas_mode' not in topics(c.tick(31.5))
+
+
+def test_throttle_is_sent_again_when_the_game_disagrees():
+    c = Cockpit(); fed(c)
+    c.handle(P + 'eng_arm', {'v': 1}, 0)
+    assert topics(c.handle(P + 'throttle', {'v': 0.8}, 0))['cmd/throttle'] == {'v': 0.8}
+    assert 'cmd/throttle' not in topics(fed(c, 0.5, vessel={'throttle': 0.0}))      # the command is still on its way
+    assert topics(fed(c, 1.5, vessel={'throttle': 0.0}))['cmd/throttle'] == {'v': 0.8}      # a gateway restarted
+    assert 'cmd/throttle' not in topics(fed(c, 3, vessel={'throttle': 0.8}))
+    c.handle('tlm/vessel', {'throttle': 0.0}, 5)
+    c.handle('tlm/time', {'ut': 105, 'met': 70, 'warp': 50}, 5)                     # KSP holds it at 0 in time warp
+    assert 'cmd/throttle' not in topics(c.tick(6.5))
+
+
+def test_speed_reference_knob_acts_only_when_moved_and_lamps_show_the_game():
+    c = Cockpit(); fed(c, vessel={'speed_mode': 'surface'})
+    assert c.published[O + 'lamp_ref_surface']['on'] and not c.published[O + 'lamp_ref_orbit']['on']
+    assert 'cmd/speed_mode' not in topics(c.handle(P + 'speed_ref', {'v': 0}, 1))      # first report: not a command
+    assert topics(c.handle(P + 'speed_ref', {'v': 2}, 2))['cmd/speed_mode'] == {'mode': 'target'}
+
+
+def test_twr_and_stage_delta_v_on_the_pad_come_from_the_engines_to_ignite():
+    c = Cockpit()
+    pad = {'stage': 4, 'mass': 20000.0, 'thrust': 0.0, 'thrust_avail': 0.0, 'isp': 0.0}
+    fed(c, vessel=pad, flight={'alt': 70.0, 'p': 101325.0},
+        resources={'stage': {'LiquidFuel': {'amount': 900, 'max': 900}, 'Oxidizer': {'amount': 1100, 'max': 1100}},
+                   'total': {'ElectricCharge': {'amount': 90, 'max': 100}}})
+    c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 0.0, 'peri': -600000.0}, 0)
+    engine = {'x': 0, 'z': 0, 'stage': 3, 'on': False, 'thrust': 0.0, 'max': 0.0, 'fuel': True,
+              'rated': 300000.0, 'isp_vac': 310.0, 'isp_sl': 285.0}
+    c.handle('tlm/engines', {'engines': [engine], 'stage': 4, 'limit': 1.0, 'gimbal_locked': False}, 0)
+    # TWR 300 kN / (20 t × 9.81) = 1.53; Δv 285 s × g0 × ln(20 / 10) = 1937 m/s at sea level
+    assert c.published['panel/sys/out/disp_twr']['text'] == '1.53'
+    assert c.published['panel/sys/out/disp_dv']['text'] == '1937'
+    # an engine lit but giving nothing is a flameout, not "before ignition": no figures
+    c.handle('tlm/engines', {'engines': [{**engine, 'on': True, 'stage': 4}], 'stage': 4, 'limit': 1.0,
+                             'gimbal_locked': False}, 1)
+    assert c.published['panel/sys/out/disp_twr']['text'] == '----'
+
+
+def test_hand_controller_axes_become_rotate_and_translate_commands():
+    c = Cockpit(); fed(c)
+    HC = 'panel/hc/in/'
+    assert topics(c.handle(HC + 'rot_pitch', {'v': -0.6}, 1))['cmd/rotate'] == {'pitch': -0.6, 'yaw': 0.0, 'roll': 0.0}
+    assert 'cmd/rotate' not in topics(c.handle(HC + 'rot_yaw', {'v': 0.02}, 1))         # inside the deadband
+    assert topics(c.handle(HC + 'rot_pitch', {'v': 0.01}, 2))['cmd/rotate'] == {'pitch': 0.0, 'yaw': 0.0, 'roll': 0.0}
+    assert topics(c.handle(HC + 'trans_fwd', {'v': 1.5}, 3))['cmd/translate'] == {'right': 0.0, 'up': 0.0, 'forward': 1.0}
+    # main bus off: everything released
+    out = topics(c.handle(P + 'cb_main', {'v': 0}, 4))
+    assert out['cmd/translate'] == {'right': 0.0, 'up': 0.0, 'forward': 0.0} and out['cmd/throttle'] == {'v': 0.0}
+
+
+def test_cutoff_lamp_blinks_until_the_lever_is_back_at_idle():
+    c = Cockpit(); fed(c)
+    c.handle(P + 'eng_arm', {'v': 1}, 0); c.handle(P + 'throttle', {'v': 0.8}, 0)
+    c.handle(P + 'eng_cutoff', {'v': 1}, 1)
+    assert c.published[O + 'lamp_cutoff'] == {'on': True, 'blink': True}
+    assert 'cmd/throttle' not in topics(c.handle(P + 'throttle', {'v': 0.9}, 2))        # pushing it up does nothing
+    c.handle(P + 'throttle', {'v': 0.0}, 3)
+    assert c.published[O + 'lamp_cutoff'] == {'on': False, 'blink': False}
+    assert topics(c.handle(P + 'throttle', {'v': 0.5}, 4))['cmd/throttle'] == {'v': 0.5}
+
+
+def test_sas_lets_go_while_the_stick_is_off_centre():
+    c = Cockpit(); fed(c, vessel={'sas': True})
+    c.handle(P + 'sas', {'v': 1}, 0)
+    HC = 'panel/hc/in/'
+    out = topics(c.handle(HC + 'rot_yaw', {'v': 0.5}, 1))
+    assert out['cmd/sas'] == {'on': False} and out['cmd/rotate']['yaw'] == 0.5
+    # the game follows; no SAS DISAGREE and no "panel wins" re-command while steering
+    for t in range(2, 6):
+        assert 'cmd/sas' not in topics(fed(c, t, vessel={'sas': False}))
+    assert 'cw_sas_dis' not in c.active_alarms()
+    out = topics(c.handle(HC + 'rot_yaw', {'v': 0.0}, 6))
+    assert out['cmd/sas'] == {'on': True} and out['cmd/rotate']['yaw'] == 0.0
+
+
+def test_rcs_fine_scales_the_sticks():
+    c = Cockpit(); fed(c)
+    HC = 'panel/hc/in/'
+    assert topics(c.handle(HC + 'trans_fwd', {'v': 1.0}, 1))['cmd/translate']['forward'] == 1.0
+    out = topics(c.handle(P + 'rcs_fine', {'v': 1}, 2))                  # switching with the stick held
+    assert out['cmd/translate']['forward'] == 0.3 and c.published[O + 'led_rcs_fine']['on']
+    assert topics(c.handle(HC + 'rot_roll', {'v': -0.5}, 3))['cmd/rotate']['roll'] == -0.15
+
+
+def test_a_small_throttle_left_in_the_game_is_cut():
+    c = Cockpit(); fed(c)
+    c.handle(P + 'throttle', {'v': 0.0}, 0)
+    c.command('cmd/throttle', {'v': 0.0})
+    assert topics(fed(c, 2, vessel={'throttle': 0.02}))['cmd/throttle'] == {'v': 0.0}

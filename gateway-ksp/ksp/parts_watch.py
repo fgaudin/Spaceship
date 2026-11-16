@@ -2,6 +2,7 @@
 and docking ports. Rebuilt after every staging, because parts leave and kRPC streams on them go stale."""
 from .streams import FAST_HZ, SLOW_HZ, StreamGroup, read_or
 
+TOTAL_RESOURCES = ('ElectricCharge', 'LiquidFuel', 'Oxidizer', 'MonoPropellant')
 STAGE_PROPELLANTS = ('LiquidFuel', 'Oxidizer', 'SolidFuel', 'MonoPropellant')
 PARACHUTE_OUT_STATES = {'semi_deployed', 'deployed'}
 
@@ -14,6 +15,12 @@ class WatchedEngine:
         right, _, down = engine.part.position(vessel_frame)
         self.right, self.down = round(right, 2), round(down, 2)
         self.stage = engine.part.stage
+        # What the engine gives at full throttle, also before it is lit (thrust and available_thrust are zero then):
+        # the cockpit needs it for the TWR and the stage Δv on the pad. Specific impulse in vacuum and at sea level;
+        # the cockpit takes the value for the outside pressure in between.
+        self.rated_thrust = streams.attribute(engine, 'max_thrust', SLOW_HZ)
+        self.vacuum_specific_impulse = round(engine.vacuum_specific_impulse, 1)
+        self.sea_level_specific_impulse = round(engine.kerbin_sea_level_specific_impulse, 1)
         self.active = streams.attribute(engine, 'active', SLOW_HZ)
         self.thrust = streams.attribute(engine, 'thrust', SLOW_HZ)
         self.available_thrust = streams.attribute(engine, 'available_thrust', SLOW_HZ)
@@ -21,7 +28,9 @@ class WatchedEngine:
 
     def telemetry(self):
         return {'x': self.right, 'z': self.down, 'stage': self.stage, 'on': self.active(),
-                'thrust': round(self.thrust(), 1), 'max': round(self.available_thrust(), 1), 'fuel': self.has_fuel()}
+                'thrust': round(self.thrust(), 1), 'max': round(self.available_thrust(), 1), 'fuel': self.has_fuel(),
+                'rated': round(self.rated_thrust(), 1), 'isp_vac': self.vacuum_specific_impulse,
+                'isp_sl': self.sea_level_specific_impulse}
 
 
 class PartsWatch:
@@ -39,6 +48,8 @@ class PartsWatch:
         parts = vessel.parts
         self.solar_panels = [panel for panel in parts.solar_panels if panel.deployable]
         self.solar_deployed = [streams.attribute(panel, 'deployed', SLOW_HZ) for panel in self.solar_panels]
+        self.antennas = [antenna for antenna in parts.antennas if antenna.deployable]
+        self.antennas_deployed = [streams.attribute(antenna, 'deployed', SLOW_HZ) for antenna in self.antennas]
         self.parachutes = list(parts.parachutes)
         self.parachute_states = [streams.attribute(parachute, 'state', SLOW_HZ) for parachute in self.parachutes]
         self.engines = [WatchedEngine(engine, streams, vessel.reference_frame) for engine in parts.engines]
@@ -49,6 +60,7 @@ class PartsWatch:
         self.docking_ports = list(parts.docking_ports)
         self.docking_port_states = [streams.attribute(port, 'state', SLOW_HZ) for port in self.docking_ports]
         self.docking_states_seen, self.is_docked = None, False
+        self._watch_total_resources()
 
     def close(self):
         self.streams.close()
@@ -73,7 +85,28 @@ class PartsWatch:
                 engines.append(watched.telemetry())
             except Exception:           # destroyed: left out, and the cockpit shows it as lost
                 continue
-        return {'engines': engines, 'limit': self.thrust_limit, 'gimbal_locked': self.gimbal_locked}
+        # `stage`: the stage this list was read in (the cockpit must not pair it with a newer stage number)
+        return {'engines': engines, 'stage': self.watched_stage, 'limit': self.thrust_limit,
+                'gimbal_locked': self.gimbal_locked}
+
+    # ---------- resources of the whole vessel ----------
+    def _watch_total_resources(self):
+        """resource → (amount stream, capacity). Read again with the parts, because staging takes capacity away.
+        These are the dearest streams of all: KSP walks every part for each."""
+        self.total_resource_watch = {}
+        for resource in TOTAL_RESOURCES:
+            capacity = self.vessel.resources.max(resource)
+            if capacity > 0:
+                amount = self.streams.call(SLOW_HZ, self.vessel.resources.amount, resource)
+                self.total_resource_watch[resource] = (amount, capacity)
+
+    def total_resources(self):
+        """{'<resource>': {'amount', 'max'}} for the whole vessel."""
+        if not self.total_resource_watch:
+            # Just after a save loads KSP reports no capacity at all for a moment: look again.
+            self._watch_total_resources()
+        return {resource: {'amount': round(read_or(0.0, amount), 3), 'max': round(capacity, 3)}
+                for resource, (amount, capacity) in self.total_resource_watch.items()}
 
     # ---------- propellant of the current stage ----------
     def stage_propellant(self, stage_number):
@@ -82,7 +115,7 @@ class PartsWatch:
         if stage_number != self.watched_stage:
             self.watched_stage = stage_number
             self.refresh()
-            self._watch_stage_tanks()
+            self._watch_stage_tanks(stage_number)
         totals = {}
         for resource, capacity, amount in self.stage_tanks:
             total = totals.setdefault(resource, {'amount': 0.0, 'max': 0.0})
@@ -91,10 +124,15 @@ class PartsWatch:
         return {resource: {'amount': round(total['amount'], 3), 'max': round(total['max'], 3)}
                 for resource, total in totals.items()}
 
-    def _watch_stage_tanks(self):
+    def _watch_stage_tanks(self, stage_number):
+        """The tanks that leave with the burning engines; before ignition, with the engines that the next staging
+        lights (KSP numbers stages downwards: they are in stage_number − 1)."""
         self.stage_streams.close()
         self.stage_tanks = []           # (resource, capacity, amount stream)
-        burning_groups = {engine.part.decouple_stage for engine in self.vessel.parts.engines if engine.active}
+        engines = self.vessel.parts.engines
+        burning_groups = {engine.part.decouple_stage for engine in engines if engine.active}
+        if not burning_groups:
+            burning_groups = {engine.part.decouple_stage for engine in engines if engine.part.stage == stage_number - 1}
         if not burning_groups:
             return
         burning_group = max(burning_groups)
@@ -115,6 +153,12 @@ class PartsWatch:
     def solar_deployed_state(self):
         """True / False, or None when the vessel has no deployable panel."""
         return any(deployed() for deployed in self.solar_deployed) if self.solar_deployed else None
+
+    def antenna_deployed_state(self):
+        """True / False, or None when the vessel has no deployable antenna."""
+        if not self.antennas_deployed:
+            return None
+        return any(read_or(False, deployed) for deployed in self.antennas_deployed)
 
     def parachute_state(self):
         """'deployed', 'armed', 'cut' or 'stowed'; None without parachutes."""

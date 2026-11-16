@@ -28,6 +28,18 @@ services:
     environment: { MQTT_HOST: 127.0.0.1, KRPC_HOST: 127.0.0.1 }
     restart: unless-stopped
 
+  flight-dynamics:
+    build: ./flight-dynamics
+    environment: { MQTT_HOST: broker }
+    depends_on: [broker]
+    restart: unless-stopped
+
+  simsup:
+    build: ./simsup
+    environment: { MQTT_HOST: broker }
+    depends_on: [broker]
+    restart: unless-stopped
+
   panel:
     image: nginx:1.27-alpine
     ports: ["8650:80"]

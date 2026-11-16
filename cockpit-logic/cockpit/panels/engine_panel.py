@@ -7,7 +7,8 @@ from ..messages import PanelOutputs, switch_lamp
 
 SWITCHES_WITH_LAMP = ('sas', 'rcs', 'gear', 'lights')
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
-         'lamp_contact', 'lamp_05g', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), *ALARMS]
+         'lamp_contact', 'lamp_05g', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP),
+         *(f'lamp_ref_{mode}' for mode in S.SPEED_MODES), 'led_rcs_fine', *ALARMS]
 DISPLAYS = ['disp_a', 'disp_met', 'disp_stage', 'disp_eng_on']
 BARS = ['bar_fuel', 'bar_thrust']
 MAIN_DISPLAY_DIGITS = 7
@@ -33,9 +34,15 @@ def handle_input(cockpit, change):
         return cockpit.command('cmd/stage', {}) if change.pressed and cockpit.is_on('stage_arm') else []
     if control == 'abort':
         return run_abort(cockpit) if change.pressed and cockpit.is_on('abort_arm') else []
+    if control == 'speed_ref':
+        # Only when moved: KSP changes the reference by itself (to surface low down, to target near one).
+        if not change.moved:
+            return []
+        return cockpit.command('cmd/speed_mode', {'mode': cockpit.selected('speed_ref', S.SPEED_MODES)})
     if control == 'sas_mode':
         if change.value is None:
             return []
+        cockpit.sas_mode_retries = 0
         return cockpit.command('cmd/sas_mode', {'mode': S.SAS_MODES[int(change.value) % len(S.SAS_MODES)]})
     return None
 
@@ -94,10 +101,17 @@ def _render_lamps(cockpit, outputs):
     outputs.lamp('led_eng_arm', cockpit.is_on('eng_arm'))
     outputs.lamp('lamp_stage', cockpit.is_on('stage_arm'))
     outputs.lamp('lamp_abort', cockpit.abort_fired or cockpit.is_on('abort_arm'), blink=cockpit.abort_fired)
-    outputs.lamp('lamp_cutoff', cockpit.throttle_cut_latched)
+    # Steady while the cutoff holds; blinking while the lever is still up, because the engine restarts only once the
+    # lever has been back to idle.
+    lever_up = float(cockpit.inputs.get('throttle') or 0.0) >= S.THROTTLE_IDLE_BELOW
+    outputs.lamp('lamp_cutoff', cockpit.throttle_cut_latched, blink=lever_up)
     outputs.lamp('led_gimbal', cockpit.telemetry.get('tlm/engines', {}).get('gimbal_locked'))
     for switch in SWITCHES_WITH_LAMP:
         outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.switch_wanted(switch)))
+    outputs.lamp('led_rcs_fine', cockpit.is_on('rcs_fine'))
+    # The game's speed reference, which the knob may not match: KSP changes it by itself.
+    for mode in S.SPEED_MODES:
+        outputs.lamp(f'lamp_ref_{mode}', fresh and vessel.get('speed_mode') == mode)
 
     # event lights
     landed = bool(vessel.get('contact')) and vessel.get('situation') != 'pre_launch'    # the pad is not a landing

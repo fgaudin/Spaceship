@@ -8,8 +8,9 @@ import { createElement, createWidgetBuilders } from './widgets.js';
 
 const PANEL_LINKS = [       // the navigation bar: [link, label, panel id]
   ['index.html', 'ENG', 'eng'], ['index.html?panel=sys', 'SYS', 'sys'], ['index.html?panel=cmp', 'CMP', 'cmp'],
-  ['index.html?panel=rdv', 'RDV', 'rdv'], ['index.html?panel=dsky', 'DSKY', 'dsky'],
-  ['fdai.html', 'FDAI', 'fdai'], ['mfd.html', 'MFD', 'mfd'],
+  ['index.html?panel=rdv', 'RDV', 'rdv'], ['index.html?panel=com', 'COM', 'com'],
+  ['index.html?panel=solo', 'SOLO', 'solo'], ['index.html?panel=lab', 'LAB', 'lab'],
+  ['fdai.html', 'FDAI', 'fdai'], ['mfd.html', 'MFD', 'mfd'], ['cam.html', 'CAM', 'cam'], ['simsup.html', 'SIMSUP', 'simsup'], ['mcc.html', 'MCC', 'mcc'],
 ];
 const RESTORE_WINDOW_MS = 700;      // after connecting, time given to the broker to send back the retained positions
 const STATUS_EVERY_MS = 5000;
@@ -21,7 +22,6 @@ const THROTTLE_KEY_STEP = 0.05;
 // keyboard key → keypad key, for panels that have a keypad
 const KEYPAD_SHORTCUTS = {
   Enter: 'ENTR', Backspace: 'CLR', Escape: 'CLR', '+': '+', '-': '-', '.': '.', ',': '.',
-  v: 'VERB', n: 'NOUN', p: 'PRO', r: 'RSET', k: 'KREL',
 };
 
 const urlParameters = new URLSearchParams(location.search);

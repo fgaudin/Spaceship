@@ -14,15 +14,16 @@ from dataclasses import dataclass
 from . import settings as S
 from .alarms import ALARMS, active_alarms
 from .burn_computer import BurnComputer
-from .dsky import Dsky
-from .engines import EngineMonitor
+from .engines import EngineMonitor, propulsion
 from .event_timer import EventTimer
+from .injected_failures import InjectedFailures
 from .messages import Message
 from .node_mirror import NodeMirror
-from .panels import computer_panel, engine_panel, rendezvous_panel, systems_panel
+from .panels import (comm_panel, computer_panel, engine_panel, hand_controller, lab_panel, rendezvous_panel,
+                     solo_panel, systems_panel)
 
-UPLINK_TOPICS = ('pad/uplink', 'dsky/uplink')       # Mission Control reads up a PAD: both computers get it
-PANELS_WITH_INPUTS = (engine_panel, systems_panel, computer_panel, rendezvous_panel)
+PANELS_WITH_INPUTS = (engine_panel, systems_panel, computer_panel, rendezvous_panel, comm_panel, lab_panel,
+                      hand_controller)
 NEVER = -1e9
 
 
@@ -63,13 +64,18 @@ class Cockpit:
         self.abort_fired = False
         self.throttle_cut_latched = False       # a cutoff holds the throttle at 0 until the lever is back at idle
         self.forced_switches = {}               # sas / rcs states an abort imposed, until the pilot moves the switch
+        self.sas_mode_retries = 0               # times the SAS mode was sent again since the game last agreed
         self.charge_rate = 0.0                  # EC/s, smoothed
         self.previous_charge_sample = None      # (mission time, amount)
         self.burn_computer = BurnComputer()
-        self.dsky = Dsky()
         self.node_mirror = NodeMirror()
         self.event_timer = EventTimer()
         self.engine_monitor = EngineMonitor()
+        self.link_watch = comm_panel.LinkWatch()
+        self.cameras = []                       # cam/list: what the camera monitor can show, [{'id', 'name'}]
+        self.camera_monitor = {}                # cam/status: {'online', 'playing'}
+        self.selected_camera_id = None
+        self.injected_failures = InjectedFailures()   # instruments and switches the instructor broke (SimSup)
 
     # ---------- reading the state ----------
     @property
@@ -111,7 +117,10 @@ class Cockpit:
         return positions[int(self.inputs.get(rotary) or 0) % len(positions)]
 
     def switch_wanted(self, switch):
-        """What the cockpit wants a switch's system to be: the switch, unless an abort forced it."""
+        """What the cockpit wants a switch's system to be: the switch, unless an abort forced it. SAS lets go while
+        the rotation stick is off centre, as KSP does when the pilot steers with the keyboard."""
+        if switch == 'sas' and hand_controller.steering(self):
+            return False
         return self.forced_switches.get(switch, self.is_on(switch))
 
     def has_lasted(self, condition_name, is_true, seconds):
@@ -123,7 +132,11 @@ class Cockpit:
         return self.now - started >= seconds
 
     def survey_engines(self):
-        return self.engine_monitor.survey(self.telemetry.get('tlm/engines', {}).get('engines') or [], self.vessel)
+        return self.engine_monitor.survey(self.telemetry.get('tlm/engines', {}), self.vessel)
+
+    def propulsion(self):
+        """(thrust at full throttle, specific impulse), also before ignition; see engines.propulsion."""
+        return propulsion(self.telemetry.get('tlm/engines', {}), self.vessel, self.flight)
 
     def active_alarms(self):
         return active_alarms(self)
@@ -166,30 +179,39 @@ class Cockpit:
         commands = []
         if len(levels) == 4 and levels[0] == 'panel' and levels[2] == 'in':
             commands = self._on_panel_input(panel=levels[1], control=levels[3], value=payload.get('v'))
-        elif topic in UPLINK_TOPICS:
-            self.dsky.uplink(payload, now)
+        elif topic == 'pad/uplink':                 # Mission Control reads up a PAD
             self.burn_computer.receive_uplink(payload)
         elif levels[0] == 'tlm':
             commands = self._on_telemetry(topic, payload)
         elif topic == 'gateway/status':
             self.link_up = bool(payload.get('connected'))
+        elif topic.startswith('sim/failures/'):
+            self.injected_failures.update(topic.rsplit('/', 1)[1], payload, self.published)
+        elif topic == 'fd/status':
+            self.telemetry['fd/status'] = payload        # not telemetry from the plant: not counted as fresh
+        elif topic == 'cam/list':
+            self.cameras = payload.get('cameras') or []
+        elif topic == 'cam/status':
+            self.camera_monitor = payload
         return commands + self.render()
 
     def _on_panel_input(self, panel, control, value):
         # Keypads send each key press on one input; the value is the key.
+        if self.injected_failures.input_is_dead(panel, control):
+            return []                           # a dead panel or a stuck switch: the input never arrives
         if control == 'key':
             if panel == S.COMPUTER_PANEL:
                 return computer_panel.press_key(self, str(value))
-            if panel == S.DSKY_PANEL and self.powered() and self.inputs.get('cb_dsky', 1):
-                self.dsky.key(str(value), self.now, self.telemetry)
             return []
         change = ControlChange(control, self.inputs.get(control), value)
         self.inputs[control] = value
         if control in ('master_alarm', 'master_caution') and change.pressed:
             self._acknowledge(warnings=control == 'master_alarm')
         if not self.powered():
-            # Switching the main bus off must still stop the engine.
-            return self.command('cmd/throttle', {'v': 0.0}) if control == 'cb_main' else []
+            # Switching the main bus off must still stop the engine and release the sticks.
+            if control != 'cb_main':
+                return []
+            return self.command('cmd/throttle', {'v': 0.0}) + hand_controller.release(self)
         for panel_module in PANELS_WITH_INPUTS:
             commands = panel_module.handle_input(self, change)
             if commands is not None:
@@ -211,21 +233,19 @@ class Cockpit:
             systems_panel.track_charge_rate(self)
         elif topic == 'tlm/node':
             self.node_mirror.node_to_pad(self, payload)
+        elif topic == 'tlm/comm':
+            comm_panel.track_link(self)
         return []
 
     def _count_burn(self):
-        """Advance both computers' Δv counters; when one reaches its PAD's Δv, cut the throttle."""
-        dsky_was_cut, computer_was_cut = self.dsky.cutoff, self.burn_computer.cutoff
-        self.dsky.step_time(self.now, self.telemetry)
+        """Advance the burn computer's Δv counter; when it reaches the PAD's Δv, cut the throttle."""
+        was_cut = self.burn_computer.cutoff
         self.burn_computer.count_delta_v(self.telemetry)
-        commands = []
-        if (self.dsky.cutoff and not dsky_was_cut) or (self.burn_computer.cutoff and not computer_was_cut):
-            commands += self.cut_throttle()
-        if self.burn_computer.cutoff and not computer_was_cut:
-            # The burn is over: remove the node, so that SAS does not chase the residual.
-            commands += self.command('cmd/node', {'clear': True})
-            self.node_mirror.forget()
-        return commands
+        if not self.burn_computer.cutoff or was_cut:
+            return []
+        # The burn is over: remove the node too, so that SAS does not chase the residual.
+        self.node_mirror.forget()
+        return self.cut_throttle() + self.command('cmd/node', {'clear': True})
 
     def tick(self, now):
         """Periodic work: mirror the PAD to the game, and re-command "panel wins" switches the game disagrees with."""
@@ -238,7 +258,33 @@ class Cockpit:
                 disagrees = switch in self.vessel and bool(self.vessel[switch]) != wanted
                 if disagrees and self.seconds_since_command(S.TOGGLE_COMMANDS[switch]) >= S.REASSERT_EVERY_S:
                     commands += self.command(S.TOGGLE_COMMANDS[switch], {'on': wanted})
+            commands += self._reassert_sas_mode()
+            commands += self._reassert_throttle()
         return commands + self.render()
+
+    def _reassert_throttle(self):
+        """The throttle last commanded wins over the game: a gateway that restarts, or a save that loads, leaves
+        the game's throttle somewhere else. Not during time warp, when KSP holds it at zero."""
+        last_command, game_throttle = self.last_commands.get('cmd/throttle'), self.vessel.get('throttle')
+        if last_command is None or game_throttle is None or (self.clock.get('warp') or 1) > 1:
+            return []
+        disagrees = abs(game_throttle - last_command[0]['v']) > S.THROTTLE_DISAGREE_ABOVE
+        if not disagrees or self.seconds_since_command('cmd/throttle') < S.REASSERT_EVERY_S:
+            return []
+        return self.command('cmd/throttle', last_command[0])
+
+    def _reassert_sas_mode(self):
+        """The SAS mode last commanded wins over the game: KSP falls back to stability when SAS is switched on, and
+        can drop a mode set in the very frame its reference appears. Only a few tries, because the game refuses for
+        good a mode that has no reference (no node, no target)."""
+        last_command, game_mode = self.last_commands.get('cmd/sas_mode'), self.vessel.get('sas_mode')
+        if last_command is None or game_mode is None or game_mode == last_command[0]['mode']:
+            self.sas_mode_retries = 0           # nothing commanded yet, SAS off, or the game agrees
+            return []
+        if self.sas_mode_retries >= S.SAS_MODE_RETRIES or self.seconds_since_command('cmd/sas_mode') < S.REASSERT_EVERY_S:
+            return []
+        self.sas_mode_retries += 1
+        return self.command('cmd/sas_mode', last_command[0])
 
     def reset(self):
         """sim/reset: a new flight. Switch positions, the link and the telemetry are facts about the world and are
@@ -249,12 +295,12 @@ class Cockpit:
         self.acknowledged_alarms.clear()
         self.condition_started.clear()
         self.last_commands.clear()
-        self.dsky = Dsky()
         self.burn_computer = BurnComputer()
         self.burn_computer.arm(self.is_on('burn_arm'))
         self.node_mirror = NodeMirror()
         self.event_timer = EventTimer()
         self.engine_monitor = EngineMonitor()
+        self.link_watch = comm_panel.LinkWatch()
         return self.render()
 
     # ---------- panel outputs ----------
@@ -269,12 +315,14 @@ class Cockpit:
         systems_panel.render(self, wanted)
         rendezvous_panel.render(self, wanted)
         computer_panel.render(self, wanted)
-        dsky_powered = self.powered() and bool(self.inputs.get('cb_dsky', 1))
-        for name, payload in self.dsky.render(self.now, self.telemetry, dsky_powered, self.telemetry_is_fresh()).items():
-            wanted[f'panel/{S.DSKY_PANEL}/out/{name}'] = payload
+        comm_panel.render(self, wanted)
+        lab_panel.render(self, wanted)
+        solo_panel.render(self, wanted)
+        wanted['cam/select'] = lab_panel.camera_selection(self)
         wanted['cmp/pad'] = self._pad_summary()
         wanted['cw/state'] = self._alarm_summary(active, unacknowledged)
 
+        self.injected_failures.apply_to_outputs(wanted)
         changed = []
         for topic, payload in wanted.items():
             if self.published.get(topic) != payload:

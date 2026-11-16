@@ -58,7 +58,7 @@ def main():
         elapsed_steps = max(1, int((time.monotonic() - simulated_until) / TIME_STEP_S))
         simulated_until += elapsed_steps * TIME_STEP_S
         with plant_lock:
-            steps = 0 if plant.paused else min(elapsed_steps * plant.warp_rate(), MAX_STEPS_PER_LOOP)
+            steps = 0 if plant.paused or plant.frozen else min(elapsed_steps * plant.warp_rate(), MAX_STEPS_PER_LOOP)
             for _ in range(steps):
                 plant.step(TIME_STEP_S)
             loop_count += 1

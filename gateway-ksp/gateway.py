@@ -11,6 +11,7 @@ import time
 import paho.mqtt.client as mqtt
 
 from ksp.commands import CommandHandler
+from ksp.failures import PlantFailures
 from ksp.vessel_link import NEW_VESSEL, NO_VESSEL, VesselLink
 
 MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
@@ -23,13 +24,16 @@ STATUS_EVERY_S = 5
 NO_VESSEL_STATUS_EVERY_S = 2
 RETRY_KRPC_AFTER_S = 3
 RECONNECT_AFTER_S = 2
+SLOW_ABOVE_S = 0.5          # a command or a telemetry read longer than this is logged: telemetry stalls
 
 
 def connect_to_broker(command_queue):
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='gateway-ksp')
     # If the gateway dies, the broker tells everyone the plant is gone.
     client.will_set('gateway/status', json.dumps({'connected': False, 'plant': 'ksp'}), qos=1, retain=True)
-    client.on_connect = lambda client, userdata, flags, reason, properties=None: client.subscribe('cmd/#', qos=1)
+    # cmd/* from the cockpit; sim/* from the instructor (failures, freeze, loading a save)
+    client.on_connect = lambda client, userdata, flags, reason, properties=None: client.subscribe(
+        [('cmd/#', 1), ('sim/failures/#', 1), ('sim/freeze', 1), ('sim/load', 1)])
     client.on_message = lambda client, userdata, message: command_queue.put(
         (message.topic, json.loads(message.payload or b'{}')))
     while True:
@@ -54,12 +58,21 @@ def run_commands(command_queue, commands, wait_until=None):
                 topic, request = command_queue.get(timeout=max(0.0, wait_until - time.monotonic()))
         except queue.Empty:
             return
-        commands.run(topic, request)
+        started = time.monotonic()
+        try:
+            commands.run(topic, request)
+        except (RuntimeError, ValueError, TypeError, KeyError) as error:
+            # KSP refused (no maneuver nodes on the pad, a part that is gone) or the payload was wrong. That must
+            # not cost the link: a lost connection is another kind of error and still ends fly().
+            print('command refused:', topic, request, '-', str(error).splitlines()[0][:160], flush=True)
+        took = time.monotonic() - started
+        if took > SLOW_ABOVE_S:
+            print(f'slow command: {topic} {request} took {took:.2f} s', flush=True)
 
 
-def fly(link, client, command_queue, publish_status):
+def fly(link, client, command_queue, publish_status, failures):
     """The telemetry loop for one kRPC connection. Returns only by raising (scene change, KSP quit, vessel gone)."""
-    commands = CommandHandler(link)
+    commands = CommandHandler(link, failures)
     status_sent_at, cycle = 0.0, 0
     cycle_period = 1 / TELEMETRY_RATE_HZ
     next_cycle_at = time.monotonic()
@@ -81,9 +94,17 @@ def fly(link, client, command_queue, publish_status):
         if link.vessel is None:         # a command split the vessel (undock): bind again first
             continue
         commands.continue_warp_to()
+        commands.continue_sas_mode()
         cycle += 1
-        payloads = link.telemetry(include_slow=cycle % SLOW_TELEMETRY_EVERY == 1,
-                                  include_target=cycle % TARGET_TELEMETRY_EVERY == 0)
+        include_slow = cycle % SLOW_TELEMETRY_EVERY == 1
+        started = time.monotonic()
+        payloads = link.telemetry(include_slow=include_slow, include_target=cycle % TARGET_TELEMETRY_EVERY == 0)
+        if include_slow:
+            commands.failures.keep_applied(link)
+        payloads = commands.failures.filter_telemetry(payloads)
+        took = time.monotonic() - started
+        if took > SLOW_ABOVE_S:
+            print(f'slow telemetry read: {took:.2f} s (slow cycle: {include_slow}; topics: {sorted(payloads)})', flush=True)
         for topic, payload in payloads.items():
             client.publish(topic, json.dumps(payload), qos=0, retain=(topic == 'tlm/orbit'))
         # Cycles start on a fixed beat, whatever the work took; after a long stall the beat starts again from now.
@@ -94,6 +115,7 @@ def fly(link, client, command_queue, publish_status):
 def main():
     command_queue = queue.Queue()
     client = connect_to_broker(command_queue)
+    failures = PlantFailures()
 
     def publish_status(**fields):
         client.publish('gateway/status', json.dumps({'plant': 'ksp', **fields}), qos=1, retain=True)
@@ -108,7 +130,7 @@ def main():
             continue
         print('connected to kRPC', link.connection.krpc.get_status().version, flush=True)
         try:
-            fly(link, client, command_queue, publish_status)
+            fly(link, client, command_queue, publish_status, failures)
         except Exception as error:
             print('link lost:', repr(error)[:300], flush=True)
             publish_status(connected=False, error=repr(error)[:200])

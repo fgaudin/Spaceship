@@ -121,6 +121,16 @@ def test_field_being_keyed_is_steady_with_a_cursor():
     assert panel(c, tlm(0))['disp_pro'] == {'text': '12_', 'blank': False, 'blink': False}
 
 
+def test_selected_field_keeps_its_value_until_the_first_key():
+    c = BurnComputer()
+    c.select_field('pro'); keys(c, '1 2 ENTR')
+    c.select_field('pro')
+    shown = panel(c, tlm(0))
+    assert shown['disp_pro']['text'] == '+12.0' and shown['led_f_pro']['on']
+    keys(c, '3')
+    assert panel(c, tlm(0))['disp_pro']['text'] == '3_'
+
+
 def test_node_made_in_the_game_becomes_the_pad():
     c = Cockpit()
     fed(c, vessel={'isp': 345.0})                                # MET 65, UT 100; 12.5 t, 200 kN
@@ -143,3 +153,11 @@ def test_node_made_in_the_game_becomes_the_pad():
     c.handle('tlm/node', {'set': True, 'ut': 420.0, 'dv': [80.0, 0.0, 0.0], 'att_err': 3.0}, 5.5)  # stale telemetry
     c.handle('tlm/node', {'set': True, 'ut': out['cmd/node']['ut'], 'dv': [20.0, 0.0, 0.0], 'att_err': 3.0}, 8)
     assert c.burn_computer.revision == rev
+
+
+def test_burn_time_is_shown_before_the_tig_is_keyed():
+    c = BurnComputer()
+    c.select_field('pro')
+    for k in ('1', '0', '0', 'ENTR'):
+        c.press_key(k)
+    assert not c.has_pad() and c.burn_time({'tlm/vessel': {'mass': 10000.0, 'thrust_avail': 100000.0, 'isp': 300.0}}) > 9

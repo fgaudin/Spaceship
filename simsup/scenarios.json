@@ -1,0 +1,35 @@
+{
+  "scenarios": [
+    {
+      "name": "Ascent: engine out",
+      "save": "lor3-selftest-pad",
+      "briefing": "Launch to an 80 km parking orbit. One engine of the core cluster fails 25 s after liftoff: spot it on the engine matrix, keep flying, decide whether orbit is still possible.",
+      "failures": [{"failure": "engine_one_out", "trigger": {"met": 25}}]
+    },
+    {
+      "name": "Ascent: gimbal stuck, then telemetry lost",
+      "save": "lor3-selftest-pad",
+      "briefing": "Launch to orbit. The gimbals lock at stage 8; the telemetry drops above 30 km for the coast. Fly on what still works.",
+      "failures": [{"failure": "gimbal_stuck", "trigger": {"stage": 8}},
+                   {"failure": "telemetry_freeze", "trigger": {"alt_above": 30000}}]
+    },
+    {
+      "name": "Mun descent: false fuel alarm",
+      "save": "lor3-selftest-pdi",
+      "briefing": "Brake out of low Mun orbit and land. A LOW FUEL caution comes on below 4 km: is it real? Cross-check before aborting.",
+      "failures": [{"failure": "false_alarm", "parameters": {"alarm": "cw_low_fuel"}, "trigger": {"alt_below": 4000}}]
+    },
+    {
+      "name": "Docking: RCS dead, SAS switch stuck",
+      "save": "lor3-rdv-handover",
+      "briefing": "Dock with the target. The SAS switch is stuck from the start and the RCS quads fail when the range is under 50 m (inject it by hand).",
+      "failures": [{"failure": "switch_stuck", "parameters": {"control": "sas"}}]
+    },
+    {
+      "name": "Coast: loss of signal",
+      "save": "lor3-selftest-coast",
+      "briefing": "Coast to apoapsis and circularise. The radio link is lost at once: the PAD must come from the crew's own numbers.",
+      "failures": [{"failure": "comm_lost"}]
+    }
+  ]
+}

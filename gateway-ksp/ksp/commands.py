@@ -1,13 +1,18 @@
 """cmd/* messages from the cockpit, turned into kRPC calls (protocol/topics.md lists the payloads)."""
 import time
 
+from .failures import PlantFailures
 from .target import control_from_port, select_target, undock
 from .vessel_link import SAS_MODE_TO_KRPC
 
 RAILS_WARP_RATES = [1, 5, 10, 50, 100, 1000, 10000, 100000]     # KSP's rails warp factors 0 to 7
 PHYSICS_WARP_MAX_FACTOR = 3
 WARP_TO_SECONDS_AHEAD = 4       # warp at a rate only while the time left is at least this many seconds of it
-ACTION_GROUP_SWITCHES = {'cmd/sas': 'sas', 'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
+SPEED_MODES = ('orbit', 'surface', 'target')
+# KSP puts SAS back to stability when it is switched on, and can drop a mode set in the same moment: the wanted mode
+# is set again this long after either.
+SAS_MODE_SET_AGAIN_AFTER_S = (0.5, 1.5)
+ACTION_GROUP_SWITCHES = {'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
                          'cmd/brakes': 'brakes'}
 
 
@@ -16,21 +21,31 @@ def clamp(value, low, high):
 
 
 class CommandHandler:
-    def __init__(self, link):
+    def __init__(self, link, failures=None):
         self.link = link
+        # what the instructor broke (SimSup); outlives a kRPC connection, since the failures arrive only once
+        self.failures = failures if failures is not None else PlantFailures()
+        self.wanted_sas_mode = None         # the last mode the cockpit asked for, kept while SAS is off
+        self.sas_mode_set_again_at = []     # times (monotonic) at which to set it again
         self.handlers = {
+            'cmd/sas': self.sas,
             'cmd/throttle': self.throttle, 'cmd/stage': self.stage, 'cmd/abort': self.abort,
             'cmd/solar': self.solar_panels, 'cmd/chute': self.parachutes, 'cmd/sas_mode': self.sas_mode,
+            'cmd/antenna': self.antennas, 'cmd/action_group': self.action_group, 'cmd/speed_mode': self.speed_mode,
             'cmd/thrust_limit': self.thrust_limit, 'cmd/gimbal': self.gimbal_lock,
             'cmd/target': lambda request: select_target(self.link, request),
             'cmd/undock': lambda request: undock(self.link),
             'cmd/control_from': lambda request: control_from_port(self.link, bool(request.get('port'))),
             'cmd/node': self.maneuver_node, 'cmd/pause': self.pause, 'cmd/game': self.save_or_load,
-            'cmd/warp': self.warp,
+            'cmd/warp': self.warp, 'cmd/rotate': self.rotate, 'cmd/translate': self.translate,
         }
 
     def run(self, topic, request):
-        if topic in ACTION_GROUP_SWITCHES:
+        if topic.startswith('sim/'):
+            self.instructor(topic, request)
+        elif self.failures.blocks(topic):
+            return
+        elif topic in ACTION_GROUP_SWITCHES:
             setattr(self.link.vessel.control, ACTION_GROUP_SWITCHES[topic], bool(request.get('on')))
         elif topic in self.handlers:
             self.handlers[topic](request)
@@ -62,19 +77,85 @@ class CommandHandler:
                 engine.gimbal_locked = bool(request.get('locked'))
         self.link.parts.read_engine_settings()
 
+    # ---------- the instructor (SimSup) ----------
+    def instructor(self, topic, request):
+        if topic.startswith('sim/failures/'):
+            self.failures.update(self.link, topic.rsplit('/', 1)[1], request)
+        elif topic == 'sim/freeze':
+            self.link.connection.krpc.paused = bool(request.get('on'))
+        elif topic == 'sim/load' and request.get('save'):
+            self.link.space_center.load(str(request['save']))     # the vessel changes: the main loop binds again
+
+    # ---------- hand controllers ----------
+    def rotate(self, request):
+        """{'pitch', 'yaw', 'roll'}, −1..1: + nose up, + nose right, + roll right."""
+        control = self.link.vessel.control
+        control.pitch = clamp(float(request.get('pitch', 0)), -1.0, 1.0)
+        control.yaw = clamp(float(request.get('yaw', 0)), -1.0, 1.0)
+        control.roll = clamp(float(request.get('roll', 0)), -1.0, 1.0)
+
+    def translate(self, request):
+        """{'right', 'up', 'forward'}, −1..1: RCS translation."""
+        control = self.link.vessel.control
+        control.right = clamp(float(request.get('right', 0)), -1.0, 1.0)
+        control.up = clamp(float(request.get('up', 0)), -1.0, 1.0)
+        control.forward = clamp(float(request.get('forward', 0)), -1.0, 1.0)
+
+    # ---------- SAS ----------
+    def sas(self, request):
+        self.link.vessel.control.sas = bool(request.get('on'))
+        if request.get('on'):
+            self._set_sas_mode_soon()
+
     def sas_mode(self, request):
         mode = request.get('mode', 'stability')
         if mode not in SAS_MODE_TO_KRPC:
             return
+        self.wanted_sas_mode = mode
+        self._apply_sas_mode()
+        self._set_sas_mode_soon()
+
+    def _set_sas_mode_soon(self):
+        now = time.monotonic()
+        self.sas_mode_set_again_at = [now + delay for delay in SAS_MODE_SET_AGAIN_AFTER_S]
+
+    def _apply_sas_mode(self):
+        """Set the wanted mode if SAS is on; with SAS off it waits for SAS to come on (KSP refuses it then)."""
+        control = self.link.vessel.control
+        if self.wanted_sas_mode is None or not control.sas:
+            return
         try:
-            self.link.vessel.control.sas_mode = getattr(self.link.space_center.SASMode, SAS_MODE_TO_KRPC[mode])
+            control.sas_mode = getattr(self.link.space_center.SASMode, SAS_MODE_TO_KRPC[self.wanted_sas_mode])
         except Exception as error:          # e.g. a mode this pilot or probe core cannot hold
-            print('sas_mode refused:', mode, error, flush=True)
+            print('sas_mode refused:', self.wanted_sas_mode, str(error).splitlines()[0], flush=True)
+
+    def continue_sas_mode(self):
+        """Called on every loop: set the wanted SAS mode again when it is due."""
+        now = time.monotonic()
+        if self.sas_mode_set_again_at and now >= self.sas_mode_set_again_at[0]:
+            self.sas_mode_set_again_at.pop(0)
+            self._apply_sas_mode()
+
+    def speed_mode(self, request):
+        """{'mode': 'orbit' | 'surface' | 'target'}: the navball's speed reference, which PRO and RETRO follow."""
+        mode = request.get('mode')
+        if mode in SPEED_MODES:
+            self.link.vessel.control.speed_mode = getattr(self.link.space_center.SpeedMode, mode)
 
     # ---------- systems ----------
     def solar_panels(self, request):
         for panel in self.link.parts.solar_panels:
             panel.deployed = bool(request.get('on'))
+
+    def antennas(self, request):
+        for antenna in self.link.parts.antennas:
+            antenna.deployed = bool(request.get('on'))
+
+    def action_group(self, request):
+        """{'n': 1..10}: toggle that action group (kRPC calls the tenth one 0)."""
+        number = int(request.get('n', 0))
+        if 1 <= number <= 10:
+            self.link.vessel.control.toggle_action_group(number % 10)
 
     def parachutes(self, request):
         for parachute in self.link.parts.parachutes:

@@ -44,6 +44,9 @@ for c, v in (('cb_main', 1), ('eng_arm', 0), ('stage_arm', 0), ('abort_arm', 0),
 wait(lambda: seen.get('tlm/vessel', {}).get('situation') == 'pre_launch', what='reset')
 check('telemetry flowing', 'tlm/flight' in seen and 'tlm/vessel' in seen)
 check('gateway status mock', seen.get('gateway/status', {}).get('plant') == 'mock')
+check('TWR and stage Δv on the pad, before ignition', wait(lambda: '-' not in (seen.get('panel/sys/out/disp_twr') or {}).get('text', '-')
+                                                            and float(seen['panel/sys/out/disp_twr']['text']) > 1, what='pad TWR') and
+      '-' not in seen['panel/sys/out/disp_dv']['text'])
 
 inp('lamp_test', 1, retain=False)
 check('lamp test: high g lit', out('cw_high_g') == {'on': True, 'blink': False})
@@ -234,6 +237,38 @@ check('WARP TO EVT: warping', ok(lambda: seen['tlm/time']['warp'] > 1, 4))
 check('warp stops about a minute before TIG', ok(lambda: seen['tlm/time']['warp'] == 1 and 40 <= met + 400 - seen['tlm/time']['met'] <= 66, 30))
 pin('sys', 'evt_src', 0)
 press('cmp', 'pad_clr')
+
+# communications panel
+check('COM: AOS, signal and station', ok(lambda: pout('com', 'lamp_aos').get('on') and not pout('com', 'lamp_los').get('on')
+                                          and pout('com', 'txt_via').get('text') == 'KSC' and pout('com', 'bar_signal') == {'v': 0.8}))
+cli.publish('sim/failures/comm_lost', json.dumps({'on': True}), qos=1, retain=True)
+check('COM: LOS blinking, NO SIGNAL', ok(lambda: pout('com', 'lamp_los') == {'on': True, 'blink': True}
+                                          and pout('com', 'txt_via').get('text') == 'NO SIGNAL'))
+cli.publish('sim/failures/comm_lost', json.dumps({'on': False}), qos=1, retain=True)
+check('COM: AOS again, time in this state counts', ok(lambda: pout('com', 'lamp_aos').get('on')
+                                                       and pout('com', 'disp_link_time').get('text', '-').startswith('00.0')))
+pin('com', 'antenna', 0); pin('com', 'antenna', 1)
+check('ANTENNA DEPLOY → plant, LED steady', ok(lambda: seen['tlm/comm']['antenna'] and pout('com', 'led_antenna') == {'on': True, 'blink': False}))
+pin('com', 'antenna', 0)
+
+# experimental panels
+press('lab', 'ag_3')
+check('AG 3 → plant toggles the group, lamp on', ok(lambda: seen['tlm/groups']['on'][2] and pout('lab', 'lamp_ag_3').get('on')))
+press('lab', 'ag_3')
+check('AG 3 again → off', ok(lambda: not seen['tlm/groups']['on'][2] and not pout('lab', 'lamp_ag_3').get('on')))
+pin('lab', 'xp_mode', 5)
+check('cross-pointer DRIFT: values and a 9 × 9 matrix', ok(lambda: pout('lab', 'disp_xp_right').get('text') == '+0.0'
+                                                            and len(pout('lab', 'mx_xp').get('rows', [])) == 9))
+pin('lab', 'xp_mode', 0)
+check('navigation: body and latitude', ok(lambda: pout('lab', 'txt_body').get('text') == 'KERBIN' and pout('lab', 'disp_lat').get('text') == '+0.00'))
+cli.publish('cam/status', json.dumps({'online': True, 'playing': True}), qos=1, retain=True)
+cli.publish('cam/list', json.dumps({'cameras': [{'id': 7, 'name': 'NavCam'}, {'id': 9, 'name': 'Kerbal'}]}), qos=1, retain=True)
+check('camera list → first camera selected and named', ok(lambda: seen.get('cam/select') == {'id': 7} and pout('lab', 'txt_cam').get('text') == 'NAVCAM'))
+press('lab', 'cam_next')
+check('CAM ▸ → next camera', ok(lambda: seen.get('cam/select') == {'id': 9} and pout('lab', 'led_cam_live').get('on')))
+cli.publish('cam/status', json.dumps({'online': False, 'playing': False}), qos=1, retain=True)
+cli.publish('cam/list', json.dumps({'cameras': []}), qos=1, retain=True)
+check('monitor gone → NO MONITOR', ok(lambda: pout('lab', 'txt_cam').get('text') == 'NO MONITOR'))
 
 # abort mode ASCENT: leave the launcher by staging, SAS and RCS forced on
 st0 = seen['tlm/vessel']['stage']

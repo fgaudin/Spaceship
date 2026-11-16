@@ -37,13 +37,6 @@
             "out": "led_solar",
             "color": "green"
           }
-        },
-        {
-          "type": "toggle",
-          "id": "cb_dsky",
-          "label": "CB DSKY",
-          "in": "cb_dsky",
-          "default": 1
         }
       ]
     },

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capsule · SimSup</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="panel.css">
+<link rel="stylesheet" href="fdai.css">
+<link rel="stylesheet" href="simsup.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">CAPSULE <span>SimSup · instructor station</span></div>
+  <div class="conn"><span id="conn-dot" class="dot"></span><span id="conn-text">connecting…</span></div>
+  <nav class="nav" aria-label="Panels">
+    <a class="navlink" href="index.html">ENG</a><a class="navlink" href="index.html?panel=sys">SYS</a>
+    <a class="navlink" href="index.html?panel=cmp">CMP</a><a class="navlink" href="index.html?panel=rdv">RDV</a>
+    <a class="navlink" href="index.html?panel=com">COM</a><a class="navlink" href="index.html?panel=lab">LAB</a>
+    <a class="navlink" href="fdai.html">FDAI</a><a class="navlink" href="mfd.html">MFD</a><a class="navlink" href="cam.html">CAM</a>
+    <a class="navlink" href="simsup.html" aria-current="page">SIMSUP</a><a class="navlink" href="mcc.html">MCC</a>
+  </nav>
+  <div class="links"><span id="services">plant ? · cockpit ? · simsup ?</span></div>
+</header>
+
+<main class="ss">
+  <section class="ss-box ss-status" aria-label="Flight">
+    <h2>Flight</h2>
+    <dl id="flight" class="ss-figures"></dl>
+    <button id="freeze" class="ss-btn ss-freeze" type="button">FREEZE</button>
+    <h3>What the crew sees</h3>
+    <div id="alarms" class="ss-alarms" aria-live="polite"></div>
+  </section>
+
+  <section class="ss-box ss-scenarios" aria-label="Scenarios">
+    <h2>Scenarios</h2>
+    <ul id="scenarios" class="ss-list"></ul>
+    <form id="load-form" class="ss-inline">
+      <label for="load-save">Load a save</label>
+      <input id="load-save" placeholder="save name" autocomplete="off">
+      <button class="ss-btn" type="submit">LOAD</button>
+    </form>
+    <h3>Armed</h3>
+    <ul id="armed" class="ss-list"><li class="ss-empty">nothing armed</li></ul>
+  </section>
+
+  <section class="ss-box ss-failures" aria-label="Failures">
+    <h2>Failures <button id="clear-all" class="ss-btn ss-small" type="button">CLEAR ALL</button></h2>
+    <div id="failures"></div>
+  </section>
+
+  <section class="ss-box ss-log" aria-label="Log and debrief">
+    <h2>Debrief <button id="new-session" class="ss-btn ss-small" type="button">NEW SESSION</button></h2>
+    <table class="ss-table"><thead><tr><th>Failure</th><th>MET</th><th>Ack after</th><th>First action after</th></tr></thead>
+      <tbody id="debrief"><tr><td colspan="4" class="ss-empty">no failure yet</td></tr></tbody></table>
+    <h2>Log
+      <select id="log-filter" aria-label="Show"><option value="">all</option><option>failure</option><option>alarm</option>
+        <option>crew</option><option>command</option><option>simsup</option><option>note</option></select>
+      <button id="export" class="ss-btn ss-small" type="button">EXPORT</button>
+    </h2>
+    <form id="note-form" class="ss-inline">
+      <input id="note" placeholder="note for the debrief" autocomplete="off" aria-label="Note">
+      <button class="ss-btn" type="submit">ADD</button>
+    </form>
+    <ol id="log" class="ss-logs"></ol>
+  </section>
+</main>
+
+<script src="vendor/mqtt.min.js"></script>
+<script type="module" src="simsup.js"></script>
+</body>
+</html>
