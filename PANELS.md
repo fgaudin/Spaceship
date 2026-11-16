@@ -15,6 +15,10 @@ Priority: **A** = cannot fly the mission without it, **B** = needed to fly it by
 - **Glass kept to a minimum.** Everything that can be digits, bars, lamps or LEDs is. Three non-glass display types
   cover what looked like it needed a screen: 7-segment digits, an alphanumeric LED row (target name) and an LED matrix
   (engine status). Glass remains for the attitude ball, and optionally one shared screen for the orbit drawing.
+- **Modules and panels in U** (2026-11-16): a panel is one faceplate of W×H U (1 U = 100 mm); a module is one
+  board with one or more panels, swapped as a unit. The virtual console draws them at real size, laid out in
+  overhead, main and low zones: [protocol/panels/README.md](protocol/panels/README.md). Below, "panel" in the
+  numbered list means a function, not a faceplate.
 - **The DSKY is gone** (removed 2026-11-16; the sections below that mention it are the original plan). The burn computer (CMP: one display per PAD field, a numeric keypad, UPLINK ACCEPT) replaces it.
 
 Built as virtual panels so far: 4 to 8 and 13 to 16 (ENG, SYS), 1 as the burn computer (CMP), the I/O part of 12 (RDV),

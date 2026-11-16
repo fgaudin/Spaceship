@@ -7,16 +7,16 @@ import { bodyOf } from '../bodies.js';
 let setOrbit, setTarget, setGround, canvas;
 
 export function mount(root) {
-  const drawing = box(root, 'ORBIT');
+  const drawing = box(root, 'ORBIT', { at: [0, 0], size: [1, 2] });
   canvas = create('canvas', 'mcc-orbit');
   canvas.width = canvas.height = 420;
   canvas.setAttribute('role', 'img');
   canvas.setAttribute('aria-label', 'Orbit drawing');
   drawing.append(canvas);
-  setOrbit = figures(box(root, 'ELEMENTS'), [['body', 'Body'], ['apo', 'Apoapsis'], ['peri', 'Periapsis'], ['e', 'Eccentricity'],
+  setOrbit = figures(box(root, 'ELEMENTS', { at: [1, 0], size: [1, 2] }), [['body', 'Body'], ['apo', 'Apoapsis'], ['peri', 'Periapsis'], ['e', 'Eccentricity'],
     ['i', 'Inclination'], ['period', 'Period'], ['t_apo', 'To apoapsis'], ['t_peri', 'To periapsis'], ['t_soi', 'To SOI change']]);
-  setTarget = figures(box(root, 'TARGET'), [['name', 'Target'], ['range', 'Range'], ['closing', 'Closing'], ['los', 'LOS rate'], ['rel_v', 'Relative speed']]);
-  setGround = figures(box(root, 'GROUND'), [['lat', 'Latitude'], ['lon', 'Longitude'], ['alt', 'Altitude'], ['radar', 'Above ground']]);
+  setTarget = figures(box(root, 'TARGET', { at: [2, 0] }), [['name', 'Target'], ['range', 'Range'], ['closing', 'Closing'], ['los', 'LOS rate'], ['rel_v', 'Relative speed']]);
+  setGround = figures(box(root, 'GROUND', { at: [2, 1] }), [['lat', 'Latitude'], ['lon', 'Longitude'], ['alt', 'Altitude'], ['radar', 'Above ground']]);
 }
 
 const seconds = (value) => (value == null ? '—' : formatMet(value));

@@ -6,9 +6,9 @@ const STANDARD_GRAVITY = 9.80665;
 let setPad, setAttitude;
 
 export function mount(root) {
-  setPad = figures(box(root, 'BURN COMPUTER'), [['state', 'State'], ['tig', 'TIG'], ['to_tig', 'Time to TIG'], ['dv', 'Δv P / N / R'],
+  setPad = figures(box(root, 'BURN COMPUTER', { at: [0, 0] }), [['state', 'State'], ['tig', 'TIG'], ['to_tig', 'Time to TIG'], ['dv', 'Δv P / N / R'],
     ['total', 'Δv total'], ['burn', 'Burn time (full thrust)'], ['uplink', 'Uplink waiting']]);
-  setAttitude = figures(box(root, 'ATTITUDE'), [['att_err', 'Off the burn'], ['pitch', 'Pitch'], ['heading', 'Heading'], ['roll', 'Roll'],
+  setAttitude = figures(box(root, 'ATTITUDE', { at: [1, 0] }), [['att_err', 'Off the burn'], ['pitch', 'Pitch'], ['heading', 'Heading'], ['roll', 'Roll'],
     ['sas', 'SAS'], ['ref', 'Navball reference']]);
 }
 

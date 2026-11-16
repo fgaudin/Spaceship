@@ -12,9 +12,9 @@ const ABORT_MODES = ['PAD', 'ASCENT', 'ORBIT', 'DESCENT'];
 let setEntry, setAbort;
 
 export function mount(root) {
-  setEntry = figures(box(root, 'ENTRY'), [['peri', 'Periapsis'], ['corridor', 'Corridor'], ['deorbit', 'Deorbit Δv at apoapsis'],
+  setEntry = figures(box(root, 'ENTRY', { at: [0, 0] }), [['peri', 'Periapsis'], ['corridor', 'Corridor'], ['deorbit', 'Deorbit Δv at apoapsis'],
     ['g', 'Load'], ['q', 'Dynamic pressure'], ['heat', 'Hottest part']]);
-  setAbort = figures(box(root, 'ABORT MODE'), [['advised', 'Fits now'], ['selected', 'Crew selected'], ['match', 'Check']]);
+  setAbort = figures(box(root, 'ABORT MODE', { at: [1, 0] }), [['advised', 'Fits now'], ['selected', 'Crew selected'], ['match', 'Check']]);
 }
 
 /* Δv (m/s) at apoapsis, retrograde, to bring the periapsis down to the target. */

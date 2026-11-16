@@ -2,23 +2,42 @@
   "id": "sys",
   "title": "SYSTEMS",
   "fw": "virtual-0.1",
-  "sections": [
+  "board": "olimex-esp32-poe",
+  "panels": [
     {
+      "id": "electrical",
       "title": "ELECTRICAL",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "sys",
       "items": [
         {
           "type": "bar",
           "id": "bar_ec",
           "label": "CHARGE",
           "out": "bar_ec",
-          "segments": 10
+          "segments": 10,
+          "at": [
+            32,
+            35
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_ec",
           "label": "EC",
           "out": "disp_ec",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            70,
+            35
+          ]
         },
         {
           "type": "seg7",
@@ -26,7 +45,11 @@
           "label": "EC/S",
           "out": "disp_ec_rate",
           "digits": 5,
-          "color": "green"
+          "color": "green",
+          "at": [
+            38,
+            64
+          ]
         },
         {
           "type": "toggle",
@@ -36,40 +59,70 @@
           "led": {
             "out": "led_solar",
             "color": "green"
-          }
+          },
+          "at": [
+            70,
+            64
+          ]
         }
       ]
     },
     {
+      "id": "propellant_stage",
       "title": "PROPELLANT · STAGE",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        0
+      ],
+      "bus": "sys",
       "items": [
         {
           "type": "bar",
           "id": "bar_lf",
           "label": "FUEL",
           "out": "bar_lf",
-          "segments": 10
+          "segments": 10,
+          "at": [
+            34,
+            29
+          ]
         },
         {
           "type": "bar",
           "id": "bar_ox",
           "label": "OXID",
           "out": "bar_ox",
-          "segments": 10
+          "segments": 10,
+          "at": [
+            70,
+            29
+          ]
         },
         {
           "type": "bar",
           "id": "bar_mono",
           "label": "MONO",
           "out": "bar_mono",
-          "segments": 10
+          "segments": 10,
+          "at": [
+            30,
+            50
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_dv",
           "label": "STAGE ΔV M/S",
           "out": "disp_dv",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            68,
+            50
+          ]
         },
         {
           "type": "seg7",
@@ -77,19 +130,37 @@
           "label": "TWR",
           "out": "disp_twr",
           "digits": 4,
-          "color": "green"
+          "color": "green",
+          "at": [
+            50,
+            73
+          ]
         }
       ]
     },
     {
+      "id": "event_timer",
       "title": "EVENT TIMER",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        0
+      ],
+      "bus": "sys",
       "items": [
         {
           "type": "seg7",
           "id": "disp_evt",
           "label": "MIN.SEC",
           "out": "disp_evt",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            34,
+            30
+          ]
         },
         {
           "type": "rotary",
@@ -102,6 +173,10 @@
             "APO",
             "PERI",
             "SOI"
+          ],
+          "at": [
+            72,
+            30
           ]
         },
         {
@@ -109,48 +184,86 @@
           "id": "led_evt_run",
           "label": "RUN",
           "out": "led_evt_run",
-          "color": "green"
+          "color": "green",
+          "at": [
+            14,
+            57
+          ]
         },
         {
           "type": "button",
           "id": "evt_start",
           "label": "START",
-          "in": "evt_start"
+          "in": "evt_start",
+          "at": [
+            38,
+            57
+          ]
         },
         {
           "type": "button",
           "id": "evt_stop",
           "label": "STOP",
-          "in": "evt_stop"
+          "in": "evt_stop",
+          "at": [
+            62,
+            57
+          ]
         },
         {
           "type": "button",
           "id": "evt_reset",
           "label": "RESET",
-          "in": "evt_reset"
+          "in": "evt_reset",
+          "at": [
+            86,
+            57
+          ]
         },
         {
           "type": "toggle",
           "id": "evt_down",
           "label": "COUNT DOWN",
-          "in": "evt_down"
+          "in": "evt_down",
+          "at": [
+            26,
+            79
+          ]
         },
         {
           "type": "button",
           "id": "evt_min",
           "label": "MIN +",
-          "in": "evt_min"
+          "in": "evt_min",
+          "at": [
+            52,
+            79
+          ]
         },
         {
           "type": "button",
           "id": "evt_sec",
           "label": "SEC +10",
-          "in": "evt_sec"
+          "in": "evt_sec",
+          "at": [
+            76,
+            79
+          ]
         }
       ]
     },
     {
+      "id": "recovery_brakes",
       "title": "RECOVERY · BRAKES",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        1
+      ],
+      "bus": "sys",
       "items": [
         {
           "type": "guarded_toggle",
@@ -160,7 +273,11 @@
           "led": {
             "out": "led_chute_armed",
             "color": "amber"
-          }
+          },
+          "at": [
+            28,
+            52
+          ]
         },
         {
           "type": "lamp_button",
@@ -168,7 +285,11 @@
           "label": "CHUTE",
           "color": "green",
           "in": "chute_deploy",
-          "out": "lamp_chute"
+          "out": "lamp_chute",
+          "at": [
+            52,
+            52
+          ]
         },
         {
           "type": "toggle",
@@ -178,12 +299,26 @@
           "led": {
             "out": "led_brakes",
             "color": "green"
-          }
+          },
+          "at": [
+            76,
+            52
+          ]
         }
       ]
     },
     {
+      "id": "time_warp",
       "title": "TIME WARP",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        1
+      ],
+      "bus": "sys",
       "items": [
         {
           "type": "seg7",
@@ -191,44 +326,78 @@
           "label": "RATE ×",
           "out": "disp_warp",
           "digits": 6,
-          "color": "green"
+          "color": "green",
+          "at": [
+            40,
+            44
+          ]
         },
         {
           "type": "led",
           "id": "led_warp",
           "label": "WARP",
           "out": "led_warp",
-          "color": "amber"
+          "color": "amber",
+          "at": [
+            76,
+            44
+          ]
         },
         {
           "type": "button",
           "id": "warp_down",
           "label": "◂ SLOWER",
-          "in": "warp_down"
+          "in": "warp_down",
+          "at": [
+            14,
+            64
+          ]
         },
         {
           "type": "button",
           "id": "warp_up",
           "label": "FASTER ▸",
-          "in": "warp_up"
+          "in": "warp_up",
+          "at": [
+            38,
+            64
+          ]
         },
         {
           "type": "button",
           "id": "warp_to",
           "label": "WARP TO EVT",
-          "in": "warp_to"
+          "in": "warp_to",
+          "at": [
+            62,
+            64
+          ]
         },
         {
           "type": "lamp_button",
           "id": "warp_stop",
           "label": "STOP WARP",
           "color": "red",
-          "in": "warp_stop"
+          "in": "warp_stop",
+          "at": [
+            86,
+            64
+          ]
         }
       ]
     },
     {
+      "id": "game",
       "title": "GAME",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        1
+      ],
+      "bus": "sys",
       "items": [
         {
           "type": "toggle",
@@ -238,25 +407,41 @@
           "led": {
             "out": "led_pause",
             "color": "amber"
-          }
+          },
+          "at": [
+            28,
+            44
+          ]
         },
         {
           "type": "guarded_toggle",
           "id": "save_arm",
           "label": "SAVE ARM",
-          "in": "save_arm"
+          "in": "save_arm",
+          "at": [
+            52,
+            44
+          ]
         },
         {
           "type": "button",
           "id": "quicksave",
           "label": "QUICK SAVE",
-          "in": "quicksave"
+          "in": "quicksave",
+          "at": [
+            76,
+            44
+          ]
         },
         {
           "type": "button",
           "id": "quickload",
           "label": "QUICK LOAD",
-          "in": "quickload"
+          "in": "quickload",
+          "at": [
+            50,
+            70
+          ]
         }
       ]
     }

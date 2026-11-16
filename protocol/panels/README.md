@@ -1,0 +1,78 @@
+# Modules, panels and the console
+
+The I/O hardware of the capsule, described so that the virtual console draws it at its real size and the generic
+firmware can be generated from the same files.
+
+## Words
+
+- **U**: the grid unit, **100 mm**. Every panel is a whole number of U wide and high.
+- **Panel**: one plate of acrylic, W×H U (mostly 1×1, a few 2×1 or 1×2), with its controls at fixed places.
+- **Module**: one board (an Olimex ESP32-POE), one PoE cable, one definition file. It carries one or more panels,
+  held side by side by a frame adapter, so the same panels can make a 3×1, a 1×3 or an L. It is the unit that is
+  plugged in, swapped, or taken to the bench. Two modules of the same shape can trade places.
+- **Console**: where the modules sit in the capsule, in zones (overhead, main, low).
+
+A panel's controls publish into the panel's own **bus namespace** (`"bus": "eng"` → `panel/eng/in/<control>`,
+`panel/eng/out/<output>`), not the module's. A panel moved to another module keeps its topics, so the cockpit logic
+does not notice. A module's heartbeat is `panel/<module>/status`.
+
+## `<module>.json`: one module
+
+```json
+{
+  "id": "eng", "title": "PROPULSION · FLIGHT CONTROL", "fw": "virtual-0.1", "board": "olimex-esp32-poe",
+  "panels": [
+    { "id": "engines_abort", "title": "ENGINES · ABORT", "size": [1, 1], "at": [2, 1], "bus": "eng",
+      "items": [ { "type": "guarded_toggle", "id": "abort_arm", "label": "ABORT ARM", "in": "abort_arm", "at": [56, 78] } ] }
+  ]
+}
+```
+
+| Field | Meaning |
+|---|---|
+| panel `size` | `[width, height]` in U |
+| panel `at` | where the panel sits on the module, in U from the module's top-left corner (`[column, row]`) |
+| panel `bus` | the topic namespace of its controls |
+| item `at` | the centre of the control block (indicator LED, component and legend), in mm from the panel's top-left corner. The panel title takes the top 12 mm. |
+| item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot`, `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`) |
+
+Not there yet: a `pin` per control, for when the boards are designed.
+
+A **glass module** (a Raspberry Pi and a screen: FDAI, MFD, CAM) has a panel with a `screen` instead of controls:
+
+```json
+{ "id": "fdai", "title": "FDAI", "size": [2, 2], "at": [0, 0], "items": [],
+  "screen": { "page": "fdai.html", "inches": 8, "mm": [162, 122], "px": [1024, 768] } }
+```
+
+The console shows the page (`fdai.html?embed=1`: no top bar, fitted to the screen) at the screen's resolution
+(`px`), scaled to its visible size (`mm`), centred under the panel's title. The page publishes its own status
+(`panel/fdai/status`, `cam/status`); the module has no I/O node of its own. The wheel and Esc over the page act on
+the console, as everywhere else on it.
+
+Components are drawn at about their real size: 0.36" 7-segment digits (9 mm high), 18 × 12 mm lit push buttons,
+14 mm keypad keys, 5 mm LEDs, bat-handle toggles.
+
+## `console.json`: the capsule
+
+```json
+{ "title": "CENTRE CONSOLE",
+  "zones": [ { "id": "main", "title": "MAIN", "modules": [ { "module": "eng", "at": [0, 0] } ] } ] }
+```
+
+Each zone is a grid of U; a module's `at` is its top-left corner on it. A zone's optional `size` ([width, height]
+in U) makes it bigger than what it holds, so that its free places show. The zones are drawn one under the other, flat.
+The firmware never reads this file.
+
+## Changing the layout
+
+Edit the numbers and reload the console page (`index.html`). It never reflows: what moves is what you moved. The
+wheel zooms around the pointer, dragging pans, double-click fits a module, Esc fits everything.
+
+- The **grid** checkbox draws a 10 mm grid on every panel; empty U places of a zone show faintly.
+- Anything misplaced is outlined in red and counted in the top bar (`layout: n issues`, the list in its tooltip and
+  in the browser console): a control sticking out of its panel, two controls overlapping, two panels or two modules
+  on the same place, the same input on two panels, a module in `console.json` without a file.
+- A new module, for example the C&W panel and the COM panel together: write `<new>.json` with both panel blocks
+  (positions on each panel stay as they are; the panels' `bus` stays `eng` and `com`), give each panel its `at` on
+  the new module, remove them from their old modules, and place the module in `console.json`.

@@ -1,8 +1,14 @@
 # Mission Control (MCC)
 
 One web page with a tab per flight controller's console. Each controller opens it on their own laptop and picks the
-consoles they hold: one, or several when there are fewer people than roles. The tabs are toggles; the consoles held
-are shown one below the other, and the page remembers them on that laptop.
+consoles they hold: one, or several when there are fewer people than roles. The tabs are toggles, and the page
+remembers them on that laptop.
+
+Every console is one **standard screen of 1200 × 800** (16:10), its boxes on a fixed grid of **3 × 2 tiles**: each
+box has a place and a size in tiles (`box(root, title, { at: [column, row], size: [w, h] })` in `ui.js`), and
+nothing reflows. A box whose content is longer scrolls inside it. The consoles held sit side by side, in as many
+columns as lets them be drawn biggest, all at the same zoom (`fitConsoles` in `mcc.js`): one console on a laptop
+fills the window; three are smaller, but each keeps its layout.
 
 - Open: `http://<cockpit machine>:8650/mcc.html`, or `mcc.html#fido` for one console, `mcc.html#fido+retro` for two.
 - A laptop holding several consoles answers a poll once for all of them (FLIGHT's board shows each), and its notes
@@ -57,7 +63,7 @@ Every console except FLIGHT has the same footer: GO / NO-GO for the open poll, a
 | `bus.js` | The MCC's store of the last payload per topic and small readers (`vessel()`, `orbit()`, `linkUp()`…), on the connection of the shared `../bus.js`. The top bar and the page navigation come from the shared `../shell.js`. |
 | `roster.js` | The consoles in tab order. Adding one: write `consoles/<id>.js` with `mount(root)` and `update()`, add it here. |
 | `consoles/*.js` | One module per console. |
-| `ui.js`, `bodies.js` | Formatting and DOM helpers; radius, atmosphere and μ of Kerbin, the Mun and Minmus. |
+| `ui.js`, `bodies.js` | Formatting and DOM helpers (`box()` places a box on the console's tiles); radius, atmosphere and μ of Kerbin, the Mun and Minmus. |
 
 ## Not done yet
 

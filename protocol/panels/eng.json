@@ -2,9 +2,20 @@
   "id": "eng",
   "title": "PROPULSION · FLIGHT CONTROL",
   "fw": "virtual-0.1",
-  "sections": [
+  "board": "olimex-esp32-poe",
+  "panels": [
     {
+      "id": "caution_warning",
       "title": "CAUTION & WARNING",
+      "size": [
+        2,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "eng",
       "items": [
         {
           "type": "lamp_button",
@@ -12,7 +23,11 @@
           "label": "MASTER ALARM",
           "color": "red",
           "in": "master_alarm",
-          "out": "master_alarm"
+          "out": "master_alarm",
+          "at": [
+            40,
+            43
+          ]
         },
         {
           "type": "lamp_button",
@@ -20,7 +35,11 @@
           "label": "MASTER CAUTION",
           "color": "amber",
           "in": "master_caution",
-          "out": "master_caution"
+          "out": "master_caution",
+          "at": [
+            63,
+            43
+          ]
         },
         {
           "type": "annunciator",
@@ -127,6 +146,10 @@
               "label": "COMM LOST",
               "color": "amber"
             }
+          ],
+          "at": [
+            126,
+            43
           ]
         },
         {
@@ -145,32 +168,57 @@
               "color": "blue"
             }
           ],
-          "label": "FLIGHT EVENTS"
+          "label": "FLIGHT EVENTS",
+          "at": [
+            76,
+            74
+          ]
         },
         {
           "type": "button",
           "id": "lamp_test",
           "label": "LAMP TEST",
-          "in": "lamp_test"
+          "in": "lamp_test",
+          "at": [
+            114,
+            74
+          ]
         },
         {
           "type": "buzzer",
           "id": "buzzer",
           "out": "buzzer",
-          "label": "TONE"
+          "label": "TONE",
+          "at": [
+            137,
+            74
+          ]
         }
-      ],
-      "class": "wide"
+      ]
     },
     {
+      "id": "displays",
       "title": "DISPLAYS",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        0
+      ],
+      "bus": "eng",
       "items": [
         {
           "type": "seg7",
           "id": "disp_a",
           "label": "DISP A",
           "digits": 7,
-          "out": "disp_a"
+          "out": "disp_a",
+          "at": [
+            34,
+            31
+          ]
         },
         {
           "type": "rotary",
@@ -184,6 +232,10 @@
             "VEL",
             "V/S",
             "MASS"
+          ],
+          "at": [
+            79,
+            31
           ]
         },
         {
@@ -192,26 +244,48 @@
           "label": "MET",
           "digits": 7,
           "out": "disp_met",
-          "color": "green"
+          "color": "green",
+          "at": [
+            32,
+            61
+          ]
         },
         {
           "type": "bar",
           "id": "bar_fuel",
           "label": "STAGE FUEL",
           "segments": 10,
-          "out": "bar_fuel"
+          "out": "bar_fuel",
+          "at": [
+            77,
+            61
+          ]
         },
         {
           "type": "bar",
           "id": "bar_throttle",
           "label": "THRUST",
           "segments": 10,
-          "out": "bar_thrust"
+          "out": "bar_thrust",
+          "at": [
+            50,
+            82
+          ]
         }
       ]
     },
     {
+      "id": "engine",
       "title": "ENGINE",
+      "size": [
+        2,
+        1
+      ],
+      "at": [
+        0,
+        1
+      ],
+      "bus": "eng",
       "items": [
         {
           "type": "guarded_toggle",
@@ -221,19 +295,31 @@
           "led": {
             "out": "led_eng_arm",
             "color": "green"
-          }
+          },
+          "at": [
+            29,
+            35
+          ]
         },
         {
           "type": "pot",
           "id": "throttle",
           "label": "THROTTLE",
-          "in": "throttle"
+          "in": "throttle",
+          "at": [
+            53,
+            35
+          ]
         },
         {
           "type": "guarded_toggle",
           "id": "stage_arm",
           "label": "STAGE ARM",
-          "in": "stage_arm"
+          "in": "stage_arm",
+          "at": [
+            76,
+            35
+          ]
         },
         {
           "type": "lamp_button",
@@ -241,14 +327,22 @@
           "label": "STAGE",
           "color": "green",
           "in": "stage",
-          "out": "lamp_stage"
+          "out": "lamp_stage",
+          "at": [
+            100,
+            35
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_stage",
           "label": "STAGE",
           "digits": 2,
-          "out": "disp_stage"
+          "out": "disp_stage",
+          "at": [
+            124,
+            35
+          ]
         },
         {
           "type": "lamp_button",
@@ -256,14 +350,22 @@
           "label": "CUTOFF",
           "color": "red",
           "in": "eng_cutoff",
-          "out": "lamp_cutoff"
+          "out": "lamp_cutoff",
+          "at": [
+            148,
+            35
+          ]
         },
         {
           "type": "pot",
           "id": "thrust_lim",
           "label": "THRUST LIMIT",
           "in": "thrust_lim",
-          "default": 1
+          "default": 1,
+          "at": [
+            173,
+            35
+          ]
         },
         {
           "type": "toggle",
@@ -273,12 +375,26 @@
           "led": {
             "out": "led_gimbal",
             "color": "amber"
-          }
+          },
+          "at": [
+            100,
+            78
+          ]
         }
       ]
     },
     {
-      "title": "ENGINES",
+      "id": "engines_abort",
+      "title": "ENGINES · ABORT",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        1
+      ],
+      "bus": "eng",
       "items": [
         {
           "type": "matrix",
@@ -286,7 +402,11 @@
           "label": "ENGINE STATUS",
           "out": "mx_eng",
           "rows": 9,
-          "cols": 9
+          "cols": 9,
+          "at": [
+            40,
+            34
+          ]
         },
         {
           "type": "seg7",
@@ -294,12 +414,65 @@
           "label": "BURNING",
           "digits": 2,
           "out": "disp_eng_on",
-          "color": "green"
+          "color": "green",
+          "at": [
+            76,
+            34
+          ]
+        },
+        {
+          "type": "rotary",
+          "id": "abort_mode",
+          "label": "ABORT MODE",
+          "in": "abort_mode",
+          "positions": [
+            "PAD",
+            "ASCENT",
+            "ORBIT",
+            "DESCENT"
+          ],
+          "at": [
+            26,
+            78
+          ]
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "abort_arm",
+          "label": "ABORT ARM",
+          "in": "abort_arm",
+          "color": "red",
+          "at": [
+            56,
+            78
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "abort",
+          "label": "ABORT",
+          "color": "red",
+          "in": "abort",
+          "out": "lamp_abort",
+          "at": [
+            80,
+            78
+          ]
         }
       ]
     },
     {
+      "id": "attitude_systems",
       "title": "ATTITUDE · SYSTEMS",
+      "size": [
+        2,
+        1
+      ],
+      "at": [
+        0,
+        2
+      ],
+      "bus": "eng",
       "items": [
         {
           "type": "toggle",
@@ -309,7 +482,11 @@
           "led": {
             "out": "led_sas",
             "color": "green"
-          }
+          },
+          "at": [
+            30,
+            35
+          ]
         },
         {
           "type": "rotary",
@@ -327,6 +504,10 @@
             "TGT",
             "A-TGT",
             "MNVR"
+          ],
+          "at": [
+            59,
+            35
           ]
         },
         {
@@ -338,6 +519,10 @@
             "ORBIT",
             "SURF",
             "TGT"
+          ],
+          "at": [
+            95,
+            35
           ]
         },
         {
@@ -361,6 +546,10 @@
               "label": "TGT",
               "color": "green"
             }
+          ],
+          "at": [
+            150,
+            35
           ]
         },
         {
@@ -371,7 +560,11 @@
           "led": {
             "out": "led_rcs",
             "color": "green"
-          }
+          },
+          "at": [
+            51,
+            71
+          ]
         },
         {
           "type": "toggle",
@@ -381,7 +574,11 @@
           "led": {
             "out": "led_rcs_fine",
             "color": "amber"
-          }
+          },
+          "at": [
+            75,
+            71
+          ]
         },
         {
           "type": "toggle",
@@ -391,7 +588,11 @@
           "led": {
             "out": "led_gear",
             "color": "green"
-          }
+          },
+          "at": [
+            99,
+            71
+          ]
         },
         {
           "type": "toggle",
@@ -401,46 +602,22 @@
           "led": {
             "out": "led_lights",
             "color": "white"
-          }
+          },
+          "at": [
+            122,
+            71
+          ]
         },
         {
           "type": "toggle",
           "id": "cb_main",
           "label": "CB MAIN BUS",
           "in": "cb_main",
-          "default": 1
-        }
-      ]
-    },
-    {
-      "title": "ABORT",
-      "items": [
-        {
-          "type": "rotary",
-          "id": "abort_mode",
-          "label": "ABORT MODE",
-          "in": "abort_mode",
-          "positions": [
-            "PAD",
-            "ASCENT",
-            "ORBIT",
-            "DESCENT"
+          "default": 1,
+          "at": [
+            147,
+            71
           ]
-        },
-        {
-          "type": "guarded_toggle",
-          "id": "abort_arm",
-          "label": "ABORT ARM",
-          "in": "abort_arm",
-          "color": "red"
-        },
-        {
-          "type": "lamp_button",
-          "id": "abort",
-          "label": "ABORT",
-          "color": "red",
-          "in": "abort",
-          "out": "lamp_abort"
         }
       ]
     }

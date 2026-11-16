@@ -2,54 +2,93 @@
   "id": "rdv",
   "title": "RENDEZVOUS · DOCKING",
   "fw": "virtual-0.1",
-  "sections": [
+  "board": "olimex-esp32-poe",
+  "panels": [
     {
+      "id": "target",
       "title": "TARGET",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "rdv",
       "items": [
         {
           "type": "alpha",
           "id": "txt_tgt",
           "label": "TARGET",
           "out": "txt_tgt",
-          "chars": 12
+          "chars": 12,
+          "at": [
+            40,
+            27
+          ]
         },
         {
           "type": "led",
           "id": "led_tgt",
           "label": "TGT",
           "out": "led_tgt",
-          "color": "green"
+          "color": "green",
+          "at": [
+            78,
+            27
+          ]
         },
         {
           "type": "led",
           "id": "led_port",
           "label": "PORT",
           "out": "led_port",
-          "color": "green"
+          "color": "green",
+          "at": [
+            14,
+            45
+          ]
         },
         {
           "type": "button",
           "id": "tgt_prev",
           "label": "◂ TGT",
-          "in": "tgt_prev"
+          "in": "tgt_prev",
+          "at": [
+            38,
+            45
+          ]
         },
         {
           "type": "button",
           "id": "tgt_next",
           "label": "TGT ▸",
-          "in": "tgt_next"
+          "in": "tgt_next",
+          "at": [
+            62,
+            45
+          ]
         },
         {
           "type": "button",
           "id": "port_next",
           "label": "PORT ▸",
-          "in": "port_next"
+          "in": "port_next",
+          "at": [
+            86,
+            45
+          ]
         },
         {
           "type": "button",
           "id": "tgt_clear",
           "label": "CLEAR",
-          "in": "tgt_clear"
+          "in": "tgt_clear",
+          "at": [
+            34,
+            70
+          ]
         },
         {
           "type": "toggle",
@@ -59,33 +98,59 @@
           "led": {
             "out": "led_ctrl_port",
             "color": "green"
-          }
+          },
+          "at": [
+            62,
+            70
+          ]
         }
       ]
     },
     {
+      "id": "rendezvous",
       "title": "RENDEZVOUS",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        0
+      ],
+      "bus": "rdv",
       "items": [
         {
           "type": "seg7",
           "id": "disp_range",
           "label": "RANGE M",
           "out": "disp_range",
-          "digits": 6
+          "digits": 6,
+          "at": [
+            40,
+            29
+          ]
         },
         {
           "type": "led",
           "id": "led_km",
           "label": "KM",
           "out": "led_km",
-          "color": "amber"
+          "color": "amber",
+          "at": [
+            76,
+            29
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_closing",
           "label": "CLOSING M/S",
           "out": "disp_closing",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            30,
+            52
+          ]
         },
         {
           "type": "seg7",
@@ -93,7 +158,11 @@
           "label": "GATE M/S",
           "out": "disp_gate",
           "digits": 5,
-          "color": "green"
+          "color": "green",
+          "at": [
+            70,
+            52
+          ]
         },
         {
           "type": "annunciator",
@@ -105,6 +174,10 @@
               "label": "OVERSPEED",
               "color": "amber"
             }
+          ],
+          "at": [
+            33,
+            75
           ]
         },
         {
@@ -113,26 +186,48 @@
           "label": "LOS °/MIN",
           "out": "disp_los",
           "digits": 4,
-          "color": "green"
+          "color": "green",
+          "at": [
+            64,
+            75
+          ]
         }
       ]
     },
     {
+      "id": "dock_1_face_the_port",
       "title": "DOCK 1 · FACE THE PORT",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        0
+      ],
+      "bus": "rdv",
       "items": [
         {
           "type": "seg7",
           "id": "disp_yaw",
           "label": "YAW ° (+ RIGHT)",
           "out": "disp_yaw",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            32,
+            40
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_pitch",
           "label": "PITCH ° (+ UP)",
           "out": "disp_pitch",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            72,
+            40
+          ]
         },
         {
           "type": "seg7",
@@ -140,7 +235,11 @@
           "label": "ROLL ° (+ RIGHT)",
           "out": "disp_roll",
           "digits": 5,
-          "color": "green"
+          "color": "green",
+          "at": [
+            36,
+            64
+          ]
         },
         {
           "type": "annunciator",
@@ -152,19 +251,37 @@
               "label": "ALIGNED",
               "color": "green"
             }
+          ],
+          "at": [
+            70,
+            64
           ]
         }
       ]
     },
     {
+      "id": "dock_2_centre",
       "title": "DOCK 2 · CENTRE",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        1
+      ],
+      "bus": "rdv",
       "items": [
         {
           "type": "seg7",
           "id": "disp_right",
           "label": "PORT IS RIGHT M",
           "out": "disp_right",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            35,
+            40
+          ]
         },
         {
           "type": "seg7",
@@ -172,14 +289,22 @@
           "label": "RATE M/S",
           "out": "disp_vright",
           "digits": 4,
-          "color": "green"
+          "color": "green",
+          "at": [
+            72,
+            40
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_up",
           "label": "PORT IS UP M",
           "out": "disp_up",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            33,
+            64
+          ]
         },
         {
           "type": "seg7",
@@ -187,19 +312,37 @@
           "label": "RATE M/S",
           "out": "disp_vup",
           "digits": 4,
-          "color": "green"
+          "color": "green",
+          "at": [
+            70,
+            64
+          ]
         }
       ]
     },
     {
-      "title": "DOCK 3 · CLOSE",
+      "id": "dock_3_close_docked",
+      "title": "DOCK 3 · CLOSE · DOCKED",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        1
+      ],
+      "bus": "rdv",
       "items": [
         {
           "type": "seg7",
           "id": "disp_axial",
           "label": "DISTANCE M",
           "out": "disp_axial",
-          "digits": 5
+          "digits": 5,
+          "at": [
+            35,
+            23
+          ]
         },
         {
           "type": "seg7",
@@ -207,7 +350,11 @@
           "label": "CLOSING M/S",
           "out": "disp_vaxial",
           "digits": 4,
-          "color": "green"
+          "color": "green",
+          "at": [
+            72,
+            23
+          ]
         },
         {
           "type": "annunciator",
@@ -219,13 +366,12 @@
               "label": "CAPTURE",
               "color": "green"
             }
+          ],
+          "at": [
+            22,
+            55
           ]
-        }
-      ]
-    },
-    {
-      "title": "DOCKED",
-      "items": [
+        },
         {
           "type": "annunciator",
           "id": "docked_box",
@@ -236,6 +382,10 @@
               "label": "DOCKED",
               "color": "white"
             }
+          ],
+          "at": [
+            51,
+            55
           ]
         },
         {
@@ -246,7 +396,11 @@
           "led": {
             "out": "led_undock_arm",
             "color": "amber"
-          }
+          },
+          "at": [
+            78,
+            55
+          ]
         },
         {
           "type": "lamp_button",
@@ -254,7 +408,11 @@
           "label": "UNDOCK",
           "color": "amber",
           "in": "undock",
-          "out": "led_undock_arm"
+          "out": "led_undock_arm",
+          "at": [
+            50,
+            84
+          ]
         }
       ]
     }

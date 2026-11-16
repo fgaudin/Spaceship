@@ -1,0 +1,33 @@
+{
+  "id": "mfd",
+  "title": "MULTI-FUNCTION DISPLAY",
+  "fw": "mfd-glass-0.1",
+  "board": "raspberry-pi",
+  "panels": [
+    {
+      "id": "mfd",
+      "title": "MFD",
+      "size": [
+        2,
+        2
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "screen": {
+        "page": "mfd.html",
+        "inches": 8,
+        "mm": [
+          162,
+          122
+        ],
+        "px": [
+          1024,
+          768
+        ]
+      },
+      "items": []
+    }
+  ]
+}

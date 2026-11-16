@@ -2,9 +2,20 @@
   "id": "com",
   "title": "COMMUNICATIONS",
   "fw": "virtual-0.1",
-  "sections": [
+  "board": "olimex-esp32-poe",
+  "panels": [
     {
-      "title": "LINK",
+      "id": "link_antenna",
+      "title": "LINK · ANTENNA",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "com",
       "items": [
         {
           "type": "annunciator",
@@ -22,6 +33,10 @@
               "label": "LOS",
               "color": "red"
             }
+          ],
+          "at": [
+            34,
+            24
           ]
         },
         {
@@ -29,21 +44,33 @@
           "id": "bar_signal",
           "label": "SIGNAL",
           "segments": 10,
-          "out": "bar_signal"
+          "out": "bar_signal",
+          "at": [
+            78,
+            24
+          ]
         },
         {
           "type": "alpha",
           "id": "txt_via",
           "label": "VIA",
           "out": "txt_via",
-          "chars": 12
+          "chars": 12,
+          "at": [
+            38,
+            45
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_hops",
           "label": "HOPS",
           "digits": 1,
-          "out": "disp_hops"
+          "out": "disp_hops",
+          "at": [
+            76,
+            45
+          ]
         },
         {
           "type": "seg7",
@@ -51,13 +78,12 @@
           "label": "IN THIS STATE MIN.SEC",
           "digits": 5,
           "out": "disp_link_time",
-          "color": "green"
-        }
-      ]
-    },
-    {
-      "title": "ANTENNA",
-      "items": [
+          "color": "green",
+          "at": [
+            33,
+            73
+          ]
+        },
         {
           "type": "toggle",
           "id": "antenna",
@@ -66,7 +92,11 @@
           "led": {
             "out": "led_antenna",
             "color": "green"
-          }
+          },
+          "at": [
+            71,
+            73
+          ]
         }
       ]
     }

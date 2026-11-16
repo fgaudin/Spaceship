@@ -1,0 +1,33 @@
+{
+  "id": "cam",
+  "title": "CAMERA MONITOR",
+  "fw": "cam-glass-0.1",
+  "board": "raspberry-pi",
+  "panels": [
+    {
+      "id": "cam",
+      "title": "MONITOR",
+      "size": [
+        3,
+        2
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "screen": {
+        "page": "cam.html",
+        "inches": 10.1,
+        "mm": [
+          217,
+          136
+        ],
+        "px": [
+          1280,
+          800
+        ]
+      },
+      "items": []
+    }
+  ]
+}

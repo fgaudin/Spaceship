@@ -3,20 +3,29 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Capsule · virtual panel</title>
+<title>Capsule · console</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="panel.css">
 </head>
 <body>
-<header class="topbar" data-subtitle="virtual panel">
+<header class="topbar" data-subtitle="console">
   <div class="links">
+    <span id="layout-status" class="layout-status" hidden></span>
     <span id="plant">plant: ?</span>
     <span id="cockpit">cockpit: ?</span>
+    <span class="zoom" aria-label="Zoom">
+      <button id="zoom-out" type="button" title="Zoom out">−</button>
+      <button id="zoom-fit" type="button" title="Fit to the window"><span id="zoom-level">100 %</span></button>
+      <button id="zoom-in" type="button" title="Zoom in">+</button>
+    </span>
+    <label class="sw-sniff" title="10 mm grid on every panel"><input type="checkbox" id="grid-toggle"> grid</label>
     <label class="sw-sniff"><input type="checkbox" id="sniff-toggle"> bus</label>
   </div>
 </header>
 
-<main id="panel" class="panel" aria-label="Panel"></main>
+<main id="console" class="console" aria-label="Console: the wheel zooms, dragging pans, double-click a module to fit it, Esc fits all">
+  <div id="overview" class="overview"></div>
+</main>
 
 <section class="bench" aria-label="Instructor bench">
   <div class="bench-title">INSTRUCTOR · BENCH</div>
@@ -24,7 +33,7 @@
   <label><input type="checkbox" data-failure="engine_out"> engine out</label>
   <label><input type="checkbox" data-failure="battery_short"> battery short</label>
   <label><input type="checkbox" data-failure="telemetry_freeze"> telemetry freeze</label>
-  <span class="bench-note">Mock plant only. Keys: <kbd>Space</kbd> stage (when armed), <kbd>↑</kbd>/<kbd>↓</kbd> throttle, <kbd>T</kbd> lamp test.</span>
+  <span class="bench-note">Mock plant only. Keys: <kbd>Space</kbd> stage (when armed), <kbd>↑</kbd>/<kbd>↓</kbd> throttle, <kbd>T</kbd> lamp test, <kbd>Esc</kbd> whole console. Mouse: wheel zooms, drag pans, double-click fits a module.</span>
 </section>
 
 <section id="sniffer" class="sniffer" hidden aria-label="Bus sniffer">

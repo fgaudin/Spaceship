@@ -1,0 +1,33 @@
+{
+  "id": "fdai",
+  "title": "ATTITUDE · FDAI",
+  "fw": "fdai-glass-0.1",
+  "board": "raspberry-pi",
+  "panels": [
+    {
+      "id": "fdai",
+      "title": "FDAI",
+      "size": [
+        2,
+        2
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "screen": {
+        "page": "fdai.html",
+        "inches": 8,
+        "mm": [
+          162,
+          122
+        ],
+        "px": [
+          1024,
+          768
+        ]
+      },
+      "items": []
+    }
+  ]
+}

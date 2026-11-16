@@ -103,8 +103,13 @@ Panels are **dumb I/O nodes**: publish raw input changes, drive outputs, debounc
 - Separate fused 12 V distribution with E-stop for shakers, fans, big backlights.
 
 ### Mechanical
-Panel grid on a standard (5.75" DZUS-style), laser-cut/3D-printed faceplates with backlit legends,
-aluminium extrusion frame, adjustable-depth mounts behind every window, enclosed black area behind windows.
+Panel grid in units of **1 U = 100 mm** (decided 2026-11-16, replacing the 5.75" Dzus-style grid): laser-cut or
+3D-printed faceplates of W×H U (mostly 1×1) with backlit legends, aluminium extrusion frame, adjustable-depth mounts
+behind every window, enclosed black area behind windows.
+- **Panel** = one faceplate. **Module** = one board (ESP32 PoE), one cable, one definition file; it carries one or more
+  panels on a frame adapter (3×1, 1×3, L…), and is what gets swapped or taken to the bench. A panel's topics belong to
+  the panel, so panels can move between modules without the cockpit logic noticing.
+- Definitions and the console layout: [protocol/panels/README.md](protocol/panels/README.md).
 
 ---
 

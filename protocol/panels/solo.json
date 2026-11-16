@@ -2,16 +2,31 @@
   "id": "solo",
   "title": "SOLO · FLIGHT DYNAMICS",
   "fw": "virtual-0.1",
-  "sections": [
+  "board": "olimex-esp32-poe",
+  "panels": [
     {
+      "id": "pad_request",
       "title": "PAD REQUEST",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "solo",
       "items": [
         {
           "type": "alpha",
           "id": "txt_fd",
           "label": "FLIGHT DYNAMICS",
           "out": "txt_fd",
-          "chars": 16
+          "chars": 16,
+          "at": [
+            52,
+            17
+          ]
         },
         {
           "type": "annunciator",
@@ -28,31 +43,51 @@
               "label": "REFUSED",
               "color": "amber"
             }
+          ],
+          "at": [
+            38,
+            35
           ]
         },
         {
           "type": "button",
           "id": "fd_circ",
           "label": "CIRC",
-          "in": "fd_circ"
+          "in": "fd_circ",
+          "at": [
+            76,
+            35
+          ]
         },
         {
           "type": "button",
           "id": "fd_plane",
           "label": "PLANE",
-          "in": "fd_plane"
+          "in": "fd_plane",
+          "at": [
+            26,
+            52
+          ]
         },
         {
           "type": "button",
           "id": "fd_rdv",
           "label": "RDV TGT",
-          "in": "fd_rdv"
+          "in": "fd_rdv",
+          "at": [
+            50,
+            52
+          ]
         },
         {
           "type": "button",
           "id": "fd_inject",
           "label": "INJECT",
-          "in": "fd_inject"
+          "in": "fd_inject",
+          "at": [
+            74,
+            52
+          ]
         },
         {
           "type": "rotary",
@@ -62,6 +97,10 @@
           "positions": [
             "MUN",
             "MINMUS"
+          ],
+          "at": [
+            50,
+            79
           ]
         }
       ]

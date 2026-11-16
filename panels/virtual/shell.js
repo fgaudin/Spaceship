@@ -9,18 +9,15 @@
    Adding a page: one line in PAGES. */
 
 export const PAGES = [
-  // [link, label]: I/O panels (drawn from protocol/panels/<id>.json by panel.js), then glass and station pages
-  ['index.html', 'ENG'], ['index.html?panel=sys', 'SYS'], ['index.html?panel=cmp', 'CMP'],
-  ['index.html?panel=rdv', 'RDV'], ['index.html?panel=com', 'COM'], ['index.html?panel=solo', 'SOLO'],
-  ['index.html?panel=lab', 'LAB'],
+  // [link, label]: the console of I/O modules (protocol/panels/console.json, drawn by panel.js), then glass and
+  // station pages
+  ['index.html', 'CONSOLE'],
   ['fdai.html', 'FDAI'], ['mfd.html', 'MFD'], ['cam.html', 'CAM'], ['simsup.html', 'SIMSUP'], ['mcc.html', 'MCC'],
 ];
 
-/* The page the browser is on, written as in PAGES ("index.html?panel=sys", "fdai.html"). */
+/* The page the browser is on, written as in PAGES ("index.html", "fdai.html"). */
 function currentLink() {
-  const file = location.pathname.split('/').pop() || 'index.html';
-  const panel = new URLSearchParams(location.search).get('panel');
-  return file === 'index.html' && panel && panel !== 'eng' ? `index.html?panel=${panel}` : file;
+  return location.pathname.split('/').pop() || 'index.html';
 }
 
 function element(tag, className, text) {
@@ -52,6 +49,22 @@ function buildTopBar() {
     navigation.append(anchor);
   }
   header.prepend(brand, connection, navigation);
+}
+
+/* A glass page shown inside the console (?embed=1, in its module's screen): no top bar, no notes, the content fitted
+   to the screen (see .embedded in panel.css); Esc and the wheel act on the console, as they do everywhere on it. */
+export const embedded = new URLSearchParams(location.search).has('embed');
+if (embedded) {
+  document.documentElement.classList.add('embedded');
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') window.parent.postMessage({ type: 'console-escape' }, location.origin);
+  });
+  // the wheel zooms the console, as it does everywhere else on it
+  window.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const pixels = event.deltaY * (event.deltaMode === 1 ? 33 : 1);
+    window.parent.postMessage({ type: 'console-wheel', pixels, x: event.clientX, y: event.clientY }, location.origin);
+  }, { passive: false });
 }
 
 buildTopBar();

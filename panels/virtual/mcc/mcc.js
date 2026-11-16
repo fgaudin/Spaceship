@@ -1,6 +1,6 @@
 /* Mission Control: one page, one tab per console. Each controller opens it on their own laptop and picks the
    consoles they hold: one, or several when there are fewer people than roles (FIDO + RETRO). The tabs are toggles;
-   the consoles held are shown one below the other. The choice is remembered on that laptop and kept in the address
+   the consoles held are shown side by side, each a standard screen of fixed layout, zoomed together to fit. The choice is remembered on that laptop and kept in the address
    (mcc.html#fido+retro).
 
    The footer and the poll banner speak for every console held: one GO / NO-GO answers for all of them (FLIGHT's
@@ -11,6 +11,9 @@ import { store, publish, met } from './bus.js';
 import { create, formatMet } from './ui.js';
 
 const UPDATE_EVERY_MS = 500;
+const CONSOLE_PX = [1200, 800];       // one console's standard screen (mcc.css)
+const CONSOLE_GAP_PX = 16;
+const MAX_ZOOM = 1.25;
 const REMEMBERED_ROLES_KEY = 'mcc-roles';
 const ROLE_SEPARATOR = '+';
 const roots = {};
@@ -72,6 +75,27 @@ function showRoles() {
   document.title = `MCC · ${names.join(' + ')}`;
   document.getElementById('my-roles').textContent = names.join(' + ');
   document.querySelector('.mcc-footer-poll').hidden = answeringRoles().length === 0;
+  fitConsoles();
+}
+
+/* The consoles held, side by side: the number of columns that lets them be drawn biggest in the window, all at the
+   same zoom. A console never reflows; only the zoom changes. */
+function fitConsoles() {
+  const holder = document.getElementById('consoles');
+  const count = heldRoles().length;
+  holder.style.zoom = 1;
+  const top = holder.getBoundingClientRect().top + window.scrollY;
+  const footer = document.querySelector('.mcc-footer').offsetHeight;
+  const available = [window.innerWidth - 2 * CONSOLE_GAP_PX, window.innerHeight - top - footer - 2 * CONSOLE_GAP_PX];
+  let best = { zoom: 0, columns: 1 };
+  for (let columns = 1; columns <= count; columns++) {
+    const rows = Math.ceil(count / columns);
+    const zoom = Math.min(available[0] / (columns * CONSOLE_PX[0] + (columns - 1) * CONSOLE_GAP_PX),
+      available[1] / (rows * CONSOLE_PX[1] + (rows - 1) * CONSOLE_GAP_PX));
+    if (zoom > best.zoom) best = { zoom, columns };
+  }
+  holder.style.gridTemplateColumns = `repeat(${best.columns}, ${CONSOLE_PX[0]}px)`;
+  holder.style.zoom = Math.min(MAX_ZOOM, best.zoom);
 }
 
 /* The answer of the consoles held: GO or NO-GO when they all agree, null otherwise (not yet, or mixed). */
@@ -88,7 +112,9 @@ function heldAnswer() {
 function updateBanner() {
   const poll = store['mcc/poll'] || {}, answer = heldAnswer();
   const banner = document.getElementById('poll-banner');
+  const wasHidden = banner.hidden;
   banner.hidden = answeringRoles().length === 0 || !poll.open;
+  if (banner.hidden !== wasHidden) fitConsoles();      // the banner takes room above the consoles
   if (banner.hidden) return;
   banner.classList.toggle('waiting', answer === null);
   banner.classList.toggle('answered-go', answer === true);
@@ -134,6 +160,7 @@ buildTabs();
 wireFooter();
 showRoles();
 window.addEventListener('hashchange', showRoles);
+window.addEventListener('resize', fitConsoles);
 setInterval(() => {
   for (const role of heldRoles()) CONSOLES.find((console) => console.id === role).module.update();
   updateFooter();

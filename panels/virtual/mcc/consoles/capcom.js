@@ -10,7 +10,7 @@ const feed = [];
 let setStatus, sendButton, feedList, form;
 
 export function mount(root) {
-  const padBox = box(root, 'PAD READ-UP');
+  const padBox = box(root, 'PAD READ-UP', { at: [0, 0] });
   form = create('form', 'mcc-pad');
   const field = (name, label, placeholder) => {
     const input = create('input');
@@ -39,9 +39,9 @@ export function mount(root) {
     publish('mcc/loop/capcom', { text: `PAD read up: TIG ${formatMet(tig)}, Δv ${delta.join(' / ')}`, met: met() });
   });
   padBox.append(form);
-  setStatus = figures(box(root, 'READBACK'), [['link', 'Link'], ['waiting', 'On the burn computer'], ['loaded', 'Loaded PAD']]);
+  setStatus = figures(box(root, 'READBACK', { at: [0, 1] }), [['link', 'Link'], ['waiting', 'On the burn computer'], ['loaded', 'Loaded PAD']]);
 
-  const crew = box(root, 'CREW ACTIONS', 'wide');
+  const crew = box(root, 'CREW ACTIONS', { at: [1, 0], size: [2, 2] });
   feedList = create('ol', 'mcc-feed');
   crew.append(feedList);
   onMessage((topic, payload, retained) => {

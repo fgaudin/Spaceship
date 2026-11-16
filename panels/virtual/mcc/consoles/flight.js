@@ -23,14 +23,14 @@ export function phase() {
 let setFigure, pollBoard, pollStatus, alarmsBox, loopList;
 
 export function mount(root) {
-  const status = box(root, 'STATUS', 'wide');
+  const status = box(root, 'STATUS', { at: [0, 0] });
   setFigure = figures(status, [['phase', 'Phase'], ['vessel', 'Vessel'], ['met', 'MET'], ['body', 'Body'],
     ['alt', 'Altitude'], ['speed', 'Speed'], ['link', 'Link'], ['tlm', 'Telemetry'], ['crew', 'Cockpit']]);
 
-  alarmsBox = box(root, "CREW'S ALARMS");
+  alarmsBox = box(root, "CREW'S ALARMS", { at: [1, 0] });
   alarmsBox.append(create('div', 'mcc-alarms'));
 
-  const poll = box(root, 'GO / NO-GO POLL', 'wide');
+  const poll = box(root, 'GO / NO-GO POLL', { at: [0, 1], size: [2, 1] });
   const form = create('form', 'mcc-inline');
   const question = create('input');
   question.placeholder = 'e.g. GO for TLI?';
@@ -50,7 +50,7 @@ export function mount(root) {
   pollBoard = create('div', 'mcc-poll');
   poll.append(form, pollStatus, pollBoard);
 
-  const loopBox = box(root, 'LOOP', 'wide');
+  const loopBox = box(root, 'LOOP', { at: [2, 0], size: [1, 2] });
   loopList = create('ol', 'mcc-feed');
   loopBox.append(loopList);
   onMessage((topic, payload, retained) => {

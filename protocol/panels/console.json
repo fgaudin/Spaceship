@@ -1,0 +1,105 @@
+{
+  "title": "CENTRE CONSOLE",
+  "zones": [
+    {
+      "id": "overhead",
+      "title": "OVERHEAD",
+      "size": [
+        8,
+        2
+      ],
+      "modules": [
+        {
+          "module": "sys",
+          "at": [
+            0,
+            0
+          ]
+        },
+        {
+          "module": "com",
+          "at": [
+            3,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "id": "main",
+      "title": "MAIN",
+      "size": [
+        8,
+        5
+      ],
+      "modules": [
+        {
+          "module": "fdai",
+          "at": [
+            0,
+            0
+          ]
+        },
+        {
+          "module": "mfd",
+          "at": [
+            0,
+            2
+          ]
+        },
+        {
+          "module": "eng",
+          "at": [
+            2,
+            0
+          ]
+        },
+        {
+          "module": "cmp",
+          "at": [
+            2,
+            3
+          ]
+        },
+        {
+          "module": "rdv",
+          "at": [
+            5,
+            0
+          ]
+        },
+        {
+          "module": "cam",
+          "at": [
+            5,
+            2
+          ]
+        }
+      ]
+    },
+    {
+      "id": "low",
+      "title": "LOW",
+      "size": [
+        8,
+        2
+      ],
+      "modules": [
+        {
+          "module": "lab",
+          "at": [
+            0,
+            0
+          ]
+        },
+        {
+          "module": "solo",
+          "at": [
+            3,
+            0
+          ]
+        }
+      ]
+    }
+  ]
+}

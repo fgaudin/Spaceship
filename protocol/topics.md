@@ -70,5 +70,7 @@ attitude angles). Seeded from the KSP self-test (`selftest/interface.md`).
 - A knob or switch that sets something the craft's builder may have set (thrust limiter, gimbal lock, control point,
   pause) commands the plant only when it moves: its first reported position after a restart is not a command.
 - Telemetry older than 2 s raises the `NO LINK` caution.
-- Panel definitions: `protocol/panels/<panel>.json` (controls, outputs, legends). The virtual panel is drawn from it; the
-  generic firmware will be generated from the same file.
+- Module definitions: `protocol/panels/<module>.json` (its panels, each W×H U with its bus namespace; their controls,
+  outputs, legends and mm positions), and `protocol/panels/console.json` (where the modules sit). The virtual console
+  is drawn from them; the generic firmware will be generated from the module file. See
+  [panels/README.md](panels/README.md).

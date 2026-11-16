@@ -1,40 +1,46 @@
-/* Virtual panel: a dumb I/O node in a browser, standing in for a hardware panel. It draws itself from
-   protocol/panels/<id>.json, publishes raw input changes on panel/<id>/in/<control> and draws whatever arrives on
-   panel/<id>/out/<output>. There are no rules here: interlocks, lamps and displays are the cockpit logic's job.
+/* The virtual console: every module of the capsule, drawn at its physical size and laid out as in the capsule, each one
+   a dumb I/O node standing in for its board. Nothing reflows: a module is W×H U (1 U = 100 mm), its panels sit at
+   fixed U positions and their controls at fixed mm positions; only the zoom changes.
 
-   URL: index.html?panel=<id>&broker=ws://host:9001 */
+     protocol/panels/console.json   the capsule: zones (overhead, main, low), each a grid of modules in U
+     protocol/panels/<module>.json  one module (one board): its panels, their controls, each panel's bus namespace
+
+   One view, like a map: the wheel zooms around the pointer, dragging pans, every control works at any zoom.
+   Double-click a module (or #<module> in the address) to fit it; Esc fits the whole console. Each module publishes
+   raw inputs on panel/<bus>/in/<control>, draws what arrives on panel/<bus>/out/<output> and its heartbeat on
+   panel/<module>/status, over its own bus connection like its board would. There are no rules here: interlocks,
+   lamps and displays are the cockpit logic's job.
+
+   URL: index.html[#<module>][?broker=ws://host:9001]; index.html?panel=<module> fits that module (old links). */
 
 import { connectBus, parse } from './bus.js';
 import { createElement, createWidgetBuilders } from './widgets.js';
 
+const U_MM = 100;
+const PX_PER_MM = 96 / 25.4;                 // CSS millimetres
+const MAX_FIT_ZOOM = 1;                      // fitting never draws bigger than real size; + does
+const ZOOM_STEP = 1.25;
+const VIEW_MARGIN_PX = 32;
+const LAYOUT_TOLERANCE_MM = 0.5;
 const RESTORE_WINDOW_MS = 700;      // after connecting, time given to the broker to send back the retained positions
 const STATUS_EVERY_MS = 5000;
 const SNIFFER_MAX_LINES = 300;
-// What only the sniffer wants to see. Subscribed to while it is open: the telemetry alone is 50 messages a second.
-const SNIFFER_ONLY_TOPICS = ['cmd/#', 'cw/#', 'tlm/#', 'sim/#'];
+const SNIFFER_TOPICS = ['panel/#', 'cmd/#', 'cw/#', 'tlm/#', 'sim/#'];
 const SNIFFER_MAX_PAYLOAD_CHARACTERS = 160;
 const THROTTLE_KEY_STEP = 0.05;
-// keyboard key → keypad key, for panels that have a keypad
+// keyboard key → keypad key, for consoles that have a keypad
 const KEYPAD_SHORTCUTS = {
-  Enter: 'ENTR', Backspace: 'CLR', Escape: 'CLR', '+': '+', '-': '-', '.': '.', ',': '.',
+  Enter: 'ENTR', Backspace: 'CLR', '+': '+', '-': '-', '.': '.', ',': '.',
 };
 
-const urlParameters = new URLSearchParams(location.search);
-const panelId = urlParameters.get('panel') || 'eng';
-const inputTopicPrefix = `panel/${panelId}/in/`;
-const outputTopicPrefix = `panel/${panelId}/out/`;
-const statusTopic = `panel/${panelId}/status`;
+const outputs = new Map();     // output topic → [{ module, draw }]
+const inputs = new Map();      // input topic  → { module, read, restore, retained, press?, nudge? }
+const inputsByName = new Map();// control name → input, for the keyboard shortcuts
+const keypadKeys = new Map();  // key → press()
+const modules = new Map();     // module id → { definition, element, home, sizeU, client, restoring }
+const layoutIssues = [];
 
-const registry = { outputs: new Map(), inputs: new Map(), keypadKeys: new Map() };
-let client = null;
-let restoringPositions = true;      // true while retained switch positions are being read back from the broker
-
-function publishInput(control, value, retained) {
-  if (!client || !client.connected) return;
-  client.publish(inputTopicPrefix + control, JSON.stringify({ v: value }), { qos: 1, retain: Boolean(retained) });
-}
-
-/* A short fingerprint of the panel definition, reported in the status so a stale panel can be spotted (FNV-1a). */
+/* A short fingerprint of a definition, reported in the status so a stale module can be spotted (FNV-1a). */
 function fingerprint(text) {
   let hash = 2166136261;
   for (let index = 0; index < text.length; index++) {
@@ -44,38 +50,343 @@ function fingerprint(text) {
   return (hash >>> 0).toString(16);
 }
 
-/* One plate per section of the definition, one widget per item. */
-function buildPanel(definition) {
-  document.title = `Capsule · ${definition.title}`;
-  if (definition.layout) document.body.classList.add(`layout-${definition.layout}`);
-  const builders = createWidgetBuilders(registry, publishInput);
-  const panel = document.getElementById('panel');
-  for (const section of definition.sections) {
-    const plate = createElement('section', `plate ${section.class || ''}`);
-    plate.append(createElement('div', 'plate-title', { textContent: section.title }), createElement('i', 'screw-b'));
-    for (const item of section.items) {
-      const wrapper = createElement('div', `ctl ${item.cls || ''} t-${item.type}`);
-      const build = builders[item.type];
-      const nodes = build ? build(item) : [createElement('div', 'sub', { textContent: `? ${item.type}` })];
-      wrapper.append(...nodes, createElement('div', 'lbl', { textContent: item.label }));
-      plate.appendChild(wrapper);
+const mm = (value) => `${value}mm`;
+
+/* The extent in U of things placed at `at` with a `size` (panels in a module, modules in a zone). */
+function extent(placed, sizeOf) {
+  let width = 0, height = 0;
+  for (const thing of placed) {
+    const [w, h] = sizeOf(thing);
+    width = Math.max(width, thing.at[0] + w);
+    height = Math.max(height, thing.at[1] + h);
+  }
+  return [width, height];
+}
+
+function overlapping(a, b) {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+function reportLayout(message, element) {
+  layoutIssues.push(message);
+  element?.classList.add('misplaced');
+  console.warn(`layout: ${message}`);
+}
+
+/* Things placed on a grid of U that overlap (panels in a module, modules in a zone). */
+function checkGrid(placed, sizeOf, nameOf, where) {
+  const boxes = placed.map((thing) => {
+    const [w, h] = sizeOf(thing);
+    return { name: nameOf(thing), left: thing.at[0], top: thing.at[1], right: thing.at[0] + w, bottom: thing.at[1] + h };
+  });
+  boxes.forEach((a, i) => boxes.slice(i + 1).forEach((b) => {
+    if (overlapping(a, b)) reportLayout(`${a.name} and ${b.name} overlap in ${where}`);
+  }));
+}
+
+/* One panel: a plate of W×H U with its engraved title and screws, each control at its mm position. */
+function buildPanel(module, panel) {
+  const [width, height] = panel.size;
+  const plate = createElement('section', 'plate', { title: `${panel.title} · ${width}×${height} U` });
+  Object.assign(plate.style, { left: mm(panel.at[0] * U_MM), top: mm(panel.at[1] * U_MM), width: mm(width * U_MM), height: mm(height * U_MM) });
+  plate.dataset.panel = panel.id;
+  plate.append(createElement('div', 'plate-title', { textContent: panel.title }), createElement('i', 'screw-b'));
+
+  if (panel.screen) plate.appendChild(buildScreen(module, panel));
+  const node = modules.get(module.id);
+  const prefix = `panel/${panel.bus}/`;
+  const publishInput = (name, value, retained) => {
+    if (node.client?.connected) node.client.publish(prefix + 'in/' + name, JSON.stringify({ v: value }), { qos: 1, retain: Boolean(retained) });
+  };
+  const scoped = {
+    outputs: { set: (name, draw) => {
+      const topic = prefix + 'out/' + name;
+      if (!outputs.has(topic)) outputs.set(topic, []);
+      outputs.get(topic).push({ module: module.id, draw });
+    } },
+    inputs: { set: (name, input) => {
+      const topic = prefix + 'in/' + name;
+      if (inputs.has(topic)) reportLayout(`${topic} is on two panels`);
+      inputs.set(topic, { ...input, module: module.id });
+      inputsByName.set(name, input);
+    } },
+    keypadKeys,
+  };
+  const builders = createWidgetBuilders(scoped, publishInput);
+  for (const item of panel.items || []) {
+    const control = createElement('div', `ctl ${item.cls || ''} t-${item.type}`);
+    const build = builders[item.type];
+    const nodes = build ? build(item) : [createElement('div', 'sub', { textContent: `? ${item.type}` })];
+    control.append(...nodes, createElement('div', 'lbl', { textContent: item.label }));
+    if (item.at) Object.assign(control.style, { left: mm(item.at[0]), top: mm(item.at[1]) });
+    else reportLayout(`${module.id}/${panel.id}/${item.id} has no position`, control);
+    control.dataset.item = item.id;
+    plate.appendChild(control);
+  }
+  return plate;
+}
+
+/* A glass panel's screen: the page at the screen's own resolution, scaled to the screen's size in mm and centred
+   under the panel's title. The page publishes its own status; the module has no I/O of its own. */
+const SCREEN_TOP_MM = 14;
+function buildScreen(module, panel) {
+  const { page, mm: [widthMm, heightMm], px: [widthPx, heightPx] } = panel.screen;
+  const frame = createElement('div', 'glass', { title: `${panel.screen.inches || ''}" screen, ${widthPx}×${heightPx}` });
+  const left = (panel.size[0] * U_MM - widthMm) / 2;
+  Object.assign(frame.style, { left: mm(left), top: mm(SCREEN_TOP_MM), width: mm(widthMm), height: mm(heightMm) });
+  if (left < 0 || SCREEN_TOP_MM + heightMm > panel.size[1] * U_MM) reportLayout(`${module.id}/${panel.id}: the screen does not fit the panel`, frame);
+  const broker = new URLSearchParams(location.search).get('broker');
+  const page_url = `${page}?embed=1${broker ? `&broker=${encodeURIComponent(broker)}` : ''}`;
+  const view = createElement('iframe', '', { src: page_url, title: panel.title, loading: 'eager' });
+  Object.assign(view.style, { width: `${widthPx}px`, height: `${heightPx}px`, transform: `scale(${(widthMm * PX_PER_MM) / widthPx})` });
+  frame.appendChild(view);
+  return frame;
+}
+
+/* One module: its panels on a grid of U, and the cover that opens it from the overview. */
+function buildModule(module) {
+  const sizeU = extent(module.panels, (panel) => panel.size);
+  const element = createElement('article', 'module', { id: `module-${module.id}` });
+  Object.assign(element.style, { width: mm(sizeU[0] * U_MM), height: mm(sizeU[1] * U_MM) });
+  modules.set(module.id, { definition: module, element, sizeU, client: null, restoring: true });
+  for (const panel of module.panels) element.appendChild(buildPanel(module, panel));
+  element.title = `${module.id.toUpperCase()} · ${module.title} · ${sizeU[0]}×${sizeU[1]} U · ${module.board} (double-click: fit)`;
+  checkGrid(module.panels, (panel) => panel.size, (panel) => panel.id, `module ${module.id}`);
+  return element;
+}
+
+function buildConsole(consoleLayout, definitions) {
+  const overview = document.getElementById('overview');
+  for (const zone of consoleLayout.zones) {
+    const placed = zone.modules.filter((entry) => {
+      if (definitions.has(entry.module)) return true;
+      reportLayout(`console.json places ${entry.module}, which has no file`);
+      return false;
+    });
+    const sizeOf = (entry) => modules.get(entry.module)?.sizeU || [0, 0];
+    const section = createElement('section', 'zone', { ariaLabel: zone.title });
+    const grid = createElement('div', 'zone-grid');
+    for (const entry of placed) {
+      const element = buildModule(definitions.get(entry.module));
+      Object.assign(element.style, { left: mm(entry.at[0] * U_MM), top: mm(entry.at[1] * U_MM) });
+      grid.appendChild(element);
     }
-    panel.appendChild(plate);
+    // a zone may be given a size, larger than what it holds, so that its free places show
+    const [usedWidth, usedHeight] = extent(placed, sizeOf);
+    const [width, height] = [Math.max(usedWidth, zone.size?.[0] || 0), Math.max(usedHeight, zone.size?.[1] || 0)];
+    if (zone.size && (usedWidth > zone.size[0] || usedHeight > zone.size[1])) reportLayout(`zone ${zone.id}: modules go past its size`);
+    Object.assign(grid.style, { width: mm(width * U_MM), height: mm(height * U_MM) });
+    checkGrid(placed, sizeOf, (entry) => entry.module, `zone ${zone.id}`);
+    section.append(createElement('div', 'zone-title', { textContent: zone.title }), grid);
+    overview.appendChild(section);
   }
 }
 
-/* The bus sniffer (the "bus" checkbox): a live list of messages, for debugging. Returns { sniff, isOpen };
-   `onToggle(open)` is called when the checkbox changes. */
-function createSniffer(onToggle) {
+/* Controls must sit inside their panel and not on top of one another (measured once drawn). */
+function checkControls() {
+  for (const plate of document.querySelectorAll('.plate')) {
+    const plateBox = plate.getBoundingClientRect();
+    const scale = plateBox.width / (plate.offsetWidth || 1);       // the zoom, so that the tolerance stays in mm
+    const tolerance = LAYOUT_TOLERANCE_MM * PX_PER_MM * scale;
+    const shrink = (box) => ({ left: box.left + tolerance, right: box.right - tolerance, top: box.top + tolerance, bottom: box.bottom - tolerance });
+    const controls = [...plate.querySelectorAll(':scope > .ctl')].map((element) => ({ element, box: shrink(element.getBoundingClientRect()) }));
+    const name = (element) => `${plate.closest('.module').id.replace('module-', '')}/${plate.dataset.panel}/${element.dataset.item}`;
+    for (const { element, box } of controls) {
+      if (box.left < plateBox.left || box.right > plateBox.right || box.top < plateBox.top || box.bottom > plateBox.bottom) {
+        reportLayout(`${name(element)} sticks out of its panel`, element);
+      }
+    }
+    controls.forEach((a, i) => controls.slice(i + 1).forEach((b) => {
+      if (overlapping(a.box, b.box)) reportLayout(`${name(a.element)} and ${name(b.element)} overlap`, b.element);
+    }));
+  }
+  const status = document.getElementById('layout-status');
+  status.hidden = layoutIssues.length === 0;
+  status.textContent = `layout: ${layoutIssues.length} issue${layoutIssues.length === 1 ? '' : 's'}`;
+  status.title = layoutIssues.join('\n');
+}
+
+/* ---------- the view: one console, zoomed with the wheel and panned by dragging ---------- */
+
+const MIN_ZOOM = 0.05;
+const MAX_ZOOM = 3;
+const WHEEL_ZOOM_RATE = 0.0015;              // per pixel of wheel travel
+const WHEEL_LINE_PX = 33;                    // a wheel that counts in lines (Firefox's mouse wheel)
+// where a press is meant for a control, not for panning
+const INTERACTIVE = 'button, input, a, select, textarea, label, iframe, .rotary-wrap, .keypad';
+const view = { zoom: 1 };
+const consoleBox = () => document.getElementById('console');
+const overview = () => document.getElementById('overview');
+
+function showZoom() {
+  document.getElementById('zoom-level').textContent = `${Math.round(view.zoom * 100)} %`;
+}
+
+/* The console fills the window under the top bar; the bench and the sniffer are below it. */
+function sizeConsoleBox() {
+  const box = consoleBox();
+  box.style.height = `${Math.max(200, window.innerHeight - box.offsetTop)}px`;
+}
+
+/* Zoom, keeping the point of the console under (x, y) where it is. */
+function zoomAt(zoom, x, y) {
+  const box = consoleBox(), content = overview();
+  const before = content.getBoundingClientRect();
+  const across = (x - before.left) / before.width, down = (y - before.top) / before.height;
+  view.zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom));
+  content.style.zoom = view.zoom;
+  const after = content.getBoundingClientRect();
+  box.scrollLeft += after.left + across * after.width - x;
+  box.scrollTop += after.top + down * after.height - y;
+  showZoom();
+}
+
+function zoomAtCentre(zoom) {
+  const box = consoleBox().getBoundingClientRect();
+  zoomAt(zoom, box.left + box.width / 2, box.top + box.height / 2);
+}
+
+/* Zoom so that an element (a module, or the whole console) fills the window, never above real size, and centre it. */
+function fit(element) {
+  const box = consoleBox(), content = overview();
+  const rect = element.getBoundingClientRect();
+  const natural = [rect.width / view.zoom, rect.height / view.zoom];
+  view.zoom = Math.min(MAX_FIT_ZOOM, (box.clientWidth - VIEW_MARGIN_PX) / natural[0], (box.clientHeight - VIEW_MARGIN_PX) / natural[1]);
+  content.style.zoom = view.zoom;
+  const target = element.getBoundingClientRect(), frame = box.getBoundingClientRect();
+  box.scrollLeft += target.left + target.width / 2 - (frame.left + frame.width / 2);
+  box.scrollTop += target.top + target.height / 2 - (frame.top + frame.height / 2);
+  showZoom();
+}
+
+/* #<module> fits that module; no hash, the whole console. */
+function showView() {
+  const wanted = decodeURIComponent(location.hash.slice(1));
+  const module = modules.get(wanted);
+  fit(module ? module.element : overview());
+  document.title = module ? `Capsule · ${wanted.toUpperCase()}` : 'Capsule · console';
+}
+
+function fitAll() {
+  if (location.hash) location.hash = '';          // hashchange fits
+  else showView();
+}
+
+function fitModule(id) {
+  if (location.hash === `#${id}`) showView();
+  else location.hash = id;
+}
+
+function wireViews() {
+  const box = consoleBox();
+  box.addEventListener('wheel', (event) => {
+    if (event.defaultPrevented) return;            // a knob took it
+    event.preventDefault();
+    const pixels = event.deltaY * (event.deltaMode === 1 ? WHEEL_LINE_PX : 1);
+    zoomAt(view.zoom * Math.exp(-pixels * WHEEL_ZOOM_RATE), event.clientX, event.clientY);
+  }, { passive: false });
+
+  // Drag to pan: the left button on anything that is not a control, or the middle button anywhere.
+  let drag = null;
+  box.addEventListener('pointerdown', (event) => {
+    const middle = event.button === 1;
+    if (!middle && (event.button !== 0 || event.target.closest(INTERACTIVE))) return;
+    if (middle) event.preventDefault();
+    drag = { x: event.clientX, y: event.clientY, left: box.scrollLeft, top: box.scrollTop, id: event.pointerId };
+    box.setPointerCapture(event.pointerId);
+    box.classList.add('panning');
+  });
+  box.addEventListener('pointermove', (event) => {
+    if (!drag || event.pointerId !== drag.id) return;
+    box.scrollLeft = drag.left - (event.clientX - drag.x);
+    box.scrollTop = drag.top - (event.clientY - drag.y);
+  });
+  const endDrag = () => { drag = null; box.classList.remove('panning'); };
+  box.addEventListener('pointerup', endDrag);
+  box.addEventListener('pointercancel', endDrag);
+  box.addEventListener('auxclick', (event) => { if (event.button === 1) event.preventDefault(); });
+
+  // Double-click on a module (not on a control): fit it.
+  box.addEventListener('dblclick', (event) => {
+    // the target is the console itself when panning captured the pointer: look under the pointer instead
+    const under = document.elementFromPoint(event.clientX, event.clientY);
+    const module = under?.closest('.module');
+    if (module && !under.closest(INTERACTIVE)) fitModule(module.id.replace('module-', ''));
+  });
+
+  // The wheel over a glass page: the page sends it here (shell.js), in its own coordinates.
+  window.addEventListener('message', (event) => {
+    if (event.origin !== location.origin) return;
+    if (event.data?.type === 'console-escape') fitAll();
+    if (event.data?.type !== 'console-wheel') return;
+    const frame = [...document.querySelectorAll('.glass iframe')].find((element) => element.contentWindow === event.source);
+    if (!frame) return;
+    const rect = frame.getBoundingClientRect();
+    const scale = rect.height / frame.clientHeight;     // the page's pixels → the window's (its wheel travel too)
+    const x = rect.left + event.data.x * scale, y = rect.top + event.data.y * scale;
+    zoomAt(view.zoom * Math.exp(-event.data.pixels * scale * WHEEL_ZOOM_RATE), x, y);
+  });
+
+  window.addEventListener('hashchange', showView);
+  window.addEventListener('resize', sizeConsoleBox);
+  document.getElementById('zoom-in').addEventListener('click', () => zoomAtCentre(view.zoom * ZOOM_STEP));
+  document.getElementById('zoom-out').addEventListener('click', () => zoomAtCentre(view.zoom / ZOOM_STEP));
+  document.getElementById('zoom-fit').addEventListener('click', fitAll);
+  document.getElementById('grid-toggle').addEventListener('change', (event) => document.body.classList.toggle('show-grid', event.target.checked));
+}
+
+/* ---------- the bus ---------- */
+
+/* Each module is its own node on the bus, as its board will be: its own connection, heartbeat and will. */
+function connectModule(node) {
+  const { definition } = node;
+  const statusTopic = `panel/${definition.id}/status`;
+  const buses = [...new Set(definition.panels.map((panel) => panel.bus))];
+  const definitionFingerprint = fingerprint(JSON.stringify(definition));
+  const startedAt = Date.now();
+  const publishStatus = () => node.client.publish(statusTopic, JSON.stringify({
+    online: true, fw: definition.fw, config: definitionFingerprint, uptime: Math.round((Date.now() - startedAt) / 1000),
+  }), { qos: 1, retain: true });
+  const ownInputs = () => [...inputs.entries()].filter(([, input]) => input.module === definition.id);
+
+  node.client = connectBus({
+    name: `panel-${definition.id}`,
+    will: { topic: statusTopic, payload: { online: false } },
+    onConnect(client) {
+      node.restoring = true;
+      client.subscribe(buses.flatMap((bus) => [`panel/${bus}/in/#`, `panel/${bus}/out/#`]), { qos: 1 });
+      // Switch positions are retained on the broker: take them back first, then publish every retained input once
+      // (on the very first run, that publishes the defaults).
+      setTimeout(() => {
+        node.restoring = false;
+        for (const [topic, input] of ownInputs()) {
+          if (input.retained) client.publish(topic, JSON.stringify({ v: input.read() }), { qos: 1, retain: true });
+        }
+      }, RESTORE_WINDOW_MS);
+      publishStatus();
+    },
+    onMessage(topic, payloadText, packet) {
+      const payload = parse(payloadText);
+      if (payload === undefined) return;
+      if (topic.includes('/out/')) {
+        for (const output of outputs.get(topic) || []) if (output.module === definition.id) output.draw(payload);
+      } else if (topic.includes('/in/')) {
+        // our own inputs echo back; only the retained ones seen while connecting are positions to restore
+        const input = inputs.get(topic);
+        if (node.restoring && packet.retain && input?.retained && input.module === definition.id) input.restore(payload.v);
+      }
+    },
+  });
+  setInterval(() => { if (node.client.connected) publishStatus(); }, STATUS_EVERY_MS);
+}
+
+/* The bus sniffer (the "bus" checkbox): a live list of messages, for debugging. */
+function createSniffer() {
   const box = document.getElementById('sniffer');
   const list = document.getElementById('sniff-list');
   const topicFilter = document.getElementById('sniff-filter');
   const showTelemetry = document.getElementById('sniff-tlm');
   const startedAt = performance.now();
-  document.getElementById('sniff-toggle').addEventListener('change', (event) => {
-    box.hidden = !event.target.checked;
-    onToggle(event.target.checked);
-  });
   document.getElementById('sniff-clear').addEventListener('click', () => { list.textContent = ''; });
   function sniff(topic, payloadText) {
     if (box.hidden) return;
@@ -91,78 +402,53 @@ function createSniffer(onToggle) {
     list.prepend(line);
     while (list.childElementCount > SNIFFER_MAX_LINES) list.lastChild.remove();
   }
-  return { sniff, isOpen: () => !box.hidden };
+  return { sniff, box };
 }
 
-function connectToBus(definition) {
-  const sniffer = createSniffer((open) => {
+/* The console's own connection: plant and cockpit status in the top bar, the sniffer, the instructor bench. */
+function connectConsole() {
+  const sniffer = createSniffer();
+  const client = connectBus({
+    name: 'console',
+    onConnect(connected) {
+      connected.subscribe(['gateway/status', 'cockpit/status'], { qos: 1 });
+      if (!sniffer.box.hidden) connected.subscribe(SNIFFER_TOPICS, { qos: 1 });
+    },
+    onMessage(topic, payloadText) {
+      sniffer.sniff(topic, payloadText);
+      const payload = parse(payloadText);
+      if (payload === undefined) return;
+      if (topic === 'gateway/status') {
+        const vessel = payload.vessel ? ` · ${payload.vessel}` : '';
+        document.getElementById('plant').textContent = `plant: ${payload.plant || '?'} ${payload.connected ? '✓' : '✗'}${vessel}`;
+      } else if (topic === 'cockpit/status') {
+        document.getElementById('cockpit').textContent = `cockpit: ${payload.online ? '✓' : '✗'}`;
+      }
+    },
+  });
+  document.getElementById('sniff-toggle').addEventListener('change', (event) => {
+    sniffer.box.hidden = !event.target.checked;
     if (!client.connected) return;
-    if (open) client.subscribe(SNIFFER_ONLY_TOPICS, { qos: 1 });
-    else client.unsubscribe(SNIFFER_ONLY_TOPICS);
+    if (event.target.checked) client.subscribe(SNIFFER_TOPICS, { qos: 1 });
+    else client.unsubscribe(SNIFFER_TOPICS);
   });
-  const definitionFingerprint = fingerprint(JSON.stringify(definition));
-  const startedAt = Date.now();
-  const publishStatus = () => client.publish(statusTopic, JSON.stringify({
-    online: true, fw: definition.fw, config: definitionFingerprint, uptime: Math.round((Date.now() - startedAt) / 1000),
-  }), { qos: 1, retain: true });
-
-  // The "will" tells the bus the panel is gone if the page closes.
-  client = connectBus({
-    name: `panel-${panelId}`,
-    will: { topic: statusTopic, payload: { online: false } },
-    onConnect,
-    onMessage,
-  });
-
-  function onConnect() {
-    restoringPositions = true;
-    client.subscribe([`${inputTopicPrefix}#`, `${outputTopicPrefix}#`, 'gateway/status', 'cockpit/status'], { qos: 1 });
-    if (sniffer.isOpen()) client.subscribe(SNIFFER_ONLY_TOPICS, { qos: 1 });
-    // Switch positions are retained on the broker: take them back first, then publish every retained input once
-    // (on the very first run, that publishes the defaults).
-    setTimeout(() => {
-      restoringPositions = false;
-      for (const [name, input] of registry.inputs) if (input.retained) publishInput(name, input.read(), true);
-    }, RESTORE_WINDOW_MS);
-    publishStatus();
-  }
-
-  function onMessage(topic, payloadText, packet) {
-    sniffer.sniff(topic, payloadText);
-    const payload = parse(payloadText);
-    if (payload === undefined) return;
-    if (topic.startsWith(outputTopicPrefix)) {
-      const draw = registry.outputs.get(topic.slice(outputTopicPrefix.length));
-      if (draw) draw(payload);
-    } else if (topic.startsWith(inputTopicPrefix)) {
-      // our own inputs echo back; only the retained ones seen while connecting are positions to restore
-      const input = registry.inputs.get(topic.slice(inputTopicPrefix.length));
-      if (restoringPositions && packet.retain && input && input.retained) input.restore(payload.v);
-    } else if (topic === 'gateway/status') {
-      const vessel = payload.vessel ? ` · ${payload.vessel}` : '';
-      document.getElementById('plant').textContent = `plant: ${payload.plant || '?'} ${payload.connected ? '✓' : '✗'}${vessel}`;
-    } else if (topic === 'cockpit/status') {
-      document.getElementById('cockpit').textContent = `cockpit: ${payload.online ? '✓' : '✗'}`;
-    }
-  }
-  setInterval(() => { if (client.connected) publishStatus(); }, STATUS_EVERY_MS);
-}
-
-/* The instructor's bench strip: reset the mock plant and inject failures. */
-function wireInstructorBench() {
   document.querySelectorAll('[data-bench]').forEach((button) => button.addEventListener('click', () =>
     client.publish(button.dataset.bench, '{}', { qos: 1 })));
   document.querySelectorAll('[data-failure]').forEach((checkbox) => checkbox.addEventListener('change', () =>
     client.publish(`sim/failures/${checkbox.dataset.failure}`, JSON.stringify({ on: checkbox.checked }), { qos: 1, retain: true })));
 }
 
-/* Keyboard: keypad keys on panels that have one; Space = STAGE, T = lamp test, arrows = throttle. */
+/* Keyboard: Esc fits the whole console; keypad keys (Backspace = CLR); Space = STAGE, T = lamp test, arrows = throttle. */
 function wireKeyboard() {
-  const { inputs, keypadKeys } = registry;
   const heldKeys = new Set();     // so that a held key presses its button once
   window.addEventListener('keydown', (event) => {
-    const typingInAField = event.target.tagName === 'INPUT' && event.target.type !== 'range';
+    const typingInAField = event.target.tagName === 'INPUT' && !['range', 'checkbox'].includes(event.target.type);
     if (typingInAField || heldKeys.has(event.code)) return;
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      fitAll();
+      return;
+    }
     if (keypadKeys.size && !event.ctrlKey && !event.metaKey && !event.altKey) {
       const singleCharacter = event.key.length === 1 ? event.key.toLowerCase() : event.key;
       const key = /^[0-9]$/.test(event.key) ? event.key : KEYPAD_SHORTCUTS[singleCharacter];
@@ -172,24 +458,42 @@ function wireKeyboard() {
         return;
       }
     }
-    if (event.code === 'Space' && event.target === document.body) {
+    if (event.code === 'Space' && (event.target === document.body || event.target === consoleBox())) {
       event.preventDefault();
       heldKeys.add(event.code);
-      inputs.get('stage')?.press(true);
+      inputsByName.get('stage')?.press(true);
     }
-    if (event.code === 'KeyT') { heldKeys.add(event.code); inputs.get('lamp_test')?.press(true); }
-    if (event.code === 'ArrowUp') { event.preventDefault(); inputs.get('throttle')?.nudge(THROTTLE_KEY_STEP); }
-    if (event.code === 'ArrowDown') { event.preventDefault(); inputs.get('throttle')?.nudge(-THROTTLE_KEY_STEP); }
+    if (event.code === 'KeyT') { heldKeys.add(event.code); inputsByName.get('lamp_test')?.press(true); }
+    if (event.code === 'ArrowUp') { event.preventDefault(); inputsByName.get('throttle')?.nudge(THROTTLE_KEY_STEP); }
+    if (event.code === 'ArrowDown') { event.preventDefault(); inputsByName.get('throttle')?.nudge(-THROTTLE_KEY_STEP); }
   });
   window.addEventListener('keyup', (event) => {
     heldKeys.delete(event.code);
-    if (event.code === 'Space') inputs.get('stage')?.press(false);
-    if (event.code === 'KeyT') inputs.get('lamp_test')?.press(false);
+    if (event.code === 'Space') inputsByName.get('stage')?.press(false);
+    if (event.code === 'KeyT') inputsByName.get('lamp_test')?.press(false);
   });
 }
 
-const definition = await (await fetch(`panels/${panelId}.json`, { cache: 'no-store' })).json();
-buildPanel(definition);
-connectToBus(definition);
-wireInstructorBench();
+async function fetchJson(path) {
+  return (await fetch(path, { cache: 'no-store' })).json();
+}
+
+const consoleLayout = await fetchJson('panels/console.json');
+const ids = [...new Set(consoleLayout.zones.flatMap((zone) => zone.modules.map((entry) => entry.module)))];
+const definitions = new Map((await Promise.all(ids.map(async (id) => {
+  try { return [id, await fetchJson(`panels/${id}.json`)]; } catch { return null; }
+}))).filter(Boolean));
+
+const oldPanelLink = new URLSearchParams(location.search).get('panel');
+if (oldPanelLink && !location.hash) history.replaceState(null, '', `#${oldPanelLink}`);
+
+buildConsole(consoleLayout, definitions);
+wireViews();
 wireKeyboard();
+sizeConsoleBox();
+showView();
+requestAnimationFrame(() => requestAnimationFrame(checkControls));
+// a module made only of glass has no I/O: its pages connect themselves
+for (const node of modules.values()) if (node.definition.panels.some((panel) => panel.items?.length)) connectModule(node);
+
+connectConsole();

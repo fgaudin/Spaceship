@@ -2,9 +2,20 @@
   "id": "cmp",
   "title": "BURN COMPUTER",
   "fw": "virtual-0.1",
-  "sections": [
+  "board": "olimex-esp32-poe",
+  "panels": [
     {
+      "id": "pad",
       "title": "PAD",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "cmp",
       "items": [
         {
           "type": "lamp_button",
@@ -12,14 +23,22 @@
           "label": "TIG",
           "color": "green",
           "in": "f_tig",
-          "out": "led_f_tig"
+          "out": "led_f_tig",
+          "at": [
+            26,
+            24
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_tig",
-          "label": "TIG H.M.S",
+          "label": "",
           "out": "disp_tig",
-          "digits": 6
+          "digits": 6,
+          "at": [
+            62,
+            24
+          ]
         },
         {
           "type": "lamp_button",
@@ -27,14 +46,22 @@
           "label": "PRO",
           "color": "green",
           "in": "f_pro",
-          "out": "led_f_pro"
+          "out": "led_f_pro",
+          "at": [
+            26,
+            43
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_pro",
-          "label": "ΔV PROGRADE",
+          "label": "",
           "out": "disp_pro",
-          "digits": 6
+          "digits": 6,
+          "at": [
+            62,
+            43
+          ]
         },
         {
           "type": "lamp_button",
@@ -42,14 +69,22 @@
           "label": "NRM",
           "color": "green",
           "in": "f_nrm",
-          "out": "led_f_nrm"
+          "out": "led_f_nrm",
+          "at": [
+            26,
+            62
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_nrm",
-          "label": "ΔV NORMAL",
+          "label": "",
           "out": "disp_nrm",
-          "digits": 6
+          "digits": 6,
+          "at": [
+            62,
+            62
+          ]
         },
         {
           "type": "lamp_button",
@@ -57,20 +92,37 @@
           "label": "RAD",
           "color": "green",
           "in": "f_rad",
-          "out": "led_f_rad"
+          "out": "led_f_rad",
+          "at": [
+            26,
+            80
+          ]
         },
         {
           "type": "seg7",
           "id": "disp_rad",
-          "label": "ΔV RADIAL",
+          "label": "",
           "out": "disp_rad",
-          "digits": 6
+          "digits": 6,
+          "at": [
+            62,
+            80
+          ]
         }
-      ],
-      "class": "pairs"
+      ]
     },
     {
+      "id": "entry",
       "title": "ENTRY",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        0
+      ],
+      "bus": "cmp",
       "items": [
         {
           "type": "keypad",
@@ -108,7 +160,11 @@
           "labels": {
             "-": "+/−",
             "ENTR": "ENTER"
-          }
+          },
+          "at": [
+            52,
+            44
+          ]
         },
         {
           "type": "lamp_button",
@@ -116,25 +172,47 @@
           "label": "UPLINK ACCEPT",
           "color": "amber",
           "in": "pad_accept",
-          "out": "lamp_uplink"
+          "out": "lamp_uplink",
+          "at": [
+            26,
+            84
+          ]
         },
         {
           "type": "button",
           "id": "pad_clr",
           "label": "PAD CLEAR",
-          "in": "pad_clr"
+          "in": "pad_clr",
+          "at": [
+            50,
+            84
+          ]
         },
         {
           "type": "led",
           "id": "lamp_err",
           "label": "ENTRY ERR",
           "out": "lamp_err",
-          "color": "amber"
+          "color": "amber",
+          "at": [
+            74,
+            84
+          ]
         }
       ]
     },
     {
+      "id": "burn",
       "title": "BURN",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        0
+      ],
+      "bus": "cmp",
       "items": [
         {
           "type": "seg7",
@@ -142,7 +220,11 @@
           "label": "TIME TO TIG",
           "out": "disp_tfi",
           "digits": 5,
-          "color": "green"
+          "color": "green",
+          "at": [
+            32,
+            28
+          ]
         },
         {
           "type": "seg7",
@@ -150,7 +232,11 @@
           "label": "ΔV TO GO",
           "out": "disp_vg",
           "digits": 5,
-          "color": "green"
+          "color": "green",
+          "at": [
+            72,
+            28
+          ]
         },
         {
           "type": "seg7",
@@ -158,7 +244,11 @@
           "label": "BURN TIME S",
           "out": "disp_tb",
           "digits": 4,
-          "color": "green"
+          "color": "green",
+          "at": [
+            21,
+            56
+          ]
         },
         {
           "type": "seg7",
@@ -166,7 +256,11 @@
           "label": "ATT ERR °",
           "out": "disp_att",
           "digits": 4,
-          "color": "green"
+          "color": "green",
+          "at": [
+            55,
+            56
+          ]
         },
         {
           "type": "toggle",
@@ -176,7 +270,11 @@
           "led": {
             "out": "led_burn_arm",
             "color": "green"
-          }
+          },
+          "at": [
+            84,
+            56
+          ]
         },
         {
           "type": "annunciator",
@@ -198,6 +296,10 @@
               "label": "CUTOFF",
               "color": "white"
             }
+          ],
+          "at": [
+            50,
+            81
           ]
         }
       ]

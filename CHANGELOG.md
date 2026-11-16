@@ -3,6 +3,43 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-17 — glass modules in the console; MCC consoles of a standard size
+
+- **FDAI, MFD and CAM in the console**, as glass modules (`board: raspberry-pi`): a panel with a `screen` (page,
+  inches, visible size in mm, resolution in px). The console shows the live page at the screen's resolution, scaled
+  to its size: FDAI and MFD 2×2 U with an 8" 4:3 screen (1024 × 768), CAM 3×2 U with a 10.1" 16:10 one
+  (1280 × 800). `?embed=1` drops a page's top bar and notes and fits it to the screen; Esc inside it goes back.
+- **Console layout:** MAIN is 8 × 5 U (FDAI and MFD left of ENG, CMP under ENG, RDV and CAM on the right, a free row
+  at the bottom); OVERHEAD and LOW 8 × 2. A zone can now be given a `size`, so its free places show.
+- **Fix:** the console's fixed plates had broken the FDAI, MFD and CAM pages' own plates (no padding, no title);
+  the fixed geometry now applies to console panels only.
+- **The console is one zoomable view**, replacing the overview and module view: the wheel zooms around the pointer
+  (over a rotary knob, the wheel still turns the knob; over a glass screen, the page passes it on), dragging pans
+  (middle button anywhere, left button off the controls), every control works at any zoom, so several modules can be
+  flown at once. Double-click a module (or `#<module>`) fits it, Esc fits the whole console; Esc no longer clears
+  the keypad (Backspace does).
+- **MCC:** every console is one standard screen of 1200 × 800 with its boxes on a fixed 3 × 2 grid of tiles; a box
+  longer than its tiles scrolls. A laptop holding several consoles shows them side by side, all at the same zoom,
+  in the number of columns that draws them biggest. Checked: the multi-console poll and banner tests pass.
+
+## 2026-11-16 — the console: modules and panels at their physical size
+
+- **Units.** 1 U = 100 mm. A *panel* is one faceplate of W×H U; a *module* is one board (Olimex ESP32-POE, one PoE
+  cable, one file) carrying one or more panels, swapped or taken to the bench as a unit. Format and how to change a
+  layout: `protocol/panels/README.md`.
+- **Definitions.** `protocol/panels/<module>.json` now lists `panels` (size and place in U, bus namespace) whose
+  controls have fixed `at` positions in mm, instead of `sections` that flowed. Positions and sizes were measured from
+  the old layout: every panel came out 1×1 or 2×1. Nearly empty sections were merged (ANTENNA into LINK, DOCKED into
+  DOCK 3, ENGINES with ABORT), and the PAD displays lost their labels (the field buttons say the same).
+  A panel's topics are its own (`"bus"`), so moving it to another module changes nothing on the bus.
+- **One console page.** `protocol/panels/console.json` places the modules in three zones (overhead, main, low); the
+  page draws them all, live, zoomed to fit; a click opens a module at real size with its controls usable, Esc goes
+  back, `index.html#<module>` opens one directly (`?panel=<id>` still works). Nothing reflows: on a phone the same
+  layout is just smaller. A grid checkbox draws 10 mm squares; misplaced controls, overlapping panels or modules
+  are outlined in red and counted in the top bar. The seven I/O tabs became one CONSOLE link.
+- Each virtual module has its own bus connection, heartbeat and will, as its board will.
+- `PLAN.md` (mechanical: 100 mm U instead of the Dzus grid; panel and module) and `PANELS.md` updated.
+
 ## 2026-11-16 — shared top bar and bus connection for the web pages
 
 - `panels/virtual/shell.js` builds every page's top bar (brand, bus light, navigation) from one list of pages; each

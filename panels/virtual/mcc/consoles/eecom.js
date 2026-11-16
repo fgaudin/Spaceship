@@ -6,9 +6,9 @@ import { store, vessel, met } from '../bus.js';
 let setPower, setThermal, setComm, lastCharge = null, chargeRate = null;
 
 export function mount(root) {
-  setPower = figures(box(root, 'ELECTRICAL'), [['ec', 'Charge'], ['rate', 'Trend'], ['endurance', 'Lasts'], ['solar', 'Solar panels'], ['lights', 'Lights']]);
-  setThermal = figures(box(root, 'THERMAL · CONSUMABLES'), [['heat', 'Hottest part'], ['mono', 'Monopropellant'], ['lf', 'Fuel (vessel)'], ['ox', 'Oxidizer (vessel)']]);
-  setComm = figures(box(root, 'COMMUNICATIONS'), [['link', 'Link'], ['strength', 'Signal'], ['via', 'Via'], ['hops', 'Hops'], ['antenna', 'Antennas']]);
+  setPower = figures(box(root, 'ELECTRICAL', { at: [0, 0] }), [['ec', 'Charge'], ['rate', 'Trend'], ['endurance', 'Lasts'], ['solar', 'Solar panels'], ['lights', 'Lights']]);
+  setThermal = figures(box(root, 'THERMAL · CONSUMABLES', { at: [1, 0] }), [['heat', 'Hottest part'], ['mono', 'Monopropellant'], ['lf', 'Fuel (vessel)'], ['ox', 'Oxidizer (vessel)']]);
+  setComm = figures(box(root, 'COMMUNICATIONS', { at: [2, 0] }), [['link', 'Link'], ['strength', 'Signal'], ['via', 'Via'], ['hops', 'Hops'], ['antenna', 'Antennas']]);
 }
 
 const amount = (resource, unit = '') => (resource ? `${fixed(resource.amount, 0)} / ${fixed(resource.max, 0)}${unit}` : '—');

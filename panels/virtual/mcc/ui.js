@@ -37,9 +37,15 @@ export function figures(container, rows) {
   };
 }
 
-/* A titled box inside a console. */
-export function box(container, title, className = '') {
-  const section = create('section', `mcc-box ${className}`);
+/* A titled box inside a console, on the console's fixed grid of tiles (CONSOLE_TILES columns × rows): `at` is its
+   top-left tile [column, row], `size` how many tiles it takes [width, height]. Nothing reflows; a box whose content
+   is longer scrolls inside it. */
+export const CONSOLE_TILES = [3, 2];
+export function box(container, title, { at, size = [1, 1] }) {
+  const section = create('section', 'mcc-box');
+  section.style.gridColumn = `${at[0] + 1} / span ${size[0]}`;
+  section.style.gridRow = `${at[1] + 1} / span ${size[1]}`;
+  if (at[0] + size[0] > CONSOLE_TILES[0] || at[1] + size[1] > CONSOLE_TILES[1]) console.warn(`MCC box ${title} is off the console's grid`);
   section.append(create('h3', '', title));
   container.append(section);
   return section;

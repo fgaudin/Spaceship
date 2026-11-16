@@ -7,9 +7,9 @@ import { bodyOf } from '../bodies.js';
 let setFigure, engineTable;
 
 export function mount(root) {
-  setFigure = figures(box(root, 'VEHICLE'), [['stage', 'Stage'], ['throttle', 'Throttle'], ['thrust', 'Thrust'], ['twr', 'TWR'],
+  setFigure = figures(box(root, 'VEHICLE', { at: [0, 0] }), [['stage', 'Stage'], ['throttle', 'Throttle'], ['thrust', 'Thrust'], ['twr', 'TWR'],
     ['isp', 'Specific impulse'], ['limit', 'Thrust limiter'], ['gimbal', 'Gimbals'], ['lf', 'Stage fuel'], ['ox', 'Stage oxidizer']]);
-  const engines = box(root, 'ENGINES', 'wide');
+  const engines = box(root, 'ENGINES', { at: [1, 0], size: [2, 2] });
   const table = create('table', 'mcc-table');
   table.innerHTML = '<thead><tr><th>Stage</th><th>Position (m)</th><th>State</th><th>Thrust</th><th>Of</th><th>Fuel</th></tr></thead>';
   engineTable = create('tbody');

@@ -19,21 +19,29 @@ The mock and the gateway both write `tlm/*` and every topic has one writer, so s
 | `cockpit` | Cockpit logic: interlocks, lamp test, caution & warning, displays, game/panel disagreement. Pure core + MQTT shell | [cockpit-logic/](cockpit-logic/) |
 | `plant-mock` | Publishes `tlm/*` from its own simple physics, obeys `cmd/*`; failures for the instructor | [plant-mock/](plant-mock/) |
 | `gateway-ksp` | The only process that talks to KSP: kRPC → `tlm/*`, `cmd/*` → kRPC (profile `ksp`, host network) | [gateway-ksp/](gateway-ksp/) |
-| `panel` | nginx serving the virtual panel; the panel is drawn from `protocol/panels/eng.json` | [panels/virtual/](panels/virtual/) |
+| `panel` | nginx serving the virtual console and the glass and station pages; the console is drawn from `protocol/panels/` | [panels/virtual/](panels/virtual/) |
 
 Topics, payloads and rules: [protocol/topics.md](protocol/topics.md).
 
-### The virtual panel
-A dumb I/O node like the future ESP32 panels: it publishes raw inputs (`panel/eng/in/<control>`, retained for switches)
-and draws what the cockpit logic sends (`panel/eng/out/<output>`). Controls: guarded toggles (click the red guard to open
+### The virtual console
+Every I/O module of the capsule, at its physical size and laid out as in the capsule: zones (overhead, main, low)
+of modules, each module one board carrying panels of W×H U (1 U = 100 mm) with their controls at fixed places
+([protocol/panels/README.md](protocol/panels/README.md)). Nothing reflows; only the zoom changes. It works like a map:
+the wheel zooms around the pointer, dragging pans, and every control works at any zoom, so several modules can be
+used at once; double-click a module to fit it, Esc (or the zoom percentage) fits the whole console, and
+`index.html#cmp` opens fitted on one module. The **grid** checkbox draws 10 mm squares; misplaced controls are outlined in red.
+
+Each module is a dumb I/O node like its future ESP32: it publishes raw inputs (`panel/eng/in/<control>`, retained for
+switches), draws what the cockpit logic sends (`panel/eng/out/<output>`) and its heartbeat. Controls: guarded toggles (click the red guard to open
 it; closing it pushes the switch off), toggles with their indicator LED, lit push buttons, a throttle lever, rotary
 selectors (click / shift-click / wheel), 7-segment displays, LED bar graphs, an annunciator matrix, a tone.
 Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus** checkbox shows a live sniffer. The bench
 strip (instructor) resets the mock and injects failures (engine out, battery short, telemetry freeze).
 
-**Panels** (top bar links): ENG (propulsion, staging, abort, SAS/RCS, C&W), SYS (`?panel=sys`), CMP (`?panel=cmp`, burn
-computer), RDV (`?panel=rdv`, rendezvous and docking), COM (`?panel=com`, radio link), LAB (`?panel=lab`, experimental panels),
-FDAI, MFD and CAM (camera monitor). The I/O panels are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
+**Modules** (on the CONSOLE page): ENG (propulsion, staging, abort, SAS/RCS, C&W), SYS, CMP (burn computer), RDV
+(rendezvous and docking), COM (radio link), SOLO, LAB (experimental panels), and the glass modules FDAI, MFD and CAM
+(camera monitor), drawn as screens with the live page in them. FDAI, MFD and CAM are also pages of their own (for a
+Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
 **SYS** (I/O panel): electrical (charge bar, EC and EC/s, solar panels), propellant for the current stage
 (fuel, oxidizer, monoprop bars; stage Δv from the rocket equation, TWR against the local gravity; before ignition
@@ -102,7 +110,7 @@ launch pad camera). It shows the camera the LAB panel selects (`cam/select`) and
 (`cam/list`). Kerbcast listens on the KSP machine only, unless its `BindAddress` setting is changed
 (`cam.html?kerbcast=http://host:8088`).
 
-**SOLO** (I/O panel, `?panel=solo`): for a pilot flying without Mission Control. CIRC, PLANE, RDV TGT and INJECT
+**SOLO** (I/O module, `index.html#solo`): for a pilot flying without Mission Control. CIRC, PLANE, RDV TGT and INJECT
 (knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which it reads up to the burn computer as CAPCOM
 would; the display says what it sent or why not. How it works: [flight-dynamics/README.md](flight-dynamics/README.md).
 
@@ -138,7 +146,7 @@ To fly the mock: CB MAIN BUS on, open the ENG ARM guard and arm, push the thrott
 | Mission Control | [panels/virtual/mcc/](panels/virtual/mcc/): `mcc.js` (tabs, poll, loop), `bus.js`, `roster.js`, one module per console in `consoles/`. Architecture: [mcc/README.md](panels/virtual/mcc/README.md). |
 | SimSup | [simsup/](simsup/): `simsup_core.py` (the logic), `service.py`, `scenarios.json`; the page is `panels/virtual/simsup.*`. Architecture: [simsup/README.md](simsup/README.md). |
 | Mock plant | [plant-mock/](plant-mock/): `simulation.py` (the model), `vehicle.py` (planet and launcher constants), `plant.py` (the service). |
-| Virtual panel | [panels/virtual/](panels/virtual/): `shell.js` (every page's top bar and navigation, from one list of pages), `bus.js` (every page's bus connection), `panel.js` (I/O panels: drawing, inputs, keyboard), `widgets.js` (one builder per item type), `seven_segment.js`; `cam.js` (camera monitor), `fdai.js`, `mfd.js`, `simsup.js`, `mcc/`. A new page: its HTML header holds only its own status items, it loads `shell.js`, and it gets one line in `PAGES` in `shell.js`. |
+| Virtual panel | [panels/virtual/](panels/virtual/): `shell.js` (every page's top bar and navigation, from one list of pages), `bus.js` (every page's bus connection), `panel.js` (the console: zones, modules and panels at their physical size, overview and module view, one bus connection per module, layout checks, keyboard), `widgets.js` (one builder per item type), `seven_segment.js`; `cam.js` (camera monitor), `fdai.js`, `mfd.js`, `simsup.js`, `mcc/`. A new page: its HTML header holds only its own status items, it loads `shell.js`, and it gets one line in `PAGES` in `shell.js`. |
 
 ### Rules the cockpit logic implements
 - ENG ARM gates the throttle; STAGE needs STAGE ARM (and an edge, holding does not stage twice); ABORT needs ABORT ARM.
