@@ -16,7 +16,8 @@
 import { connectBus, parse } from './bus.js';
 import { createElement, createWidgetBuilders } from './widgets.js';
 
-const U_MM = 100;
+const U_MM = 100;                            // a slot; a panel is built smaller by its clearance
+const PANEL_CLEARANCE_MM = 0.5;              // on each side: a 1 U panel is 99 mm, neighbours are 1 mm apart
 const PX_PER_MM = 96 / 25.4;                 // CSS millimetres
 const MAX_FIT_ZOOM = 1;                      // fitting never draws bigger than real size; + does
 const ZOOM_STEP = 1.25;
@@ -84,11 +85,17 @@ function checkGrid(placed, sizeOf, nameOf, where) {
   }));
 }
 
-/* One panel: a plate of W×H U with its engraved title and screws, each control at its mm position. */
+/* The faceplate of a panel of `size` U: its slot less the clearance on each side, in mm. */
+const faceplateMm = (size) => size.map((u) => u * U_MM - 2 * PANEL_CLEARANCE_MM);
+
+/* One panel: a plate in its W×H U slot with its engraved title and screws, each control at its mm position. */
 function buildPanel(module, panel) {
   const [width, height] = panel.size;
-  const plate = createElement('section', 'plate', { title: `${panel.title} · ${width}×${height} U` });
-  Object.assign(plate.style, { left: mm(panel.at[0] * U_MM), top: mm(panel.at[1] * U_MM), width: mm(width * U_MM), height: mm(height * U_MM) });
+  const [widthMm, heightMm] = faceplateMm(panel.size);
+  const plate = createElement('section', 'plate', { title: `${panel.title} · ${width}×${height} U (${widthMm}×${heightMm} mm)` });
+  Object.assign(plate.style, {
+    left: mm(panel.at[0] * U_MM + PANEL_CLEARANCE_MM), top: mm(panel.at[1] * U_MM + PANEL_CLEARANCE_MM), width: mm(widthMm), height: mm(heightMm),
+  });
   plate.dataset.panel = panel.id;
   plate.append(createElement('div', 'plate-title', { textContent: panel.title }), createElement('i', 'screw-b'));
 
@@ -132,9 +139,10 @@ const SCREEN_TOP_MM = 14;
 function buildScreen(module, panel) {
   const { page, mm: [widthMm, heightMm], px: [widthPx, heightPx] } = panel.screen;
   const frame = createElement('div', 'glass', { title: `${panel.screen.inches || ''}" screen, ${widthPx}×${heightPx}` });
-  const left = (panel.size[0] * U_MM - widthMm) / 2;
+  const [plateWidthMm, plateHeightMm] = faceplateMm(panel.size);
+  const left = (plateWidthMm - widthMm) / 2;
   Object.assign(frame.style, { left: mm(left), top: mm(SCREEN_TOP_MM), width: mm(widthMm), height: mm(heightMm) });
-  if (left < 0 || SCREEN_TOP_MM + heightMm > panel.size[1] * U_MM) reportLayout(`${module.id}/${panel.id}: the screen does not fit the panel`, frame);
+  if (left < 0 || SCREEN_TOP_MM + heightMm > plateHeightMm) reportLayout(`${module.id}/${panel.id}: the screen does not fit the panel`, frame);
   const broker = new URLSearchParams(location.search).get('broker');
   const page_url = `${page}?embed=1${broker ? `&broker=${encodeURIComponent(broker)}` : ''}`;
   const view = createElement('iframe', '', { src: page_url, title: panel.title, loading: 'eager' });

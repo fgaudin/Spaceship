@@ -5,7 +5,8 @@ firmware can be generated from the same files.
 
 ## Words
 
-- **U**: the grid unit, **100 mm**. Every panel is a whole number of U wide and high.
+- **U**: the grid unit, **100 mm**: the slot. Every panel is a whole number of U wide and high, and its faceplate
+  is built 0.5 mm smaller on each side for clearance (a 1×1 U panel is 99 × 99 mm). Modules fill their slots exactly.
 - **Panel**: one plate of acrylic, W×H U (mostly 1×1, a few 2×1 or 1×2), with its controls at fixed places.
 - **Module**: one board (an Olimex ESP32-POE), one PoE cable, one definition file. It carries one or more panels,
   held side by side by a frame adapter, so the same panels can make a 3×1, a 1×3 or an L. It is the unit that is
@@ -33,7 +34,7 @@ does not notice. A module's heartbeat is `panel/<module>/status`.
 | panel `size` | `[width, height]` in U |
 | panel `at` | where the panel sits on the module, in U from the module's top-left corner (`[column, row]`) |
 | panel `bus` | the topic namespace of its controls |
-| item `at` | the centre of the control block (indicator LED, component and legend), in mm from the panel's top-left corner. The panel title takes the top 12 mm. |
+| item `at` | the centre of the control block (indicator LED, component and legend), in mm from the faceplate's top-left corner. The panel title takes the top 12 mm. |
 | item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot`, `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`) |
 
 Not there yet: a `pin` per control, for when the boards are designed.

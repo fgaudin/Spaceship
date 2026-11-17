@@ -38,7 +38,10 @@ body { margin: 0; background: radial-gradient(ellipse at top, #1b1e21, var(--bg)
 /* the zone's grid of U, faint, so that free places show */
 .zone-grid { position: relative; background-image: linear-gradient(#ffffff0d 1px, transparent 1px), linear-gradient(90deg, #ffffff0d 1px, transparent 1px);
   background-size: 100mm 100mm; outline: 1px solid #ffffff0d; }
-.module { position: absolute; background: #08090a; box-shadow: 0 0 0 1.5mm #050607, 0 10px 30px #000c; }
+/* a module fills its slots exactly; its frame shows in the panels' clearance, and a light edge just inside its
+   footprint (thinner than the clearance, so on no panel) shows what belongs together. Nothing is drawn outside. */
+.module { position: absolute; background: #08090a; }
+.module::after { content: ""; position: absolute; inset: 0; border: 1.5px solid #ffffff38; pointer-events: none; }
 .console.panning { cursor: grabbing; }
 .zoom { display: inline-flex; gap: 2px; }
 .zoom button { white-space: nowrap; background: #2b3035; color: var(--legend); border: 1px solid #000; border-radius: 3px; padding: .1rem .5rem; cursor: pointer;
