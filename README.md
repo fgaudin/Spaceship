@@ -35,8 +35,8 @@ Each module is a dumb I/O node like its future ESP32: it publishes raw inputs (`
 switches), draws what the cockpit logic sends (`panel/eng/out/<output>`) and its heartbeat. Controls: guarded toggles (click the red guard to open
 it; closing it pushes the switch off), toggles with their indicator LED, lit push buttons, a throttle lever, rotary
 selectors (click / shift-click / wheel), 7-segment displays, LED bar graphs, an annunciator matrix, a tone.
-Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus** checkbox shows a live sniffer. The bench
-strip (instructor) resets the mock and injects failures (engine out, battery short, telemetry freeze).
+Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus** checkbox shows a live sniffer. Resetting
+the simulation and injecting failures are on the SIMSUP page.
 
 **Modules** (on the CONSOLE page): ENG (propulsion, staging, abort, SAS/RCS, C&W), SYS, CMP (burn computer), RDV
 (rendezvous and docking), COM (radio link), SOLO, LAB (experimental panels), and the glass modules FDAI, MFD and CAM

@@ -29,6 +29,9 @@ const SNIFFER_MAX_LINES = 300;
 const SNIFFER_TOPICS = ['panel/#', 'cmd/#', 'cw/#', 'tlm/#', 'sim/#'];
 const SNIFFER_MAX_PAYLOAD_CHARACTERS = 160;
 const THROTTLE_KEY_STEP = 0.05;
+const SIDE_MIN_PX = 240;                     // the side column (help, bus): narrowest it can be dragged
+const SIDE_MAX_FRACTION = 0.7;               // and widest, as a share of the window
+const SIDE_WIDTH_KEY = 'console-side-width';
 // keyboard key → keypad key, for consoles that have a keypad
 const KEYPAD_SHORTCUTS = {
   Enter: 'ENTR', Backspace: 'CLR', '+': '+', '-': '-', '.': '.', ',': '.',
@@ -230,10 +233,10 @@ function showZoom() {
   document.getElementById('zoom-level').textContent = `${Math.round(view.zoom * 100)} %`;
 }
 
-/* The console fills the window under the top bar; the bench and the sniffer are below it. */
+/* The console and the side column (help, sniffer) fill the window under the top bar: nothing is below them. */
 function sizeConsoleBox() {
-  const box = consoleBox();
-  box.style.height = `${Math.max(200, window.innerHeight - box.offsetTop)}px`;
+  const workspace = document.getElementById('workspace');
+  workspace.style.height = `${Math.max(200, window.innerHeight - workspace.offsetTop)}px`;
 }
 
 /* Zoom, keeping the point of the console under (x, y) where it is. */
@@ -413,7 +416,7 @@ function createSniffer() {
   return { sniff, box };
 }
 
-/* The console's own connection: plant and cockpit status in the top bar, the sniffer, the instructor bench. */
+/* The console's own connection: plant and cockpit status in the top bar, the sniffer. */
 function connectConsole() {
   const sniffer = createSniffer();
   const client = connectBus({
@@ -440,10 +443,49 @@ function connectConsole() {
     if (event.target.checked) client.subscribe(SNIFFER_TOPICS, { qos: 1 });
     else client.unsubscribe(SNIFFER_TOPICS);
   });
-  document.querySelectorAll('[data-bench]').forEach((button) => button.addEventListener('click', () =>
-    client.publish(button.dataset.bench, '{}', { qos: 1 })));
-  document.querySelectorAll('[data-failure]').forEach((checkbox) => checkbox.addEventListener('change', () =>
-    client.publish(`sim/failures/${checkbox.dataset.failure}`, JSON.stringify({ on: checkbox.checked }), { qos: 1, retain: true })));
+}
+
+/* The side column's grip: drag it to make the column wider (bus lines stop wrapping), arrows nudge it, double-click
+   goes back to the default width. The width is kept in this browser. */
+function wireSideResize() {
+  const side = document.getElementById('side'), grip = document.getElementById('side-grip');
+  const clamp = (width) => Math.round(Math.min(window.innerWidth * SIDE_MAX_FRACTION, Math.max(SIDE_MIN_PX, width)));
+  const setWidth = (width, keep = true) => {
+    side.style.flexBasis = width == null ? '' : `${clamp(width)}px`;
+    if (!keep) return;
+    try {
+      if (width == null) localStorage.removeItem(SIDE_WIDTH_KEY);
+      else localStorage.setItem(SIDE_WIDTH_KEY, String(clamp(width)));
+    } catch { /* private window */ }
+  };
+  try {
+    const saved = Number(localStorage.getItem(SIDE_WIDTH_KEY));
+    if (saved > 0) setWidth(saved, false);
+  } catch { /* private window */ }
+  grip.addEventListener('pointerdown', (event) => {
+    event.preventDefault();
+    grip.setPointerCapture(event.pointerId);
+    grip.classList.add('dragging');
+    const startX = event.clientX, startWidth = side.getBoundingClientRect().width;
+    const move = (moveEvent) => setWidth(startWidth + startX - moveEvent.clientX, false);
+    const up = (upEvent) => {
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', up);
+      grip.removeEventListener('pointercancel', up);
+      grip.classList.remove('dragging');
+      setWidth(startWidth + startX - upEvent.clientX);
+    };
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', up);
+    grip.addEventListener('pointercancel', up);
+  });
+  grip.addEventListener('dblclick', () => setWidth(null));
+  grip.addEventListener('keydown', (event) => {
+    const step = { ArrowLeft: 40, ArrowRight: -40 }[event.key];
+    if (!step) return;
+    event.preventDefault();
+    setWidth(side.getBoundingClientRect().width + step);
+  });
 }
 
 /* Keyboard: Esc fits the whole console; keypad keys (Backspace = CLR); Space = STAGE, T = lamp test, arrows = throttle. */
@@ -498,6 +540,7 @@ if (oldPanelLink && !location.hash) history.replaceState(null, '', `#${oldPanelL
 buildConsole(consoleLayout, definitions);
 wireViews();
 wireKeyboard();
+wireSideResize();
 sizeConsoleBox();
 showView();
 requestAnimationFrame(() => requestAnimationFrame(checkControls));

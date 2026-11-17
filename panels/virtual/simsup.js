@@ -174,6 +174,11 @@ function exportLog() {
 
 /* ---------- wiring ---------- */
 element('freeze').addEventListener('click', () => send({ action: 'freeze', on: !state.frozen }));
+element('reset').addEventListener('click', () => {
+  if (confirm('Reset the simulation? The mock plant starts a new flight and the cockpit logic resets.')) {
+    client.publish('sim/reset', '{}', { qos: 1 });
+  }
+});
 element('clear-all').addEventListener('click', () => send({ action: 'clear_all' }));
 element('new-session').addEventListener('click', () => {
   if (confirm('Clear the log and the debrief?')) send({ action: 'new_session' });

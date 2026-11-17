@@ -51,8 +51,8 @@ attitude angles). Seeded from the KSP self-test (`selftest/interface.md`).
 | `cam/select` | cockpit logic | `{"id"}`: the camera to show, or null | on change | 1, retained |
 | `cw/state` | cockpit logic | `{"master_caution": bool, "master_alarm": bool, "active": ["LOW FUEL", …], "unacked": [...]}` | on change | 1, retained |
 | `gateway/status` | plant (gateway or mock) | `{"connected", "plant": "ksp"|"mock", "scene", "vessel", "paused"}` (LWT `connected: false`) | on change + 5 s | 1, retained |
-| `sim/reset` | instructor (or the panel's bench page) | `{}` | event | 1 |
-| `sim/failures/<id>` | SimSup (or the panel's bench strip, mock only) | `{"on": bool, ...parameters}`: catalogue and who applies each in [simsup/README.md](../simsup/README.md) | on change | 1, retained |
+| `sim/reset` | SimSup page (RESET SIM) | `{}` | event | 1 |
+| `sim/failures/<id>` | SimSup | `{"on": bool, ...parameters}`: catalogue and who applies each in [simsup/README.md](../simsup/README.md) | on change | 1, retained |
 | `sim/freeze` | SimSup | `{"on": bool}`: the instructor's pause (the gateway pauses KSP; the mock stops), apart from the crew's PAUSE | on change | 1, retained |
 | `sim/load` | SimSup | `{"save": name}`: the gateway loads that KSP save | event | 1 |
 | `fd/status` | flight-dynamics | `{"text", "ok"}`: what the last SOLO request gave ("CIRC APO 1004.2", "RDV: NO TARGET") | on change | 1, retained |

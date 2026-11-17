@@ -3,6 +3,22 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-17 — panel clearance, module edges; the bench goes to SimSup; a side column on the console
+
+- **1 U is a slot, not a panel.** A faceplate is built 0.5 mm smaller on each side for clearance (a 1×1 U panel is
+  99 × 99 mm, neighbours 1 mm apart); control `at` positions are from the faceplate's corner. Every control still
+  fits (layout check: 0 issues). `protocol/panels/README.md` updated.
+- **Module edges.** A module fills its slots exactly and draws nothing outside them: its frame used to be drawn
+  1.5 mm outside, so neighbouring modules overlapped and covered each other's panels (invisible while the frame was
+  black). A thin light edge just inside each module, in the panels' clearance, shows which panels belong together.
+- **The instructor bench is gone** from the console page: its failures (engine out, battery short, telemetry
+  freeze) were already in SimSup, which logs them for the debrief; the bench published `sim/failures/*` behind its
+  back. RESET SIM (`sim/reset`) moved to SimSup's Flight box, next to FREEZE, and asks for confirmation.
+- **Side column.** The keys and mouse help and the bus sniffer were under the console, out of sight since the wheel
+  zooms instead of scrolling. They are now in a column on the console's right: the help at the top, the sniffer
+  filling the rest when "bus" is on. Its left edge drags to widen it (so bus lines stop wrapping); double-click
+  restores the default width, which is kept in the browser. Under 900 px wide the column goes under the console.
+
 ## 2026-11-17 — glass modules in the console; MCC consoles of a standard size
 
 - **FDAI, MFD and CAM in the console**, as glass modules (`board: raspberry-pi`): a panel with a `screen` (page,

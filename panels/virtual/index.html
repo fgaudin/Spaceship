@@ -23,28 +23,42 @@
   </div>
 </header>
 
+<div id="workspace" class="workspace">
 <main id="console" class="console" aria-label="Console: the wheel zooms, dragging pans, double-click a module to fit it, Esc fits all">
   <div id="overview" class="overview"></div>
 </main>
 
-<section class="bench" aria-label="Instructor bench">
-  <div class="bench-title">INSTRUCTOR · BENCH</div>
-  <button data-bench="sim/reset">RESET SIM</button>
-  <label><input type="checkbox" data-failure="engine_out"> engine out</label>
-  <label><input type="checkbox" data-failure="battery_short"> battery short</label>
-  <label><input type="checkbox" data-failure="telemetry_freeze"> telemetry freeze</label>
-  <span class="bench-note">Mock plant only. Keys: <kbd>Space</kbd> stage (when armed), <kbd>↑</kbd>/<kbd>↓</kbd> throttle, <kbd>T</kbd> lamp test, <kbd>Esc</kbd> whole console. Mouse: wheel zooms, drag pans, double-click fits a module.</span>
-</section>
+<div id="side-grip" class="side-grip" role="separator" aria-orientation="vertical" aria-label="Resize the side column" tabindex="0"
+  title="Drag to resize (double-click: default width)"></div>
+<aside id="side" class="side" aria-label="Help and bus">
+  <section class="console-help" aria-label="Help">
+    <h2>KEYS</h2>
+    <dl>
+      <dt><kbd>Space</kbd></dt><dd>stage (when armed)</dd>
+      <dt><kbd>↑</kbd> <kbd>↓</kbd></dt><dd>throttle</dd>
+      <dt><kbd>T</kbd></dt><dd>lamp test</dd>
+      <dt><kbd>Esc</kbd></dt><dd>whole console</dd>
+    </dl>
+    <h2>MOUSE</h2>
+    <dl>
+      <dt>wheel</dt><dd>zoom</dd>
+      <dt>drag</dt><dd>pan</dd>
+      <dt>double-click</dt><dd>fit a module</dd>
+    </dl>
+    <p>Failures and reset: <a href="simsup.html">SimSup</a>.</p>
+  </section>
 
-<section id="sniffer" class="sniffer" hidden aria-label="Bus sniffer">
-  <div class="sniff-head">
-    <strong>BUS</strong>
-    <input id="sniff-filter" placeholder="filter topic (e.g. panel/ or cmd/)" value="">
-    <label><input type="checkbox" id="sniff-tlm"> show tlm/*</label>
-    <button id="sniff-clear">clear</button>
-  </div>
-  <ol id="sniff-list"></ol>
-</section>
+  <section id="sniffer" class="sniffer" hidden aria-label="Bus sniffer">
+    <div class="sniff-head">
+      <h2>BUS</h2>
+      <button id="sniff-clear">clear</button>
+      <input id="sniff-filter" placeholder="filter topic (e.g. panel/ or cmd/)" value="">
+      <label><input type="checkbox" id="sniff-tlm"> show tlm/*</label>
+    </div>
+    <ol id="sniff-list"></ol>
+  </section>
+</aside>
+</div>
 
 <script src="vendor/mqtt.min.js"></script>
 <script type="module" src="shell.js"></script>
