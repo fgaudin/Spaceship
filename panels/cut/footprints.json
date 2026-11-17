@@ -1,0 +1,104 @@
+{
+  "_about": "Footprints for the laser-cut faceplates (make_templates.py). All sizes in mm, x to the right, y down, relative to the component's centre. Every number here is a placeholder for a typical part: measure the real one and edit. 'cut' is what goes through the plate; 'front' is what shows on the face (bezel, cap, nut, cover: used for the layout and the overlap check); 'behind' is the body behind the plate (checked for collisions). A size is [w, h] for a rectangle or a single number for a circle's diameter. 'extra' (any footprint) adds shapes to cut: {\"circle\": d, \"at\": [x, y]} or {\"rect\": [w, h], \"r\": radius, \"at\": [x, y]}, e.g. an anti-rotation tab or mounting holes.",
+
+  "layer_colours": {
+    "legends": "#FF8000", "cut": "#0000FF", "outline": "#FF0000", "front": "#00E000", "behind": "#D0D000",
+    "note": "LightBurn makes one layer per colour: keep them distinct (its palette: 00 black, 01 blue, 02 red, 03 green, 04 yellow, 05 orange)"
+  },
+
+  "plate": {
+    "thickness": 3,
+    "corner_radius": 1.5,
+    "edge_margin": 2,
+    "title_band": 12,
+    "mounting_holes": { "diameter": 3.4, "inset": 5, "head": 6.5, "note": "M3 clearance, 5 mm from each edge, at the 4 corners; must match the frame adapter" }
+  },
+
+  "text": {
+    "font": "Arial",
+    "legend": 2.6,
+    "small": 1.9,
+    "title": 3.0,
+    "title_baseline": 7,
+    "title_rule": { "y": 9.2, "width": 0.6 },
+    "char_width": 0.68,
+    "note": "font sizes in mm; char_width (a fraction of the size) only estimates text widths for the checks"
+  },
+
+  "block": { "gap": 1.5, "note": "the space between the LED, the component and its legend in a control block" },
+
+  "footprints": {
+    "toggle": {
+      "part": "mini toggle, 6 mm bushing (MTS-102 style)",
+      "cut": 6.2, "front": [10, 18], "behind": [13, 8],
+      "positions": ["ON", "OFF"]
+    },
+    "guarded_toggle": {
+      "part": "12 mm toggle (KN3C style) under a flip cover that mounts on its bushing",
+      "cut": 12.2, "front": [21, 36], "behind": [16, 12]
+    },
+    "lamp_button": {
+      "part": "rectangular lit push button, 18 x 12 mm",
+      "cut": [18, 12], "front": [20, 14], "behind": [18, 12],
+      "legend": false, "note": "the legend is on the cap"
+    },
+    "button": {
+      "part": "rectangular push button, 18 x 12 mm (as lamp_button, unlit)",
+      "cut": [18, 12], "front": [20, 14], "behind": [18, 12],
+      "legend": false
+    },
+    "led": {
+      "part": "5 mm LED, press fit",
+      "cut": 5.1, "front": 6
+    },
+    "annunciator": {
+      "part": "one lit window per cell (a light box behind with one LED per cell)",
+      "cell": [21, 9], "pitch": [23, 11], "corner_radius": 0.5, "frame": 1.5,
+      "note": "frame: the margin of the front envelope around the cells"
+    },
+    "seg7": {
+      "part": "0.36 in 7-segment modules (MAX7219 style), one window per display",
+      "digit_pitch": 7.6, "height": 11, "pad": 1, "corner_radius": 0.5, "behind_height": 20
+    },
+    "bar": {
+      "part": "10-segment LED bar graph, 2.54 mm pitch",
+      "segment_pitch": 2.54, "height": 10.4, "pad": 0.6, "corner_radius": 0.3
+    },
+    "matrix": {
+      "part": "3 mm LEDs on a 4.5 mm grid, one hole each",
+      "mode": "holes", "hole": 3.1, "pitch": 4.5, "pad": 2,
+      "note": "mode 'window' cuts one window over the whole grid instead (an LED matrix module behind)"
+    },
+    "alpha": {
+      "part": "small character display (OLED or LCD), size from the virtual console",
+      "char_pitch": 3.65, "height": 9.5, "pad": 2, "corner_radius": 0.5,
+      "note": "the real part is not chosen: set the window to its visible area"
+    },
+    "rotary": {
+      "part": "rotary selector, 3/8 in bushing, knob about 15 mm",
+      "cut": 10.2, "knob": 15, "behind": 26, "legend_radius": 11.5,
+      "extra": [],
+      "note": "position legends sit on a circle around the knob; add the anti-rotation tab hole in 'extra' when the part is known"
+    },
+    "pot": {
+      "part": "slide potentiometer, 30 mm travel (Bourns PTA30 style)",
+      "travel": 30, "slot_width": 2.2, "cap": [10, 8], "behind": [9, 45],
+      "extra": [],
+      "note": "the lever cap moves along the slot; add the body's mounting holes in 'extra'"
+    },
+    "keypad": {
+      "part": "one cap-through hole per key",
+      "key": [14, 13], "gap": 2, "side_key_width": 16, "corner_radius": 1
+    },
+    "buzzer": {
+      "part": "12 mm piezo buzzer behind the plate, sound holes",
+      "hole": 2, "pitch": 3, "front": 10, "behind": 12.5
+    },
+    "screen": {
+      "part": "the screen's visible area, from the panel's screen.mm",
+      "margin": 0, "top": 14, "corner_radius": 1,
+      "extra": [],
+      "note": "top: the window's top edge below the faceplate's, as in the virtual console; add the screen's mounting holes in 'extra' (relative to the window's centre)"
+    }
+  }
+}

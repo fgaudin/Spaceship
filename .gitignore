@@ -36,3 +36,6 @@ desktop.ini
 .env.*
 
 NOTES.md
+
+# generated laser-cut templates (panels/cut/make_templates.py)
+panels/cut/out/

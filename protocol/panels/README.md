@@ -39,6 +39,9 @@ does not notice. A module's heartbeat is `panel/<module>/status`.
 
 Not there yet: a `pin` per control, for when the boards are designed.
 
+The same files make the laser-cut templates of the faceplates (SVG for LightBurn, with the components' cutouts
+from `panels/cut/footprints.json`): [panels/cut/README.md](../../panels/cut/README.md).
+
 A **glass module** (a Raspberry Pi and a screen: FDAI, MFD, CAM) has a panel with a `screen` instead of controls:
 
 ```json

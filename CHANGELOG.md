@@ -3,6 +3,26 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-17 — laser-cut templates of the faceplates
+
+- **`panels/cut/make_templates.py`** makes the faceplates' cutting templates from the panel definitions, so the
+  hardware follows the virtual console instead of being redrawn: one SVG per panel at its real size (99 × 99 mm for
+  1×1 U) and one per module with its panels in their slots, in mm, layers in LightBurn's palette colours
+  (legends orange, readable on a dark background too; holes blue; outline red; guides green and yellow with no
+  output), set in `footprints.json`. Python 3 only.
+- **Footprints in `panels/cut/footprints.json`**, one per item type: the cutout, what shows on the face, the body
+  behind, and extra holes (anti-rotation tabs, mounting holes). Every value is a placeholder for a typical part
+  (6 mm mini toggles, 12 mm toggles with flip covers, 18 × 12 mm push buttons, 0.36" digits, 3 mm LEDs on a
+  4.5 mm grid, 3/8" rotary selectors, a 30 mm slide pot…), to be measured and replaced when the parts are in hand.
+  An item's `at` stays the centre of its block (LED, component, legend), as in the console.
+- **Legends in a single-stroke font** drawn by the script (scored lines, as on engraved panels), so they import
+  into LightBurn as paths with no font to install; SVG text is an option. Push-button, annunciator and key legends
+  go on the caps and lenses, so they are on a guide layer, not engraved.
+- **Layout checks** with the real sizes: out of the faceplate or in the title band, overlaps on the face, bodies
+  colliding behind, a control on a mounting screw. With the placeholders, 17 issues: the guarded toggles' covers,
+  the wider 7-segment displays and the C&W grid do not fit where the virtual console draws them. Nothing is moved
+  yet; that waits for the real parts.
+
 ## 2026-11-17 — panel clearance, module edges; the bench goes to SimSup; a side column on the console
 
 - **1 U is a slot, not a panel.** A faceplate is built 0.5 mm smaller on each side for clearance (a 1×1 U panel is
