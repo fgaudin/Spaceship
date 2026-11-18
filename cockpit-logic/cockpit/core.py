@@ -13,6 +13,7 @@ from dataclasses import dataclass
 
 from . import settings as S
 from .alarms import ALARMS, active_alarms
+from .angle_rates import AngleRates
 from .burn_computer import BurnComputer
 from .engines import EngineMonitor, propulsion
 from .event_timer import EventTimer
@@ -67,6 +68,7 @@ class Cockpit:
         self.charge_rate = 0.0                  # EC/s, smoothed
         self.previous_charge_sample = None      # (mission time, amount)
         self.docking_rates = rendezvous_panel.DockingRates()   # yaw, pitch and roll rates against the port
+        self.attitude_rates = AngleRates(S.ATTITUDE_RATE_SMOOTHING)   # pitch, heading and roll rates
         self.was_powered = True
         self.burn_computer = BurnComputer()
         self.node_mirror = NodeMirror()
@@ -244,6 +246,9 @@ class Cockpit:
             self.node_mirror.node_to_pad(self, payload)
         elif topic == 'tlm/comm':
             comm_panel.track_link(self)
+        elif topic == 'tlm/attitude':
+            angles = {name: payload[name] for name in ('pitch', 'heading', 'roll') if payload.get(name) is not None}
+            self.attitude_rates.track(angles if len(angles) == 3 else None, self.clock.get('ut'))
         elif topic == 'tlm/target':
             self.docking_rates.track(payload.get('port'), self.clock.get('met'))
         return []
@@ -312,6 +317,7 @@ class Cockpit:
         self.engine_monitor = EngineMonitor()
         self.link_watch = comm_panel.LinkWatch()
         self.docking_rates = rendezvous_panel.DockingRates()
+        self.attitude_rates = AngleRates(S.ATTITUDE_RATE_SMOOTHING)
         return self.render()
 
     # ---------- panel outputs ----------

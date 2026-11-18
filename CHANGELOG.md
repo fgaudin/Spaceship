@@ -3,6 +3,44 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-18 — the FDAI on a 4" round screen
+
+- **A 4" round screen** (720 × 720, a 101.5 mm circle) replaces the 7": with only the ball and its roll ring on it, the
+  ball grows from about 70 to about 83 mm, in a smaller opening. The screen view drops the readouts and rate scales.
+- **Pitch, heading, roll and their rates** are 7-segment displays beside the screen, their right edges aligned. The cockpit formats them from
+  `tlm/attitude` and differentiates them over game time (`angle_rates.py`, shared with the docking rates); the yaw rate
+  is the heading's rate times the cosine of the pitch. Numbers need no scale, so **RATE SCALE is gone**.
+- **Screens can be placed and round:** `screen.at`, `screen.round` and `screen.module_mm`, in the console and the cut
+  templates (a circular window, the display's body checked behind the plate).
+- **The FDAI controls use the corners around the circle** (MARKERS top left, NEEDLES bottom left, ERROR SCALE bottom
+  right), which leaves the attitude controls alone under the screen, SAS MODE raised close to it; both layout checks now
+  treat a round screen as a circle.
+- **The display's body is a 126 mm circle** behind the plate, and the cut templates check the controls against that
+  outline, so the corners around it are usable.
+
+## 2026-11-18 — the FDAI's controls leave the glass
+
+- **NEEDLES, ERROR SCALE, RATE SCALE and MARKERS** were keys drawn on the FDAI screen (and N, S, R, M on the
+  keyboard), kept by each browser: nothing to click on a glass. They are now controls on the ATTITUDE panel, a row
+  above the attitude switches: three knobs (prograde / retrograde / off; ±5° / ±50°; ±1 / ±5 / ±10 °/s) and a
+  toggle. The cockpit sends the page its settings (`panel/eng/out/fdai`), and the page only draws.
+- **A 7" 4:3 screen** (142 × 107 mm, 1024 × 768) instead of the 8", to make room for the second row on the 2 × 2 U
+  faceplate; the ball is about 13 % smaller.
+- **PITCH, HDG and ROLL in a column beside the ball** on the screen (`?embed=1`, the console's and a kiosk's view),
+  so the ball takes the screen's full height: 736 px instead of 584 at 1024 × 768, which more than makes up for the
+  smaller screen.
+
+## 2026-11-18 — the attitude switches under the FDAI ball
+
+- **ATTITUDE and FDAI are one panel:** the ball took a 2 × 2 U module on its own, with room to spare under its 8"
+  screen. SAS, SAS MODE, SPEED REF, RCS and RCS FINE moved there from ENG (same controls, same `eng` bus, so the
+  cockpit logic is unchanged); ENG is 3 × 2 U now and CMP moved up a row, which frees 2 U of the MAIN zone.
+- **A glass panel can carry controls:** the console gives the FDAI module an I/O connection since it has items, and
+  both layout checks (the console page's and the cut templates') now treat a screen as an obstacle. On the hardware
+  the Pi would read the switches (GPIO, or a small I/O board): not decided. In the virtual console the module's I/O node reports on
+  `panel/fdai/io/status`: the embedded page already reports on `panel/fdai/status`, and two clients with a last will
+  on one retained topic would mark the module offline whenever either one closed.
+
 ## 2026-11-18 — panel review: fewer repeats, ASCENT and ORBIT panels, power from the battery, LIGHTS
 
 After flying the panels (NOTES.md): an instrument that repeats another, or needs a selector to be read, goes.

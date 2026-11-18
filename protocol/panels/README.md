@@ -51,8 +51,18 @@ A **glass module** (a Raspberry Pi and a screen: FDAI, MFD, CAM) has a panel wit
 
 The console shows the page (`fdai.html?embed=1`: no top bar, fitted to the screen) at the screen's resolution
 (`px`), scaled to its visible size (`mm`), centred under the panel's title. The page publishes its own status
-(`panel/fdai/status`, `cam/status`); the module has no I/O node of its own. The wheel and Esc over the page act on
-the console, as everywhere else on it.
+(`panel/fdai/status`, `cam/status`); a module made only of glass has no I/O node of its own. The wheel and Esc over
+the page act on the console, as everywhere else on it.
+
+A glass panel may also carry controls (`items`, with the panel's `bus`), placed around the screen like on any panel:
+the FDAI module's ATTITUDE panel has pitch, heading, roll and their rates beside the ball, the FDAI's own controls (NEEDLES, ERROR SCALE, MARKERS) in
+the corners around it, and SAS, SAS MODE, SPEED REF, RCS and RCS FINE under it, on the `eng` bus. Optional
+`screen` fields: `at` (its centre on the faceplate, in mm; by default centred under the title), `round` (a circular
+window) and `module_mm` (the display's body behind the plate, a circle on a round screen, for the cut templates' collision check). A glass page has no keys of its own:
+what it would set on its bezel comes from panel controls through the cockpit.
+The module then has an I/O node too (on the hardware: the Pi's GPIO, or a small I/O board on it); in the virtual
+console it reports on `panel/<module>/io/status`, since the page already reports on `panel/<module>/status`. Both layout checks
+treat the screen as an obstacle: a control on it is an issue (a round screen is a circle, so its corners are free).
 
 Components are drawn at about their real size: 0.36" 7-segment digits (9 mm high), 18 × 12 mm lit push buttons,
 14 mm keypad keys, 5 mm LEDs, bat-handle toggles.

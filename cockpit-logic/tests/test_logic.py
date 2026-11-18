@@ -563,3 +563,27 @@ def test_fuel_cell_outside_temperature_and_ablator():
     c.handle('tlm/thermal', {'max': 0.3, 'outside': -42.4}, 2)
     assert c.published[S + 'led_fuel_cell'] == {'on': True, 'blink': False}
     assert c.published[S + 'disp_outside']['text'] == '-42' and c.published[S + 'bar_ablator'] == {'v': 0.75}
+
+
+def test_fdai_controls_set_how_the_ball_is_drawn():
+    c = Cockpit(); fed(c)
+    assert c.published[O + 'fdai'] == {'needles': 'prograde', 'error_scale': 5, 'markers': True}
+    c.handle(P + 'fdai_needles', {'v': 1}, 1)
+    c.handle(P + 'fdai_error', {'v': 1}, 1)
+    out = topics(c.handle(P + 'fdai_markers', {'v': 0}, 1))
+    assert out[O + 'fdai'] == {'needles': 'retrograde', 'error_scale': 50, 'markers': False}
+
+
+def test_attitude_displays_and_rates():
+    c = Cockpit(); fed(c)
+
+    def at(ut, pitch, heading, roll):
+        c.handle('tlm/time', {'ut': ut, 'met': 0, 'warp': 1}, 1)          # on the pad the mission clock stands still
+        c.handle('tlm/attitude', {'pitch': pitch, 'heading': heading, 'roll': roll}, 1)
+
+    at(100.0, 60.0, 359.0, 179.0)
+    assert c.published[O + 'disp_att_pitch']['text'] == '+60.0' and c.published[O + 'disp_att_hdg']['text'] == '359.0'
+    assert c.published[O + 'disp_att_roll']['text'] == '+179.0' and c.published[O + 'disp_rate_roll']['text'] == '----'
+    at(100.5, 61.0, 1.0, -179.0)                                          # heading and roll cross their wrap
+    assert c.published[O + 'disp_rate_pitch']['text'] == '+2.0' and c.published[O + 'disp_rate_roll']['text'] == '+4.0'
+    assert c.published[O + 'disp_rate_yaw']['text'] == '+1.9'             # 4 °/s of heading × cos 61°

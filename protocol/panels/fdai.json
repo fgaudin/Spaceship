@@ -1,12 +1,12 @@
 {
   "id": "fdai",
   "title": "ATTITUDE · FDAI",
-  "fw": "fdai-glass-0.1",
+  "fw": "fdai-0.2",
   "board": "raspberry-pi",
   "panels": [
     {
-      "id": "fdai",
-      "title": "FDAI",
+      "id": "attitude",
+      "title": "ATTITUDE",
       "size": [
         2,
         2
@@ -15,19 +15,222 @@
         0,
         0
       ],
+      "bus": "eng",
       "screen": {
         "page": "fdai.html",
-        "inches": 8,
+        "inches": 4,
+        "round": true,
         "mm": [
-          162,
-          122
+          101.5,
+          101.5
         ],
         "px": [
-          1024,
-          768
+          720,
+          720
+        ],
+        "at": [
+          70,
+          71.5
+        ],
+        "module_mm": [
+          126,
+          126
         ]
       },
-      "items": []
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_att_pitch",
+          "label": "PITCH °",
+          "digits": 5,
+          "out": "disp_att_pitch",
+          "at": [
+            165,
+            24
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_rate_pitch",
+          "label": "RATE °/S",
+          "digits": 4,
+          "out": "disp_rate_pitch",
+          "color": "green",
+          "at": [
+            168.24,
+            44
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_att_hdg",
+          "label": "HDG °",
+          "digits": 5,
+          "out": "disp_att_hdg",
+          "at": [
+            165,
+            64
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_rate_yaw",
+          "label": "RATE °/S",
+          "digits": 4,
+          "out": "disp_rate_yaw",
+          "color": "green",
+          "at": [
+            168.24,
+            84
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_att_roll",
+          "label": "ROLL °",
+          "digits": 5,
+          "out": "disp_att_roll",
+          "at": [
+            165,
+            104
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_rate_roll",
+          "label": "RATE °/S",
+          "digits": 4,
+          "out": "disp_rate_roll",
+          "color": "green",
+          "at": [
+            168.24,
+            124
+          ]
+        },
+        {
+          "type": "rotary",
+          "id": "fdai_needles",
+          "label": "NEEDLES",
+          "in": "fdai_needles",
+          "positions": [
+            "PRO",
+            "RETRO",
+            "OFF"
+          ],
+          "at": [
+            17,
+            130
+          ]
+        },
+        {
+          "type": "rotary",
+          "id": "fdai_error",
+          "label": "ERROR SCALE °",
+          "in": "fdai_error",
+          "positions": [
+            "5",
+            "50"
+          ],
+          "at": [
+            124,
+            130
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "fdai_markers",
+          "label": "MARKERS",
+          "in": "fdai_markers",
+          "default": 1,
+          "at": [
+            14,
+            27
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "sas",
+          "label": "SAS",
+          "in": "sas",
+          "led": {
+            "out": "led_sas",
+            "color": "green"
+          },
+          "at": [
+            25,
+            170
+          ]
+        },
+        {
+          "type": "rotary",
+          "id": "sas_mode",
+          "label": "SAS MODE",
+          "in": "sas_mode",
+          "positions": [
+            "STAB",
+            "PRO",
+            "RETRO",
+            "NML",
+            "ANTI",
+            "RAD",
+            "A-RAD",
+            "TGT",
+            "A-TGT",
+            "MNVR"
+          ],
+          "at": [
+            62,
+            151
+          ]
+        },
+        {
+          "type": "rotary",
+          "id": "speed_ref",
+          "label": "SPEED REF",
+          "in": "speed_ref",
+          "positions": [
+            "ORBIT",
+            "SURF",
+            "TGT"
+          ],
+          "at": [
+            105,
+            170
+          ],
+          "led": {
+            "out": "led_speed_ref",
+            "color": "green"
+          }
+        },
+        {
+          "type": "toggle",
+          "id": "rcs",
+          "label": "RCS",
+          "in": "rcs",
+          "led": {
+            "out": "led_rcs",
+            "color": "green"
+          },
+          "at": [
+            145,
+            170
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "rcs_fine",
+          "label": "RCS FINE",
+          "in": "rcs_fine",
+          "led": {
+            "out": "led_rcs_fine",
+            "color": "amber"
+          },
+          "at": [
+            172,
+            170
+          ]
+        }
+      ]
     }
   ]
 }

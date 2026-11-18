@@ -10,6 +10,7 @@ attitude angles). Seeded from the KSP self-test (`selftest/interface.md`).
 | `panel/<panel>/in/<control>` | the panel | `{"v": <value>}`: switch 0/1 (3-pos: -1/0/1), button 0/1 (momentary), pot 0..1, rotary int | on change | 1, **retained** for switches/pots/rotaries, not for buttons |
 | `panel/<panel>/out/<output>` | cockpit logic | lamp/LED `{"on": bool, "blink": bool}`; 7-seg and alphanumeric `{"text": "12.345", "blank": false, "blink": false}`; bar `{"v": 0..1}`; LED matrix `{"rows": ["..g..", …]}` (one character per LED: g, a, r, w, `.` off); buzzer `{"on": bool}` | on change | 1, retained |
 | `panel/<panel>/status` | the panel | `{"online": bool, "fw": str, "config": hash, "uptime": s}` (LWT `{"online": false}`) | 5 s | 1, retained |
+| `panel/<module>/io/status` | the I/O node of a module that also has a screen (virtual console: FDAI) | the same, while its page reports on `panel/<module>/status` | 5 s | 1, retained |
 | `tlm/time` | plant | `{"ut", "met", "warp", "paused"}` | 10 Hz | 0 |
 | `tlm/flight` | plant | `{"alt", "radar", "vs", "hs", "speed", "q", "g", "lat", "lon", "vn", "ve", "v_right", "v_fwd", "v_down", "p"}` (vn, ve: surface velocity north and east; v_right, v_fwd, v_down: the same velocity along the vessel's own axes; p: outside static pressure, Pa) | 10–20 Hz | 0 |
 | `tlm/vessel` | plant | `{"name", "mass", "thrust", "thrust_avail", "isp", "situation", "stage", "throttle", "sas", "rcs", "gear", "lights", "brakes", "sas_mode", "speed_mode", "solar", "fuel_cell", "chute", "comm", "has_gear", "contact"}` (solar: panels deployed or null; fuel_cell: a fuel cell runs, or null without one; chute: stowed/armed/deployed/cut or null; comm: a link to the ground exists; contact: landed, splashed, or a leg or wheel touches the ground) | 10 Hz | 0 |
@@ -53,6 +54,7 @@ attitude angles). Seeded from the KSP self-test (`selftest/interface.md`).
 | `cw/state` | cockpit logic | `{"master_caution": bool, "master_alarm": bool, "active": ["LOW FUEL", …], "unacked": [...]}` | on change | 1, retained |
 | `cockpit/power` | cockpit logic | `{"on": bool}`: the cockpit has power (electric charge left, and the breaker in); off, every panel is dark and its inputs dead | on change | 1, retained |
 | `cockpit/lighting` | cockpit logic | `{"cabin": bool, "backlight": bool}`: the LIGHTS panel's cockpit lights, off without power (the console page brightens its plates and lights its legends) | on change | 1, retained |
+| `panel/eng/out/fdai` | cockpit logic | `{"needles": "prograde"|"retrograde"|"off", "error_scale": 5|50, "markers": bool}`: how the FDAI page draws, from the FDAI controls on the ATTITUDE panel | on change | 1, retained |
 | `gateway/status` | plant (gateway or mock) | `{"connected", "plant": "ksp"|"mock", "scene", "vessel", "paused"}` (LWT `connected: false`) | on change + 5 s | 1, retained |
 | `sim/reset` | SimSup page (RESET SIM) | `{}` | event | 1 |
 | `sim/failures/<id>` | SimSup | `{"on": bool, ...parameters}`: catalogue and who applies each in [simsup/README.md](../simsup/README.md) | on change | 1, retained |

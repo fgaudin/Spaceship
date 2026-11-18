@@ -1,4 +1,7 @@
-"""ENG module: caution and warning, ascent displays, engine and staging, engine status matrix and abort, attitude."""
+"""The eng bus: caution and warning, ascent displays, engine and staging, engine status matrix and abort, and the
+ATTITUDE panel (on the FDAI module): its switches, attitude and rate displays, and the settings of the ball."""
+import math
+
 from .. import settings as S
 from ..alarms import ALARMS, stage_fuel_fraction
 from ..display_format import fit_number, format_mission_time
@@ -12,7 +15,8 @@ LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_ab
          'led_rcs_fine', *ALARMS]
 # display → (digits, the dashes shown without telemetry)
 DISPLAYS = {'disp_alt': 6, 'disp_srf': 5, 'disp_g': 4, 'disp_met': 7, 'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5,
-            'disp_twr': 4}
+            'disp_twr': 4, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
+            'disp_rate_yaw': 4, 'disp_rate_roll': 4}
 BARS = ['bar_fuel', 'bar_thrust']
 
 
@@ -59,6 +63,7 @@ def render(cockpit, wanted, active_alarms, unacknowledged_alarms):
     caution_waiting = any(not ALARMS[name].is_warning for name in unacknowledged_alarms)
     powered, lamp_test = cockpit.powered(), cockpit.is_on('lamp_test')
     outputs.raw('buzzer', {'on': powered and not lamp_test and warning_waiting})
+    outputs.raw('fdai', fdai_settings(cockpit))
 
     if not powered:
         outputs.all_dark(LAMPS, DISPLAYS, BARS)
@@ -77,6 +82,28 @@ def render(cockpit, wanted, active_alarms, unacknowledged_alarms):
 
     _render_lamps(cockpit, outputs)
     _render_displays(cockpit, outputs)
+
+
+def _render_attitude(cockpit, outputs):
+    """Pitch, heading and roll with their rates. The heading's rate counts for less as the nose nears the vertical:
+    the yaw rate is that rate times the cosine of the pitch."""
+    attitude, rates = cockpit.telemetry.get('tlm/attitude', {}), cockpit.attitude_rates.rates
+    pitch = attitude.get('pitch')
+    heading_rate = rates.get('heading')
+    yaw_rate = heading_rate * math.cos(math.radians(pitch)) if None not in (heading_rate, pitch) else None
+    outputs.text('disp_att_pitch', fit_number(pitch, 1, 5, signed=True))
+    outputs.text('disp_att_hdg', fit_number(attitude.get('heading'), 1, 5))
+    outputs.text('disp_att_roll', fit_number(attitude.get('roll'), 1, 5, signed=True))
+    outputs.text('disp_rate_pitch', fit_number(rates.get('pitch'), 1, 4, signed=True))
+    outputs.text('disp_rate_yaw', fit_number(yaw_rate, 1, 4, signed=True))
+    outputs.text('disp_rate_roll', fit_number(rates.get('roll'), 1, 4, signed=True))
+
+
+def fdai_settings(cockpit):
+    """panel/eng/out/fdai: how the FDAI page draws, from the FDAI controls on the ATTITUDE panel."""
+    return {'needles': cockpit.selected('fdai_needles', S.FDAI_NEEDLES),
+            'error_scale': cockpit.selected('fdai_error', S.FDAI_ERROR_SCALES_DEG),
+            'markers': bool(cockpit.inputs.get('fdai_markers', 1))}
 
 
 def _render_lamps(cockpit, outputs):
@@ -122,6 +149,7 @@ def _render_displays(cockpit, outputs):
     outputs.text('disp_g', fit_number(flight.get('g'), 2, DISPLAYS['disp_g']))
     outputs.text('disp_dv', fit_number(stage_delta_v(cockpit), 0, DISPLAYS['disp_dv']))
     outputs.text('disp_twr', fit_number(thrust_to_weight(cockpit), 2, DISPLAYS['disp_twr']))
+    _render_attitude(cockpit, outputs)
     mission_time = cockpit.clock.get('met')
     outputs.text('disp_met', format_mission_time(mission_time) if mission_time is not None else '--.--.--')
     stage = vessel.get('stage')

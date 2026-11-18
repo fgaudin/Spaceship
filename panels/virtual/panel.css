@@ -55,6 +55,7 @@ body { margin: 0; background: radial-gradient(ellipse at top, #1b1e21, var(--bg)
   display: flex; flex-wrap: wrap; gap: 1.1rem 1rem; align-content: flex-start; justify-content: center; }
 /* a glass panel's screen: the page, scaled from its resolution to the screen's size */
 .glass { position: absolute; overflow: hidden; background: #000; border-radius: 1mm; box-shadow: 0 0 0 2mm #111316, 0 0 0 2.4mm #000; }
+.glass.round { border-radius: 50%; }
 .glass iframe { border: 0; display: block; transform-origin: 0 0; background: #000; }
 /* a console panel: fixed size and place, its controls placed absolutely */
 .module .plate { position: absolute; display: block; padding: 0; overflow: hidden; border-radius: 1.5mm;
@@ -266,6 +267,10 @@ kbd { background: #2b3035; border-radius: 3px; padding: 0 .3rem; border: 1px sol
 .embedded .plate { width: 100%; height: 100vh; padding: 1rem; border-radius: 0; background: #050607; box-shadow: none;
   justify-content: center; align-content: center; }
 .embedded .plate::before, .embedded .plate::after { display: none; }
-.embedded .fdai-box { width: min(100%, calc(100vh - 9.5rem)); }
+/* FDAI on its round screen: only the ball and its roll ring (radius 232 of the 560 px drawing) fill the circle; the
+   figures and rates are 7-segment displays on the panel */
+.embedded .fdai-plate { padding: 0; align-items: center; justify-content: center; overflow: hidden; }
+.embedded .fdai-box { flex: none; width: calc(100vmin * 280 / 232); }
+.embedded .fdai-plate .readouts { display: none; }
 .embedded .screen { flex-basis: min(36rem, calc(100vh - 2rem)); }
 .embedded .cam-screen { width: min(100%, calc((100vh - 2rem) * 16 / 9)); }

@@ -140,12 +140,13 @@ function buildPanel(module, panel) {
    under the panel's title. The page publishes its own status; the module has no I/O of its own. */
 const SCREEN_TOP_MM = 14;
 function buildScreen(module, panel) {
-  const { page, mm: [widthMm, heightMm], px: [widthPx, heightPx] } = panel.screen;
-  const frame = createElement('div', 'glass', { title: `${panel.screen.inches || ''}" screen, ${widthPx}×${heightPx}` });
+  const { page, mm: [widthMm, heightMm], px: [widthPx, heightPx], at, round } = panel.screen;
+  const frame = createElement('div', `glass${round ? ' round' : ''}`, { title: `${panel.screen.inches || ''}" screen, ${widthPx}×${heightPx}` });
   const [plateWidthMm, plateHeightMm] = faceplateMm(panel.size);
-  const left = (plateWidthMm - widthMm) / 2;
-  Object.assign(frame.style, { left: mm(left), top: mm(SCREEN_TOP_MM), width: mm(widthMm), height: mm(heightMm) });
-  if (left < 0 || SCREEN_TOP_MM + heightMm > plateHeightMm) reportLayout(`${module.id}/${panel.id}: the screen does not fit the panel`, frame);
+  const left = at ? at[0] - widthMm / 2 : (plateWidthMm - widthMm) / 2;      // `at`: the screen's centre on the faceplate
+  const top = at ? at[1] - heightMm / 2 : SCREEN_TOP_MM;
+  Object.assign(frame.style, { left: mm(left), top: mm(top), width: mm(widthMm), height: mm(heightMm) });
+  if (left < 0 || top < 0 || left + widthMm > plateWidthMm || top + heightMm > plateHeightMm) reportLayout(`${module.id}/${panel.id}: the screen does not fit the panel`, frame);
   const broker = new URLSearchParams(location.search).get('broker');
   const page_url = `${page}?embed=1${broker ? `&broker=${encodeURIComponent(broker)}` : ''}`;
   const view = createElement('iframe', '', { src: page_url, title: panel.title, loading: 'eager' });
@@ -194,21 +195,32 @@ function buildConsole(consoleLayout, definitions) {
 }
 
 /* Controls must sit inside their panel and not on top of one another (measured once drawn). */
+/* A box against a round screen: controls may sit in the corners around the circle. */
+function touchesCircle(box, circle) {
+  const radius = (circle.right - circle.left) / 2;
+  const x = (circle.left + circle.right) / 2, y = (circle.top + circle.bottom) / 2;
+  return Math.hypot(x - Math.max(box.left, Math.min(x, box.right)), y - Math.max(box.top, Math.min(y, box.bottom))) < radius;
+}
+
 function checkControls() {
   for (const plate of document.querySelectorAll('.plate')) {
     const plateBox = plate.getBoundingClientRect();
     const scale = plateBox.width / (plate.offsetWidth || 1);       // the zoom, so that the tolerance stays in mm
     const tolerance = LAYOUT_TOLERANCE_MM * PX_PER_MM * scale;
     const shrink = (box) => ({ left: box.left + tolerance, right: box.right - tolerance, top: box.top + tolerance, bottom: box.bottom - tolerance });
-    const controls = [...plate.querySelectorAll(':scope > .ctl')].map((element) => ({ element, box: shrink(element.getBoundingClientRect()) }));
-    const name = (element) => `${plate.closest('.module').id.replace('module-', '')}/${plate.dataset.panel}/${element.dataset.item}`;
+    // a screen is an obstacle like a control: nothing may sit on it
+    const controls = [...plate.querySelectorAll(':scope > .ctl, :scope > .glass')].map((element) => ({
+      element, box: shrink(element.getBoundingClientRect()), round: element.classList.contains('round'),
+    }));
+    const name = (element) => `${plate.closest('.module').id.replace('module-', '')}/${plate.dataset.panel}/${element.dataset.item || 'screen'}`;
     for (const { element, box } of controls) {
       if (box.left < plateBox.left || box.right > plateBox.right || box.top < plateBox.top || box.bottom > plateBox.bottom) {
         reportLayout(`${name(element)} sticks out of its panel`, element);
       }
     }
     controls.forEach((a, i) => controls.slice(i + 1).forEach((b) => {
-      if (overlapping(a.box, b.box)) reportLayout(`${name(a.element)} and ${name(b.element)} overlap`, b.element);
+      const hit = a.round ? touchesCircle(b.box, a.box) : b.round ? touchesCircle(a.box, b.box) : overlapping(a.box, b.box);
+      if (hit) reportLayout(`${name(a.element)} and ${name(b.element)} overlap`, b.element);
     }));
   }
   const status = document.getElementById('layout-status');
@@ -351,7 +363,10 @@ function wireViews() {
 /* Each module is its own node on the bus, as its board will be: its own connection, heartbeat and will. */
 function connectModule(node) {
   const { definition } = node;
-  const statusTopic = `panel/${definition.id}/status`;
+  // A module with a screen: its page reports panel/<module>/status itself, so the I/O node reports beside it (two
+  // clients in the virtual console, one board on the hardware).
+  const hasScreen = definition.panels.some((panel) => panel.screen);
+  const statusTopic = `panel/${definition.id}/${hasScreen ? 'io/' : ''}status`;
   const buses = [...new Set(definition.panels.map((panel) => panel.bus))];
   const definitionFingerprint = fingerprint(JSON.stringify(definition));
   const startedAt = Date.now();

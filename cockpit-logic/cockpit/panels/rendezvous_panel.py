@@ -7,6 +7,7 @@ The docking figures are in the pilot's own axes (tlm/target "port": right, up, y
 import math
 
 from .. import settings as S
+from ..angle_rates import AngleRates
 from ..display_format import fit_number
 from ..messages import PanelOutputs, switch_lamp
 
@@ -24,27 +25,15 @@ SIGNED_PORT_DISPLAYS = {
 }
 
 
-class DockingRates:
-    """How fast yaw, pitch and roll to the port change (°/s): the displayed angles differentiated over game time and
-    smoothed, so the rates agree with the angles by construction (a rate towards zero has the opposite sign)."""
+class DockingRates(AngleRates):
+    """How fast yaw, pitch and roll to the port change (°/s), so the rates agree with the angles by construction."""
 
     def __init__(self):
-        self.rates = {}             # angle name → °/s
-        self.previous = None        # (mission time, {angle name: degrees})
+        super().__init__(S.DOCKING_RATE_SMOOTHING)
 
     def track(self, port, mission_time):
         angles = {name: port[name] for name in ANGLES if port and port.get(name) is not None}
-        if len(angles) < len(ANGLES) or mission_time is None:
-            self.rates, self.previous = {}, None        # no port targeted: start again when one is
-            return
-        if self.previous and mission_time > self.previous[0]:
-            elapsed = mission_time - self.previous[0]
-            for name, angle in angles.items():
-                change = (angle - self.previous[1][name] + 180) % 360 - 180     # across ±180° the short way
-                rate = change / elapsed
-                old = self.rates.get(name)
-                self.rates[name] = rate if old is None else old + (rate - old) * S.DOCKING_RATE_SMOOTHING
-        self.previous = (mission_time, angles)
+        super().track(angles if len(angles) == len(ANGLES) else None, mission_time)
 
 
 # ---------- inputs ----------

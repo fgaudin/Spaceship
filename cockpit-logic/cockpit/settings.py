@@ -28,6 +28,9 @@ SAS_MODES = ['stability', 'prograde', 'retrograde', 'normal', 'antinormal', 'rad
              'antitarget', 'maneuver']
 EVENT_TIMER_SOURCES = ['MAN', 'TIG', 'APO', 'PERI', 'SOI']
 SPEED_MODES = ['orbit', 'surface', 'target']    # the navball's speed reference: what PRO and RETRO follow
+# FDAI controls (ATTITUDE panel): what the error needles point at, and their full scale
+FDAI_NEEDLES = ['prograde', 'retrograde', 'off']
+FDAI_ERROR_SCALES_DEG = [5, 50]
 
 # ---------- engine and throttle ----------
 HAND_CONTROLLER_DEADBAND = 0.05     # a stick axis under this is zero
@@ -68,6 +71,7 @@ BRAKING_GATE_TIME_S = 400.0         # allowed closing speed = range / 400 s ...
 BRAKING_GATE_FLOOR_M_S = 0.05       # ... but never under 0.05 m/s
 CLOSING_CAUTION_MARGIN = 1.2        # CLOSING caution at 20 % over the gate
 RANGE_IN_KM_FROM_M = 100000.0       # the range display switches to km from 100 km
+ATTITUDE_RATE_SMOOTHING = 0.25      # weight of the newest sample in the ATTITUDE panel's rates
 DOCKING_RATE_SMOOTHING = 0.4       # weight of the newest sample in the yaw, pitch and roll rates
 # Capture envelope: closing speed, lateral offset and angle at contact; the lamp only works within 10 m.
 CAPTURE_SPEED_MIN_M_S, CAPTURE_SPEED_MAX_M_S = 0.03, 0.3

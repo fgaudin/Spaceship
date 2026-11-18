@@ -286,6 +286,23 @@ def place_item(item, settings, issues, where):
     return placed
 
 
+def touches_circle(box, shape):
+    """A box against a circle: controls may sit in the corners around a round screen."""
+    x, y = shape['x'], shape['y']
+    return math.hypot(x - max(box[0], min(x, box[2])), y - max(box[1], min(y, box[3]))) < shape['d'] / 2
+
+
+def shapes_touch(a, b):
+    """Two circles or boxes, by their real outlines."""
+    if a['kind'] == b['kind'] == 'circle':
+        return math.hypot(a['x'] - b['x'], a['y'] - b['y']) < (a['d'] + b['d']) / 2
+    if b['kind'] == 'circle':
+        return touches_circle(bounds(a), b)
+    if a['kind'] == 'circle':
+        return touches_circle(bounds(b), a)
+    return overlap(bounds(a), bounds(b))
+
+
 def overlap(a, b):
     return a[0] < b[2] and b[0] < a[2] and a[1] < b[3] and b[1] < a[3]
 
@@ -309,12 +326,22 @@ def build_panel(module, panel, settings):
     layers['legends'].append({'kind': 'line', 'points': [(width * (1 - rule['width']) / 2, rule['y']), (width * (1 + rule['width']) / 2, rule['y'])]})
 
     inside = (plate['edge_margin'], plate['title_band'], width - plate['edge_margin'], height - plate['edge_margin'])
+    screen_box = module = window = None
     if panel.get('screen'):
         fp = settings['footprints']['screen']
         w, h = (v + 2 * fp['margin'] for v in panel['screen']['mm'])
-        window = rect(width / 2, fp['top'] + h / 2, w, h, fp['corner_radius'])
-        layers['cut'] += [window] + [moved(shape, window['x'], window['y']) for shape in extra_shapes(fp)]
-        box = bounds(window)
+        screen = panel['screen']
+        x, y = screen.get('at', (width / 2, fp['top'] + h / 2))     # `at`: the screen's centre on the faceplate
+        window = circle(x, y, w) if screen.get('round') else rect(x, y, w, h, fp['corner_radius'])
+        layers['cut'] += [window] + [moved(shape, x, y) for shape in extra_shapes(fp)]
+        box = screen_box = bounds(window)
+        if screen.get('module_mm'):                                 # the display's body behind the plate
+            size = screen['module_mm']
+            module = circle(x, y, size[0]) if screen.get('round') else rect(x, y, *size)
+            layers['behind'].append(module)
+            for sx, sy in screws:
+                if shapes_touch(circle(sx, sy, holes['head']), module):
+                    issues.append(f'{where}: the screen module is on the mounting screw at {sx:.0f}, {sy:.0f}')
         if box[0] < 0 or box[3] > height - plate['edge_margin']:
             issues.append(f'{where}: the screen window does not fit the faceplate')
 
@@ -331,6 +358,10 @@ def build_panel(module, panel, settings):
             issues.append(f'{where}/{item["id"]}: sticks out of the faceplate ({describe(box, width, height)})')
         elif box[1] < inside[1]:
             issues.append(f'{where}/{item["id"]}: in the title band (top at {box[1]:.1f} mm, the band ends at {inside[1]} mm)')
+        if screen_box and (touches_circle(box, window) if window['kind'] == 'circle' else overlap(box, screen_box)):
+            issues.append(f'{where}/{item["id"]}: on the screen window')
+        if module and any(shapes_touch(shape, module) for shape in placed['behind']):
+            issues.append(f'{where}/{item["id"]}: collides with the screen module behind the plate')
         for x, y in screws:
             if overlap(box, bounds(circle(x, y, holes['head']))):
                 issues.append(f'{where}/{item["id"]}: on the mounting screw at {x:.0f}, {y:.0f}')

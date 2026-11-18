@@ -1,5 +1,6 @@
 /* FDAI glass panel. A display only: it subscribes to tlm/attitude (pitch, heading, roll in degrees against the local
-   horizon, plus the surface prograde direction) and draws the ball. The bezel keys are local to the instrument.
+   horizon, plus the surface prograde direction) and draws the ball. What the needles show, their scales and the
+   markers are set by the ATTITUDE panel's FDAI controls: the cockpit sends them on panel/eng/out/fdai.
 
    Geometry. Local-level axes (north, east, up). The nose f, the right wing r and the body-up u follow from heading ψ,
    pitch θ and roll φ (right wing down positive). The ball is seen from behind the nose: a pixel (x right, y up) of the
@@ -10,6 +11,7 @@ import { connectBus, parse, showDemo } from './bus.js';
 (() => {
   const params = new URLSearchParams(location.search);
   const DEMO = params.has('demo');
+  const ON_GLASS = params.has('embed');    // the round screen: the rates are on the panel's displays, not drawn here
   const D2R = Math.PI / 180, R2D = 180 / Math.PI;
   const $ = (id) => document.getElementById(id);
   const cv = $('ball'), g = cv.getContext('2d');
@@ -23,7 +25,14 @@ import { connectBus, parse, showDemo } from './bus.js';
   let rates = { p: 0, y: 0, r: 0 };        // deg/s, low-passed
   let lastRx = 0, lastSample = null;
   const REFS = ['PROGRADE', 'RETROGRADE', 'OFF'], SCALES = [5, 50], RATES = [1, 5, 10];
-  const ui = { ref: 0, scale: 0, rate: 1, markers: true };
+  const ui = { ref: 0, scale: 0, rate: 1, markers: true };     // until the cockpit says (and in the demo)
+  const indexOf = (list, value, fallback) => (list.indexOf(value) >= 0 ? list.indexOf(value) : fallback);
+  const applySettings = (settings) => {                         // panel/eng/out/fdai
+    ui.ref = indexOf(REFS, String(settings.needles || '').toUpperCase(), ui.ref);
+    ui.scale = indexOf(SCALES, settings.error_scale, ui.scale);
+    ui.rate = indexOf(RATES, settings.rate_scale, ui.rate);
+    if (typeof settings.markers === 'boolean') ui.markers = settings.markers;
+  };
 
   // ---------- attitude maths ----------
   function axes(a) {
@@ -265,7 +274,7 @@ import { connectBus, parse, showDemo } from './bus.js';
         g.restore();
       }
       drawOverlay(A, a);
-      rateScale('roll', stale ? 0 : rates.r); rateScale('pitch', stale ? 0 : rates.p); rateScale('yaw', stale ? 0 : rates.y);
+      if (!ON_GLASS) { rateScale('roll', stale ? 0 : rates.r); rateScale('pitch', stale ? 0 : rates.p); rateScale('yaw', stale ? 0 : rates.y); }
       $('flag').hidden = !stale;
       $('r-pitch').textContent = stale ? '---.-' : fmt(a.pitch, true);
       $('r-hdg').textContent = stale ? '---.-' : fmt(a.heading, false);
@@ -295,27 +304,6 @@ import { connectBus, parse, showDemo } from './bus.js';
     sample({ pitch, heading, roll, prograde: { pitch: 31, heading: 78 } }, t);
   }
 
-  // ---------- bezel ----------
-  const paint = () => {
-    $('k-ref').textContent = REFS[ui.ref];
-    $('k-scale').textContent = `±${SCALES[ui.scale]}°`;
-    $('k-rate').textContent = `±${RATES[ui.rate]}°/s`;
-    $('k-mark').textContent = ui.markers ? 'ON' : 'OFF';
-    $('k-mark').setAttribute('aria-pressed', String(ui.markers));
-    try { localStorage.setItem('fdai-ui', JSON.stringify(ui)); } catch { /* private window */ }
-  };
-  try { Object.assign(ui, JSON.parse(localStorage.getItem('fdai-ui') || '{}')); } catch { /* ignore */ }
-  const acts = {
-    ref: () => { ui.ref = (ui.ref + 1) % REFS.length; }, scale: () => { ui.scale = (ui.scale + 1) % SCALES.length; },
-    rate: () => { ui.rate = (ui.rate + 1) % RATES.length; }, mark: () => { ui.markers = !ui.markers; },
-  };
-  for (const k of Object.keys(acts)) $(`k-${k}`).addEventListener('click', () => { acts[k](); paint(); });
-  addEventListener('keydown', (e) => {
-    const k = { n: 'ref', s: 'scale', r: 'rate', m: 'mark' }[e.key.toLowerCase()];
-    if (k && !e.ctrlKey && !e.metaKey && !e.altKey) { acts[k](); paint(); }
-  });
-  paint();
-
   // ---------- bus ----------
   const statusTopic = 'panel/fdai/status';
   if (DEMO) { showDemo(); $('plant').textContent = 'plant: demo'; }
@@ -324,13 +312,14 @@ import { connectBus, parse, showDemo } from './bus.js';
       name: 'panel-fdai',
       will: { topic: statusTopic, payload: { online: false } },
       onConnect: (client) => {
-        client.subscribe(['tlm/attitude', 'gateway/status'], { qos: 0 });
-        client.publish(statusTopic, JSON.stringify({ online: true, fw: 'fdai-glass-0.1' }), { qos: 1, retain: true });
+        client.subscribe(['tlm/attitude', 'gateway/status', 'panel/eng/out/fdai'], { qos: 0 });
+        client.publish(statusTopic, JSON.stringify({ online: true, fw: 'fdai-glass-0.2' }), { qos: 1, retain: true });
       },
       onMessage: (topic, text) => {
         const p = parse(text);
         if (p === undefined) return;
         if (topic === 'tlm/attitude') sample(p, performance.now() / 1000);
+        else if (topic === 'panel/eng/out/fdai') applySettings(p);
         else if (topic === 'gateway/status') $('plant').textContent = `plant: ${p.plant || '?'}${p.connected ? '' : ' (down)'}`;
       },
     });

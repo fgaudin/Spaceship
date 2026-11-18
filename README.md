@@ -60,9 +60,8 @@ flamed out or gone; engines staged away leave the matrix, and so does an engine 
 is still attached) with a count of burning engines; CUTOFF (throttle to 0, held until the lever is back at idle; the lamp blinks while the lever is still up);
 ABORT behind ABORT ARM fires KSP's abort group, and only that (what the craft's builder wired to it); two event
 lights in the C&W grid, 0.05 G (drag is felt with the engine off while descending: the entry has begun) and CONTACT
-(landed, or a leg or wheel touches the ground); ATTITUDE: SAS, SAS MODE (with TGT, A-TGT and MNVR), SPEED REF knob
-(the navball's speed reference, which SAS PRO and RETRO follow: orbit, surface or target; it acts only when turned,
-and its LED blinks while the game's reference is another one, since KSP changes it by itself), RCS, RCS FINE.
+(landed, or a leg or wheel touches the ground). The attitude switches are under the FDAI ball (below), still on the
+`eng` bus.
 
 **Hand controllers** (`hc`, no page yet): the USB joysticks will publish `panel/hc/in/rot_pitch`, `rot_yaw`,
 `rot_roll`, `trans_right`, `trans_up` and `trans_fwd` (−1 to 1); tests publish them today. The cockpit passes them on
@@ -136,10 +135,17 @@ speed and apoapsis tapes, q and g), LANDING (drift cross-pointer in the heading 
 TWR), DOCKING (range, closing speed and line-of-sight rate against the course's ρ/400 s braking gate; port alignment
 and capture envelope when a docking port is targeted). `mfd.html?demo=1` runs without a broker.
 
-**FDAI** (glass panel, http://localhost:8650/fdai.html, also linked from the panel's top bar): an attitude ball drawn
+**FDAI** (glass module, 2 × 2 U, its panel ATTITUDE: the ball on a 4" round screen, pitch, heading and roll with their
+rates on 7-segment displays beside it, the FDAI controls in the corners around it (MARKERS top left, NEEDLES and ERROR
+SCALE at the bottom), and under them SAS, SAS MODE with TGT, A-TGT and MNVR,
+SPEED REF (the navball's speed reference, which SAS PRO and RETRO follow: orbit, surface or target; it acts only when
+turned, and its LED blinks while the game's reference is another one, since KSP changes it by itself), RCS, RCS FINE.
+The page alone: http://localhost:8650/fdai.html, also linked from the panel's top bar): an attitude ball drawn
 from `tlm/attitude` (pitch, heading, roll against the local horizon), with a roll index, prograde and retrograde markers,
 three fly-to error needles (to prograde or retrograde, ±5° or ±50° full scale), three rate scales and a NO ATT flag when
-the telemetry is older than 2 s. Bezel keys N, S, R, M. `fdai.html?demo=1` runs without a broker.
+the telemetry is older than 2 s. What the needles show (prograde, retrograde, off), their scale (±5° or ±50°) and the
+markers are set by the FDAI controls on the ATTITUDE panel, never on the glass (`panel/eng/out/fdai`). The screen view
+(`?embed=1`) shows only the ball and its roll ring; the page alone in a browser keeps its readouts and rate scales. `fdai.html?demo=1` runs without a broker.
 
 To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE ARM and arm, press STAGE.
 
@@ -176,7 +182,7 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 
 ### Tests
 ```sh
-.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the panels and the burn computer (63)
+.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the panels and the burn computer (65)
 .venv/bin/python tests/e2e_mock.py                    # end to end on the running stack with the mock (76 checks; `MQTT_PORT` selects another broker)
 .venv/bin/python tests/e2e_ksp.py                     # end to end with KSP and gateway-ksp (85 checks; loads a save in orbit)
 .venv/bin/python tests/e2e_ksp_docking.py --save lor3-rdv-handover   # docking display signs in KSP (8 checks)
