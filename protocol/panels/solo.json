@@ -177,6 +177,54 @@
           ]
         }
       ]
+    },
+    {
+      "id": "navigation",
+      "title": "NAVIGATION",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        3,
+        0
+      ],
+      "bus": "lab",
+      "items": [
+        {
+          "type": "alpha",
+          "id": "txt_body",
+          "label": "BODY",
+          "out": "txt_body",
+          "chars": 8,
+          "at": [
+            32,
+            40
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_lat",
+          "label": "LAT ° (+ NORTH)",
+          "digits": 5,
+          "out": "disp_lat",
+          "at": [
+            71,
+            40
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_lon",
+          "label": "LON ° (+ EAST)",
+          "digits": 6,
+          "out": "disp_lon",
+          "at": [
+            50,
+            66
+          ]
+        }
+      ]
     }
   ]
 }

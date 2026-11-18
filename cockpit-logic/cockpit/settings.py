@@ -9,6 +9,7 @@ COMM_PANEL = 'com'
 HAND_CONTROLLER_PANEL = 'hc'       # the hand controllers (USB joysticks), as a panel
 SOLO_PANEL = 'solo'           # PAD requests to the flight dynamics service, flying solo
 LAB_PANEL = 'lab'            # experimental panels
+SCIENCE_PANEL = 'sci'
 
 # ---------- link to the plant ----------
 NO_CHARGE_BELOW = 0.01              # electric charge left under this: no power, the panels go dark
@@ -54,6 +55,10 @@ OVERHEAT_FRACTION = 0.80            # hottest part, as a fraction of its tempera
 SINK_RATE_BELOW_ALTITUDE_M = 1000.0
 SINK_RATE_BASE_M_S, SINK_RATE_PER_ALTITUDE = 8.0, 0.1   # allowed descent rate: 8 m/s + 10 % of the radar altitude
 GEAR_UP_BELOW_ALTITUDE_M = 300.0
+# LANDING AID: the touchdown lamps work below SINK_RATE_BELOW_ALTITUDE_M, and each lights inside its limit
+TOUCHDOWN_SINK_BASE_M_S, TOUCHDOWN_SINK_PER_ALTITUDE = 2.0, 0.1     # 2 m/s + 10 % of the radar altitude
+TOUCHDOWN_DRIFT_M_S = 1.0
+TOUCHDOWN_TILT_DEG = 10.0
 CHUTE_BELOW_ALTITUDE_M = 15000.0
 ATTITUDE_ERROR_LIMIT_DEG = 5.0      # off the burn attitude by more than this ...
 ATTITUDE_ERROR_WINDOW_S = 30.0      # ... from this long before TIG
@@ -91,6 +96,8 @@ STATION_NAME_CHARACTERS = 12        # the display of the first station or relay 
 # ---------- experimental panels ----------
 ACTION_GROUP_COUNT = 10
 BODY_NAME_CHARACTERS = 8
+EXPERIMENT_NAME_CHARACTERS = 16
+BIOME_NAME_CHARACTERS = 12
 CAMERA_NAME_CHARACTERS = 16
 
 # ---------- time warp ----------

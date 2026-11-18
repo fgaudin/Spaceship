@@ -1,0 +1,147 @@
+{
+  "id": "rnt",
+  "title": "REENTRY · RECOVERY",
+  "fw": "virtual-0.1",
+  "board": "olimex-esp32-poe",
+  "panels": [
+    {
+      "id": "reentry",
+      "title": "REENTRY · RECOVERY",
+      "size": [
+        2,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "bar",
+          "id": "bar_ablator",
+          "label": "ABLATOR",
+          "segments": 10,
+          "out": "bar_ablator",
+          "at": [
+            12,
+            50
+          ],
+          "vertical": true
+        },
+        {
+          "type": "seg7",
+          "id": "disp_heat",
+          "label": "HOTTEST PART PCT",
+          "out": "disp_heat",
+          "digits": 4,
+          "at": [
+            42,
+            34
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_to_atm",
+          "label": "TIME TO ATM S",
+          "out": "disp_to_atm",
+          "digits": 5,
+          "at": [
+            42,
+            68
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_outside",
+          "label": "OUTSIDE °C",
+          "digits": 4,
+          "out": "disp_outside",
+          "color": "green",
+          "at": [
+            84,
+            34
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_pressure",
+          "label": "PRESSURE KPA",
+          "digits": 4,
+          "out": "disp_pressure",
+          "color": "green",
+          "at": [
+            84,
+            68
+          ]
+        },
+        {
+          "type": "annunciator",
+          "id": "chute_safety",
+          "cols": 3,
+          "cells": [
+            {
+              "out": "lamp_chute_safe",
+              "label": "CHUTE SAFE",
+              "color": "green"
+            },
+            {
+              "out": "lamp_chute_risky",
+              "label": "CHUTE RISKY",
+              "color": "amber"
+            },
+            {
+              "out": "lamp_chute_unsafe",
+              "label": "CHUTE UNSAFE",
+              "color": "red"
+            }
+          ],
+          "at": [
+            150,
+            26
+          ]
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "chute_arm",
+          "label": "CHUTE ARM",
+          "in": "chute_arm",
+          "led": {
+            "out": "led_chute_armed",
+            "color": "amber"
+          },
+          "at": [
+            122,
+            66
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "chute_deploy",
+          "label": "CHUTE",
+          "color": "green",
+          "in": "chute_deploy",
+          "out": "lamp_chute",
+          "at": [
+            150,
+            66
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "brakes",
+          "label": "BRAKES",
+          "in": "brakes",
+          "led": {
+            "out": "led_brakes",
+            "color": "green"
+          },
+          "at": [
+            178,
+            66
+          ]
+        }
+      ]
+    }
+  ]
+}

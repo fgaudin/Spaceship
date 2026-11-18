@@ -8,7 +8,8 @@ def fit_number(value, decimals, digits, signed=False):
     if value is None or not math.isfinite(value):
         return '-' * digits
     for kept_decimals in range(decimals, -1, -1):
-        text = f'{value:+.{kept_decimals}f}' if signed else f'{value:.{kept_decimals}f}'
+        shown = round(value, kept_decimals) or 0.0      # no "-0.0" for a tiny negative value
+        text = f'{shown:+.{kept_decimals}f}' if signed else f'{shown:.{kept_decimals}f}'
         if len(text.replace('.', '')) <= digits:
             return text
     return 'E' * digits

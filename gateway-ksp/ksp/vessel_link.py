@@ -54,6 +54,7 @@ class VesselLink:
         self._open_streams(active_vessel)
         self.parts = PartsWatch(self.connection, active_vessel)
         self.body_names = {}
+        self.body_atmospheres = {}          # body → top of its atmosphere (m), None without one
         self.warp_to_universal_time = None
         controlling_part = active_vessel.parts.controlling
         # where CTRL FROM PORT off goes back to
@@ -133,6 +134,7 @@ class VesselLink:
                 'speed_mode': (control, 'speed_mode'),
                 'available_thrust': (vessel, 'available_thrust'),
                 'crew_count': (vessel, 'crew_count'),
+                'biome': (vessel, 'biome'),
                 'specific_impulse': (vessel, 'specific_impulse'),
                 'can_communicate': (vessel.comms, 'can_communicate'),
                 'body': (orbit, 'body'),
@@ -192,6 +194,7 @@ class VesselLink:
             payloads['tlm/node'] = self._node_payload()
             payloads['tlm/comm'] = self._comm_payload(now)
             payloads['tlm/groups'] = {'on': [bool(group()) for group in self.action_groups]}
+            payloads['tlm/science'] = {'experiments': self.parts.science_telemetry(), 'biome': now['biome']}
         if include_slow or (include_target and self.has_target):
             payloads['tlm/target'] = target_telemetry(self, refresh_slow_facts=include_slow)
         return payloads
@@ -239,6 +242,7 @@ class VesselLink:
                 'sas': now['sas'], 'rcs': now['rcs'], 'gear': now['gear'], 'lights': now['lights'],
                 'brakes': now['brakes'], 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
                 'solar': self.parts.solar_deployed_state(), 'chute': self.parts.parachute_state(),
+                'chute_safe': self.parts.parachute_safety_state(),
                 'fuel_cell': self.parts.fuel_cell_state(),
                 'comm': now['can_communicate'], 'has_gear': self.parts.has_landing_gear(),
                 'contact': situation in GROUND_SITUATIONS or self.parts.touches_ground()}
@@ -247,9 +251,10 @@ class VesselLink:
         body = now['body']
         if body._object_id not in self.body_names:      # the name is a plain read: once per body
             self.body_names[body._object_id] = body.name
+            self.body_atmospheres[body._object_id] = body.atmosphere_depth if body.has_atmosphere else None
         closed_orbit = now['eccentricity'] < 1          # an escape trajectory has no apoapsis and no period
         finite_or_none = lambda value: value if math.isfinite(value) else None
-        return {'body': self.body_names[body._object_id],
+        return {'body': self.body_names[body._object_id], 'atm': self.body_atmospheres[body._object_id],
                 'apo': finite_or_none(now['apoapsis_altitude']), 'peri': now['periapsis_altitude'],
                 'a': now['semi_major_axis'], 'e': now['eccentricity'], 'i': math.degrees(now['inclination']),
                 'period': now['period'] if closed_orbit else None,

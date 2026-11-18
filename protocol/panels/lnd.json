@@ -1,0 +1,76 @@
+{
+  "id": "lnd",
+  "title": "LANDING AID",
+  "fw": "virtual-0.1",
+  "board": "olimex-esp32-poe",
+  "panels": [
+    {
+      "id": "landing_aid",
+      "title": "LANDING AID",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "eng",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_drift_right",
+          "label": "DRIFT M/S + R",
+          "out": "disp_drift_right",
+          "digits": 5,
+          "at": [
+            26,
+            31
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_drift_up",
+          "label": "DRIFT M/S + UP",
+          "out": "disp_drift_up",
+          "digits": 5,
+          "at": [
+            73,
+            31
+          ]
+        },
+        {
+          "type": "annunciator",
+          "id": "touchdown",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_td_sink",
+              "label": "SINK OK",
+              "color": "green"
+            },
+            {
+              "out": "lamp_td_drift",
+              "label": "DRIFT OK",
+              "color": "green"
+            },
+            {
+              "out": "lamp_td_upright",
+              "label": "UPRIGHT",
+              "color": "green"
+            },
+            {
+              "out": "lamp_td_gear",
+              "label": "GEAR DOWN",
+              "color": "green"
+            }
+          ],
+          "at": [
+            50,
+            70
+          ]
+        }
+      ]
+    }
+  ]
+}

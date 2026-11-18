@@ -3,6 +3,33 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-19 — a FAN switch
+
+- **LIGHTS becomes LIGHTS · FAN**, with a FAN toggle (`panel/sys/in/fan`). It does nothing in the virtual cockpit.
+
+## 2026-11-19 — LANDING AID
+
+- **PROPELLANT and LIFE SUPPORT swap places:** PROPELLANT is now on the ENG module, LIFE SUPPORT on RES under ELECTRICAL.
+- **ENGINE and ASCENT · DESCENT swap places**, which puts ASCENT · DESCENT beside LANDING AID.
+- **A new 1 U panel left of ENGINE** (module LND, `eng` bus): DRIFT + R and DRIFT + UP, the sideways speed across the craft's
+  axis, and the touchdown lamps SINK OK, DRIFT OK, UPRIGHT and GEAR DOWN, lit below 1000 m while each is within its limit.
+- 7-segment displays no longer show `-0.0` for a tiny negative value.
+
+## 2026-11-19 — REENTRY and SCIENCE panels
+
+- **REENTRY** (new module, `sys` bus, on MAIN's bottom row, SCIENCE beside it) takes ABLATOR, OUTSIDE °C and PRESSURE KPA from RECOVERY · BRAKES, and
+  adds HOTTEST PART PCT, TIME TO ATM S (`atm` in `tlm/orbit`) and CHUTE SAFE / RISKY / UNSAFE (`chute_safe` in `tlm/vessel`).
+- **RECOVERY · BRAKES merges into it**, as REENTRY · RECOVERY: the chute controls sit under the chute safety lamps.
+- **SCIENCE** (new module, `sci` bus): one experiment shown at a time, with RUN, SEND, DUMP, RESET and RUN ALL, its state, the
+  biome and the science of its data (`tlm/science`, `cmd/science`).
+- **CAUTION & WARNING:** MASTER ALARM and MASTER CAUTION sit under the annunciator; the **MET** moves to the MONITOR panel.
+
+## 2026-11-19 — OVERHEAD reordered
+
+- **NAVIGATION joins the SOLO module** (still on the `lab` bus), and the LAB module, then empty, is gone.
+- **OVERHEAD:** SOLO (PAD REQUEST, ORBIT, NAVIGATION) on the first row; TIME WARP, LIGHTS, EVENT TIMER and SAVE on the
+  second. The burn computer is alone in LOW and moves to its first row.
+
 ## 2026-11-18 — SAVE gets its own panel, with REVERT TO LAUNCH
 
 - **TIME WARP · GAME is split** into TIME WARP (with PAUSE) and **SAVE** (QUICK SAVE, QUICK LOAD).
@@ -16,7 +43,7 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-18 — LIFE SUPPORT, with TAC Life Support
 
-- **A LIFE SUPPORT panel** on the RES module (`sys` bus): FOOD, WATER and O2 bars, how many hours each lasts for the crew
+- **A LIFE SUPPORT panel** on the ENG module, under LINK · ANTENNA (`sys` bus): FOOD, WATER and O2 bars, how many hours each lasts for the crew
   aboard (TAC's own rates, recyclers not counted), and CREW. The gateway adds `Food`, `Water` and `Oxygen` to
   `tlm/resources` and `crew` to `tlm/vessel`.
 - **LS LOW** (a caution, under 10 %) and **LS OUT** (a warning, one of them empty) join the annunciator, now 5 columns

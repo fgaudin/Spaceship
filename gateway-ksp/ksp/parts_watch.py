@@ -36,6 +36,29 @@ class WatchedEngine:
                 'isp_sl': self.sea_level_specific_impulse, 'propellants': self.propellants}
 
 
+class WatchedExperiment:
+    def __init__(self, experiment, streams):
+        self.experiment = experiment
+        self.title = experiment.title
+        self.rerunnable = experiment.rerunnable
+        self.available = streams.attribute(experiment, 'available', SLOW_HZ)
+        self.has_data = streams.attribute(experiment, 'has_data', SLOW_HZ)
+        self.inoperable = streams.attribute(experiment, 'inoperable', SLOW_HZ)
+        self.values = None              # (science, science if transmitted) of the data held, read once per result
+
+    def telemetry(self):
+        has_data = self.has_data()
+        if not has_data:
+            self.values = None
+        elif self.values is None:
+            data = self.experiment.data
+            self.values = (round(sum(item.science_value for item in data), 2),
+                           round(sum(item.transmit_value for item in data), 2))
+        return {'title': self.title, 'available': self.available(), 'data': has_data,
+                'inoperable': self.inoperable(), 'rerunnable': self.rerunnable,
+                'value': self.values and self.values[0], 'transmit': self.values and self.values[1]}
+
+
 class PartsWatch:
     def __init__(self, connection, vessel):
         self.connection, self.vessel = connection, vessel
@@ -56,6 +79,8 @@ class PartsWatch:
         self._watch_fuel_cells(parts)
         self.parachutes = list(parts.parachutes)
         self.parachute_states = [streams.attribute(parachute, 'state', SLOW_HZ) for parachute in self.parachutes]
+        self.parachute_safety = [streams.attribute(parachute, 'safe_state', SLOW_HZ) for parachute in self.parachutes]
+        self.experiments = [WatchedExperiment(experiment, streams) for experiment in parts.experiments]
         self.engines = [WatchedEngine(engine, streams, vessel.reference_frame) for engine in parts.engines]
         self.read_engine_settings()
         self.ground_contacts = ([streams.attribute(leg, 'is_grounded', FAST_HZ) for leg in parts.legs]
@@ -163,6 +188,22 @@ class PartsWatch:
         if not self.antennas_deployed:
             return None
         return any(read_or(False, deployed) for deployed in self.antennas_deployed)
+
+    def parachute_safety_state(self):
+        """Whether opening the parachutes now is 'safe', 'risky' or 'unsafe' (the worst of them); None when KSP gives
+        no verdict, or without parachutes."""
+        states = {read_or(None, safety) for safety in self.parachute_safety}
+        names = {state.name for state in states if state is not None}
+        return next((name for name in ('unsafe', 'risky', 'safe') if name in names), None)
+
+    def science_telemetry(self):
+        experiments = []
+        for watched in self.experiments:
+            try:
+                experiments.append(watched.telemetry())
+            except Exception:           # the part is gone: left out until the parts are read again
+                continue
+        return experiments
 
     def parachute_state(self):
         """'deployed', 'armed', 'cut' or 'stowed'; None without parachutes."""

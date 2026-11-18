@@ -21,10 +21,10 @@ from .injected_failures import InjectedFailures
 from .messages import Message
 from .node_mirror import NodeMirror
 from .panels import (comm_panel, computer_panel, engine_panel, hand_controller, lab_panel, rendezvous_panel,
-                     solo_panel, systems_panel)
+                     science_panel, solo_panel, systems_panel)
 
 PANELS_WITH_INPUTS = (engine_panel, systems_panel, computer_panel, rendezvous_panel, comm_panel, lab_panel,
-                      hand_controller)
+                      science_panel, hand_controller)
 NEVER = -1e9
 
 
@@ -78,6 +78,7 @@ class Cockpit:
         self.cameras = []                       # cam/list: what the camera monitor can show, [{'id', 'name'}]
         self.camera_monitor = {}                # cam/status: {'online', 'playing'}
         self.selected_camera_id = None
+        self.selected_experiment = 0            # its place in the list of tlm/science
         self.injected_failures = InjectedFailures()   # instruments and switches the instructor broke (SimSup)
 
     # ---------- reading the state ----------
@@ -335,6 +336,7 @@ class Cockpit:
         comm_panel.render(self, wanted)
         lab_panel.render(self, wanted)
         solo_panel.render(self, wanted)
+        science_panel.render(self, wanted)
         wanted['cam/select'] = lab_panel.camera_selection(self)
         wanted['cmp/pad'] = self._pad_summary()
         wanted['cw/state'] = self._alarm_summary(active, unacknowledged)

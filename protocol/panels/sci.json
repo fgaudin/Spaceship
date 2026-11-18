@@ -1,0 +1,183 @@
+{
+  "id": "sci",
+  "title": "SCIENCE",
+  "fw": "virtual-0.1",
+  "board": "olimex-esp32-poe",
+  "panels": [
+    {
+      "id": "science",
+      "title": "SCIENCE",
+      "size": [
+        2,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "sci",
+      "items": [
+        {
+          "type": "alpha",
+          "id": "txt_sci",
+          "label": "EXPERIMENT",
+          "out": "txt_sci",
+          "chars": 16,
+          "at": [
+            46,
+            30
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_sci_number",
+          "label": "NO",
+          "out": "disp_sci_number",
+          "digits": 2,
+          "at": [
+            96,
+            30
+          ]
+        },
+        {
+          "type": "alpha",
+          "id": "txt_biome",
+          "label": "BIOME",
+          "out": "txt_biome",
+          "chars": 12,
+          "at": [
+            150,
+            30
+          ]
+        },
+        {
+          "type": "button",
+          "id": "sci_prev",
+          "label": "◂ EXP",
+          "in": "sci_prev",
+          "at": [
+            22,
+            58
+          ]
+        },
+        {
+          "type": "button",
+          "id": "sci_next",
+          "label": "EXP ▸",
+          "in": "sci_next",
+          "at": [
+            46,
+            58
+          ]
+        },
+        {
+          "type": "led",
+          "id": "led_sci_ready",
+          "label": "READY",
+          "out": "led_sci_ready",
+          "color": "green",
+          "at": [
+            76,
+            58
+          ]
+        },
+        {
+          "type": "led",
+          "id": "led_sci_data",
+          "label": "DATA",
+          "out": "led_sci_data",
+          "color": "amber",
+          "at": [
+            96,
+            58
+          ]
+        },
+        {
+          "type": "led",
+          "id": "led_sci_spent",
+          "label": "SPENT",
+          "out": "led_sci_spent",
+          "color": "red",
+          "at": [
+            116,
+            58
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_sci_value",
+          "label": "SCIENCE",
+          "out": "disp_sci_value",
+          "digits": 5,
+          "color": "green",
+          "at": [
+            166,
+            57
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_sci_transmit",
+          "label": "IF SENT",
+          "out": "disp_sci_transmit",
+          "digits": 5,
+          "color": "green",
+          "at": [
+            166,
+            82
+          ]
+        },
+        {
+          "type": "button",
+          "id": "sci_run",
+          "label": "RUN",
+          "in": "sci_run",
+          "at": [
+            22,
+            84
+          ]
+        },
+        {
+          "type": "button",
+          "id": "sci_transmit",
+          "label": "SEND",
+          "in": "sci_transmit",
+          "at": [
+            46,
+            84
+          ]
+        },
+        {
+          "type": "button",
+          "id": "sci_dump",
+          "label": "DUMP",
+          "in": "sci_dump",
+          "at": [
+            70,
+            84
+          ]
+        },
+        {
+          "type": "button",
+          "id": "sci_reset",
+          "label": "RESET",
+          "in": "sci_reset",
+          "at": [
+            94,
+            84
+          ]
+        },
+        {
+          "type": "button",
+          "id": "sci_run_all",
+          "label": "RUN ALL",
+          "in": "sci_run_all",
+          "at": [
+            118,
+            84
+          ]
+        }
+      ]
+    }
+  ]
+}

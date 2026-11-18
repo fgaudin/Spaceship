@@ -10,14 +10,14 @@
       ],
       "modules": [
         {
-          "module": "sys",
+          "module": "solo",
           "at": [
             0,
             0
           ]
         },
         {
-          "module": "solo",
+          "module": "sys",
           "at": [
             0,
             1
@@ -74,6 +74,27 @@
             2,
             0
           ]
+        },
+        {
+          "module": "rnt",
+          "at": [
+            1,
+            5
+          ]
+        },
+        {
+          "module": "sci",
+          "at": [
+            3,
+            5
+          ]
+        },
+        {
+          "module": "lnd",
+          "at": [
+            1,
+            4
+          ]
         }
       ]
     },
@@ -90,17 +111,10 @@
       },
       "modules": [
         {
-          "module": "lab",
-          "at": [
-            0,
-            0
-          ]
-        },
-        {
           "module": "cmp",
           "at": [
             0,
-            1
+            0
           ]
         }
       ]

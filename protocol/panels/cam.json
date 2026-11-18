@@ -27,7 +27,21 @@
           800
         ]
       },
-      "items": []
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_met",
+          "label": "MET",
+          "digits": 7,
+          "out": "disp_met",
+          "color": "green",
+          "at": [
+            150,
+            177
+          ]
+        }
+      ],
+      "bus": "eng"
     }
   ]
 }

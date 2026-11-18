@@ -1,6 +1,6 @@
 {
   "id": "res",
-  "title": "ELECTRICAL · PROPELLANT · LIFE SUPPORT",
+  "title": "ELECTRICAL · LIFE SUPPORT",
   "fw": "virtual-0.1",
   "board": "olimex-esp32-poe",
   "panels": [
@@ -83,92 +83,6 @@
       ]
     },
     {
-      "id": "propellant",
-      "title": "PROPELLANT",
-      "size": [
-        1,
-        1
-      ],
-      "at": [
-        0,
-        1
-      ],
-      "bus": "sys",
-      "items": [
-        {
-          "type": "bar",
-          "id": "bar_lf",
-          "label": "FUEL",
-          "out": "bar_lf",
-          "segments": 10,
-          "vertical": true,
-          "at": [
-            20,
-            40
-          ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_ox",
-          "label": "OXID",
-          "out": "bar_ox",
-          "segments": 10,
-          "vertical": true,
-          "at": [
-            40,
-            40
-          ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_mono",
-          "label": "MONO",
-          "out": "bar_mono",
-          "segments": 10,
-          "vertical": true,
-          "at": [
-            60,
-            40
-          ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_xenon",
-          "label": "XENON",
-          "out": "bar_xenon",
-          "segments": 10,
-          "vertical": true,
-          "at": [
-            80,
-            40
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_burn_time",
-          "label": "BURN TIME S",
-          "out": "disp_burn_time",
-          "digits": 5,
-          "at": [
-            30,
-            78
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_rcs_dv",
-          "label": "RCS ΔV M/S",
-          "out": "disp_rcs_dv",
-          "digits": 4,
-          "color": "green",
-          "at": [
-            74,
-            78
-          ]
-        }
-      ]
-    },
-    {
       "id": "life_support",
       "title": "LIFE SUPPORT",
       "size": [
@@ -177,7 +91,7 @@
       ],
       "at": [
         0,
-        2
+        1
       ],
       "bus": "sys",
       "items": [

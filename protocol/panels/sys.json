@@ -5,6 +5,158 @@
   "board": "olimex-esp32-poe",
   "panels": [
     {
+      "id": "time_warp",
+      "title": "TIME WARP",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_warp",
+          "label": "RATE ×",
+          "out": "disp_warp",
+          "digits": 6,
+          "color": "green",
+          "at": [
+            40,
+            28
+          ]
+        },
+        {
+          "type": "led",
+          "id": "led_warp",
+          "label": "WARP",
+          "out": "led_warp",
+          "color": "amber",
+          "at": [
+            76,
+            28
+          ]
+        },
+        {
+          "type": "button",
+          "id": "warp_down",
+          "label": "◂ SLOWER",
+          "in": "warp_down",
+          "at": [
+            14,
+            50
+          ]
+        },
+        {
+          "type": "button",
+          "id": "warp_up",
+          "label": "FASTER ▸",
+          "in": "warp_up",
+          "at": [
+            38,
+            50
+          ]
+        },
+        {
+          "type": "button",
+          "id": "warp_to",
+          "label": "WARP TO EVT",
+          "in": "warp_to",
+          "at": [
+            62,
+            50
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "warp_stop",
+          "label": "STOP WARP",
+          "color": "red",
+          "in": "warp_stop",
+          "at": [
+            86,
+            50
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "pause",
+          "label": "PAUSE",
+          "in": "pause",
+          "led": {
+            "out": "led_pause",
+            "color": "amber"
+          },
+          "at": [
+            50,
+            78
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lights",
+      "title": "LIGHTS · FAN",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        0
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "toggle",
+          "id": "cabin_light",
+          "label": "CABIN",
+          "in": "cabin_light",
+          "at": [
+            15,
+            52
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "backlight",
+          "label": "BACKLIGHT",
+          "in": "backlight",
+          "at": [
+            38,
+            52
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "lights",
+          "label": "EXTERNAL",
+          "in": "lights",
+          "led": {
+            "out": "led_lights",
+            "color": "white"
+          },
+          "at": [
+            61,
+            52
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "fan",
+          "label": "FAN",
+          "in": "fan",
+          "at": [
+            84,
+            52
+          ]
+        }
+      ]
+    },
+    {
       "id": "event_timer",
       "title": "EVENT TIMER",
       "size": [
@@ -12,7 +164,7 @@
         1
       ],
       "at": [
-        0,
+        2,
         0
       ],
       "bus": "sys",
@@ -114,148 +266,6 @@
           "at": [
             76,
             79
-          ]
-        }
-      ]
-    },
-    {
-      "id": "lights",
-      "title": "LIGHTS",
-      "size": [
-        1,
-        1
-      ],
-      "at": [
-        1,
-        0
-      ],
-      "bus": "sys",
-      "items": [
-        {
-          "type": "toggle",
-          "id": "cabin_light",
-          "label": "CABIN",
-          "in": "cabin_light",
-          "at": [
-            26,
-            52
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "backlight",
-          "label": "BACKLIGHT",
-          "in": "backlight",
-          "at": [
-            50,
-            52
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "lights",
-          "label": "EXTERNAL",
-          "in": "lights",
-          "led": {
-            "out": "led_lights",
-            "color": "white"
-          },
-          "at": [
-            74,
-            52
-          ]
-        }
-      ]
-    },
-    {
-      "id": "time_warp",
-      "title": "TIME WARP",
-      "size": [
-        1,
-        1
-      ],
-      "at": [
-        2,
-        0
-      ],
-      "bus": "sys",
-      "items": [
-        {
-          "type": "seg7",
-          "id": "disp_warp",
-          "label": "RATE ×",
-          "out": "disp_warp",
-          "digits": 6,
-          "color": "green",
-          "at": [
-            40,
-            28
-          ]
-        },
-        {
-          "type": "led",
-          "id": "led_warp",
-          "label": "WARP",
-          "out": "led_warp",
-          "color": "amber",
-          "at": [
-            76,
-            28
-          ]
-        },
-        {
-          "type": "button",
-          "id": "warp_down",
-          "label": "◂ SLOWER",
-          "in": "warp_down",
-          "at": [
-            14,
-            50
-          ]
-        },
-        {
-          "type": "button",
-          "id": "warp_up",
-          "label": "FASTER ▸",
-          "in": "warp_up",
-          "at": [
-            38,
-            50
-          ]
-        },
-        {
-          "type": "button",
-          "id": "warp_to",
-          "label": "WARP TO EVT",
-          "in": "warp_to",
-          "at": [
-            62,
-            50
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "warp_stop",
-          "label": "STOP WARP",
-          "color": "red",
-          "in": "warp_stop",
-          "at": [
-            86,
-            50
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "pause",
-          "label": "PAUSE",
-          "in": "pause",
-          "led": {
-            "out": "led_pause",
-            "color": "amber"
-          },
-          "at": [
-            50,
-            78
           ]
         }
       ]

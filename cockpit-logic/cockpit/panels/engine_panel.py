@@ -1,4 +1,4 @@
-"""The eng bus: caution and warning, ascent and descent displays, engine and staging, engine status matrix and abort, and the
+"""The eng bus: caution and warning, ascent and descent displays, the landing aid, engine and staging, engine status matrix and abort, and the
 ATTITUDE panel (on the FDAI module): its switches, attitude and rate displays, and the settings of the ball."""
 import math
 
@@ -12,10 +12,10 @@ from ..performance import current_thrust_to_weight, hover_time, speeds_in_refere
 SWITCHES_WITH_LAMP = ('sas', 'rcs')
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
          'lamp_contact', 'lamp_05g', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
-         'led_rcs_fine', 'led_gear', *ALARMS]
+         'led_rcs_fine', 'led_gear', 'lamp_td_sink', 'lamp_td_drift', 'lamp_td_upright', 'lamp_td_gear', *ALARMS]
 # display → (digits, the dashes shown without telemetry)
 DISPLAYS = {'disp_alt': 8, 'disp_hs': 5, 'disp_vs': 5, 'disp_speed': 5, 'disp_g': 4, 'disp_q': 4, 'disp_hover': 4,
-            'disp_impact': 5, 'disp_met': 7,
+            'disp_impact': 5, 'disp_drift_right': 5, 'disp_drift_up': 5, 'disp_met': 7,
             'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5, 'disp_twr': 4, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
             'disp_rate_yaw': 4, 'disp_rate_roll': 4}
 BARS = ['bar_fuel', 'bar_thrust']
@@ -128,12 +128,29 @@ def _render_lamps(cockpit, outputs):
     knob_mode = cockpit.selected('speed_ref', S.SPEED_MODES)
     outputs.lamp('led_speed_ref', game_mode is not None, blink=game_mode is not None and game_mode != knob_mode)
 
+    _render_touchdown_lamps(cockpit, outputs, fresh)
+
     # event lights
     landed = bool(vessel.get('contact')) and vessel.get('situation') != 'pre_launch'    # the pad is not a landing
     outputs.lamp('lamp_contact', fresh and landed)
     drag_felt = (flight.get('g') or 0) >= S.ENTRY_G_FORCE and not vessel.get('thrust')
     descending = (flight.get('vs') or 0) < 0 and vessel.get('situation') in ('flying', 'sub_orbital')
     outputs.lamp('lamp_05g', fresh and drag_felt and descending)
+
+
+def _render_touchdown_lamps(cockpit, outputs, fresh):
+    """LANDING AID: near the ground, each lamp lights while that condition is good for touching down."""
+    flight, vessel = cockpit.flight, cockpit.vessel
+    radar, sink = flight.get('radar'), -(flight.get('vs') or 0.0)
+    right, down, pitch = flight.get('v_right'), flight.get('v_down'), cockpit.telemetry.get('tlm/attitude', {}).get('pitch')
+    descending = (fresh and radar is not None and 0 < radar < S.SINK_RATE_BELOW_ALTITUDE_M
+                  and vessel.get('situation') not in ('landed', 'splashed', 'pre_launch'))
+    allowed_sink = S.TOUCHDOWN_SINK_BASE_M_S + S.TOUCHDOWN_SINK_PER_ALTITUDE * (radar or 0.0)
+    outputs.lamp('lamp_td_sink', descending and sink <= allowed_sink)
+    outputs.lamp('lamp_td_drift', descending and None not in (right, down)
+                 and math.hypot(right, down) <= S.TOUCHDOWN_DRIFT_M_S)
+    outputs.lamp('lamp_td_upright', descending and pitch is not None and 90 - pitch <= S.TOUCHDOWN_TILT_DEG)
+    outputs.lamp('lamp_td_gear', descending and vessel.get('gear'))
 
 
 def _render_ascent_descent(cockpit, outputs):
@@ -151,6 +168,10 @@ def _render_ascent_descent(cockpit, outputs):
     outputs.text('disp_q', fit_number(pressure / 1000 if pressure is not None else None, 2, 4))
     outputs.text('disp_hover', fit_number(hover_time(cockpit), 0, 4))
     outputs.text('disp_impact', fit_number(time_to_impact(cockpit), 0, 5))
+    # across the craft's own axis, as on TRANSLATION: for a lander standing on its tail, which way it slides
+    down = flight.get('v_down')
+    outputs.text('disp_drift_right', fit_number(flight.get('v_right'), 1, 5, signed=True))
+    outputs.text('disp_drift_up', fit_number(-down if down is not None else None, 1, 5, signed=True))
 
 
 def _render_displays(cockpit, outputs):

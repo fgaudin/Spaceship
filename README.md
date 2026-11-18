@@ -39,20 +39,24 @@ Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus**
 the simulation and injecting failures are on the SIMSUP page.
 
 **Modules** (on the CONSOLE page): ENG (C&W, ascent displays, propulsion, staging, abort, attitude), SYS, CMP (burn
-computer), RDV (target and docking), SOLO (PAD requests and the orbit), LAB (experimental panels), and the glass modules FDAI and CAM
+computer), RDV (target and docking), SOLO (PAD requests, the orbit and navigation), and the glass modules FDAI and CAM
 (camera monitor), drawn as screens with the live page in them. FDAI and CAM are also pages of their own (for a
 Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
-**SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with ELECTRICAL and PROPELLANT; RECOVERY · BRAKES on the ENG module): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
+**SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with ELECTRICAL and LIFE SUPPORT; PROPELLANT on the ENG module): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
 whole vessel (fuel, oxidizer, monoprop and xenon bars) with BURN TIME (the stage's propellant at the present thrust, or at full thrust) and RCS ΔV (an estimate, from the stock thrusters' 240 s), life support (TAC Life Support: food, water and oxygen bars, the hours each lasts for the crew aboard, recyclers not counted, and CREW; LS LOW and LS OUT on the annunciator), event timer (manual,
 or counting down to TIG / apoapsis / periapsis / SOI change; with COUNT DOWN on, the manual timer counts down from a
 value set with MIN + and SEC +10 and blinks at zero), recovery (chute arm + deploy, brakes, the ablator left, the
 outside temperature and air pressure), time warp (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
-event the timer's source selects; pause), save (QUICK SAVE, QUICK LOAD, and REVERT TO LAUNCH behind the guarded REVERT ARM), lights (CABIN and BACKLIGHT light the cockpit itself
+event the timer's source selects; pause), save (QUICK SAVE, QUICK LOAD, and REVERT TO LAUNCH behind the guarded REVERT ARM), lights and fan (FAN does nothing in the virtual cockpit; CABIN and BACKLIGHT light the cockpit itself
 through `cockpit/lighting`: on the console page the plates brighten and the legends glow; EXTERNAL is the craft's
 lights).
 
-**ENG** (I/O module): CAUTION & WARNING, with the MET; ASCENT · DESCENT (altitude in m, above the sea or the ground by ALT REF; horizontal, vertical and total speed against the orbit or the surface by the SPEED REF knob, TGT reading the surface; g, dynamic pressure in kPa, TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; GEAR); ENGINE (ENG ARM, throttle,
+**LANDING AID** (module in MAIN, on the `eng` bus): DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides), and four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN.
+
+**REENTRY · RECOVERY** (module in MAIN, on the `sys` bus): CHUTE ARM, CHUTE, BRAKES, ablator, the hottest part as a percentage of its limit, time to the atmosphere at the present sink rate, outside temperature and pressure, and KSP's verdict on opening the chutes (SAFE, RISKY, UNSAFE). **SCIENCE** (module in MAIN, `sci` bus): step through the experiments; RUN, SEND, DUMP, RESET the one shown, RUN ALL, with its state, biome and science value.
+
+**ENG** (I/O module): CAUTION & WARNING (the MET is on the camera monitor's panel); ASCENT · DESCENT (altitude in m, above the sea or the ground by ALT REF; horizontal, vertical and total speed against the orbit or the surface by the SPEED REF knob, TGT reading the surface; g, dynamic pressure in kPa, TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; GEAR); ENGINE (ENG ARM, throttle,
 STAGE ARM and STAGE, the stage number, CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
 equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off); an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
@@ -95,8 +99,8 @@ just came on blinks for 10 s), signal strength bar, the first station or relay o
 long the link has been in its present state, and ANTENNA DEPLOY (acts only when moved, so a restart cannot retract
 the antennas).
 
-**LAB** (I/O panel, experimental): panels tried here before they earn a place in the cockpit.
-- NAVIGATION: body orbited, latitude, longitude.
+**The `lab` bus** (no module of its own any more): panels first tried as experiments, now placed on other modules.
+- NAVIGATION (on the SOLO module): body orbited, latitude, longitude.
 - ORBIT (on the SOLO module, on the `lab` bus, 2 U wide): apoapsis and periapsis in km, the time to each, inclination.
 - ACTION GROUPS (on the AUX module in MAIN, on the `lab` bus): the craft's ten custom groups, each button lit while its group is on.
 - CAMERA (on the AUX module in MAIN, on the `lab` bus): CAM ◂ ▸ pick the camera shown on the monitor, with its name and number, and a LIVE LED.

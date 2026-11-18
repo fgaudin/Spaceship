@@ -122,3 +122,15 @@ def life_support_hours(cockpit, resource):
     if not crew or not carried:
         return None
     return carried['amount'] / (S.LIFE_SUPPORT_USE_PER_KERBAL_S[resource] * crew) / 3600
+
+
+def time_to_atmosphere(cockpit):
+    """Seconds to the top of the atmosphere at the present sink rate. None when not coming down towards it: inside it
+    already, climbing, on an orbit that stays above it, or around a body without one."""
+    altitude, vertical = cockpit.flight.get('alt'), cockpit.flight.get('vs')
+    top, periapsis = cockpit.orbit.get('atm'), cockpit.orbit.get('peri')
+    if None in (altitude, vertical, top) or altitude <= top or vertical >= -S.SINKING_ABOVE_M_S:
+        return None
+    if periapsis is not None and periapsis >= top:
+        return None
+    return (altitude - top) / -vertical

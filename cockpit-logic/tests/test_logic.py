@@ -152,6 +152,7 @@ def test_ascent_displays_and_formats():
     assert c.published[O + 'disp_met']['text'] == format_mission_time(65)
     assert fit_number(123456.78, 1, 7) == '123456.8'
     assert fit_number(-1.5, 1, 7) == '-1.5'
+    assert fit_number(-0.01, 1, 5, signed=True) == '+0.0'
 
 
 def test_outputs_published_once():
@@ -652,6 +653,46 @@ def test_revert_to_launch_needs_its_arm_switch():
     out = topics(c.handle(SYS_IN + 'revert_arm', {'v': 1}, 2))
     assert out['panel/sys/out/lamp_revert'] == {'on': True, 'blink': False}
     assert topics(c.handle(SYS_IN + 'revert', {'v': 1}, 3))['cmd/game'] == {'revert': True}
+
+
+def test_landing_aid_shows_the_drift_and_the_touchdown_conditions():
+    c = Cockpit()
+    def descent(t, **flight):
+        fed(c, t, vessel={'situation': 'flying', 'gear': True},
+            flight={'radar': 50.0, 'vs': -5.0, 'v_right': 0.3, 'v_down': -0.4, **flight})
+        c.handle('tlm/attitude', {'pitch': 85.0, 'heading': 90.0, 'roll': 0.0}, t)
+    descent(0)
+    assert c.published[O + 'disp_drift_right']['text'] == '+0.3' and c.published[O + 'disp_drift_up']['text'] == '+0.4'
+    assert all(c.published[O + lamp]['on'] for lamp in ('lamp_td_sink', 'lamp_td_drift', 'lamp_td_upright', 'lamp_td_gear'))
+    descent(1, vs=-9.0, v_right=2.0)                                        # 7 m/s allowed at 50 m
+    assert not c.published[O + 'lamp_td_sink']['on'] and not c.published[O + 'lamp_td_drift']['on']
+    descent(2, radar=5000.0)                                                # too high for the lamps to mean anything
+    assert not c.published[O + 'lamp_td_gear']['on']
+
+
+def test_reentry_panel():
+    c = Cockpit(); fed(c, flight={'alt': 100000.0, 'vs': -100.0}, vessel={'chute_safe': 'risky'})
+    c.handle('tlm/orbit', {'atm': 70000.0, 'peri': 30000.0}, 0)
+    c.handle('tlm/thermal', {'max': 0.634, 'outside': -40.0}, 0)
+    sys_out = 'panel/sys/out/'
+    assert c.published[sys_out + 'disp_heat']['text'] == '63' and c.published[sys_out + 'disp_to_atm']['text'] == '300'
+    assert c.published[sys_out + 'lamp_chute_risky']['on'] and not c.published[sys_out + 'lamp_chute_safe']['on']
+    c.handle('tlm/orbit', {'atm': 70000.0, 'peri': 80000.0}, 1)             # this orbit stays above the atmosphere
+    assert c.published[sys_out + 'disp_to_atm']['text'] == '-----'
+
+
+def test_science_panel_steps_through_experiments_and_commands_the_one_shown():
+    c = Cockpit(); fed(c)
+    goo = {'title': 'Mystery Goo', 'available': True, 'data': False, 'inoperable': False, 'value': None, 'transmit': None}
+    report = {'title': 'Crew Report', 'available': False, 'data': True, 'inoperable': False, 'value': 5.0, 'transmit': 3.2}
+    c.handle('tlm/science', {'experiments': [goo, report], 'biome': 'Shores'}, 1)
+    out, IN = 'panel/sci/out/', 'panel/sci/in/'
+    assert c.published[out + 'txt_sci']['text'] == 'MYSTERY GOO' and c.published[out + 'led_sci_ready']['on']
+    assert c.published[out + 'txt_biome']['text'] == 'SHORES'
+    c.handle(IN + 'sci_next', {'v': 1}, 2)
+    assert c.published[out + 'txt_sci']['text'] == 'CREW REPORT' and c.published[out + 'disp_sci_transmit']['text'] == '3.2'
+    assert topics(c.handle(IN + 'sci_transmit', {'v': 1}, 3))['cmd/science'] == {'index': 1, 'action': 'transmit'}
+    assert topics(c.handle(IN + 'sci_run_all', {'v': 1}, 4))['cmd/science'] == {'all': True}
 
 
 def test_outside_pressure_in_kilopascals():

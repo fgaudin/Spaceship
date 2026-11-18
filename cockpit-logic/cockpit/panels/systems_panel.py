@@ -1,19 +1,19 @@
-"""The sys bus: electrical, propellant, life support, event timer, recovery, time warp, save, lights."""
+"""The sys bus: electrical, propellant, life support, event timer, recovery, reentry, time warp, save, lights."""
 
 from .. import settings as S
 from ..alarms import fraction_left
 from ..display_format import fit_number, format_event_time
 from ..messages import PanelOutputs, switch_lamp
-from ..performance import burn_time, life_support_hours, rcs_delta_v
+from ..performance import burn_time, life_support_hours, rcs_delta_v, time_to_atmosphere
 
 SWITCHES_WITH_LAMP = ('solar', 'brakes', 'fuel_cell', 'lights')
-LAMPS = ['lamp_chute', 'lamp_revert', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
+LAMPS = ['lamp_chute', 'lamp_revert', 'lamp_chute_safe', 'lamp_chute_risky', 'lamp_chute_unsafe', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
          *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP)]
 DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside', 'disp_pressure', 'disp_burn_time',
-            'disp_rcs_dv', 'disp_ls_food', 'disp_ls_water', 'disp_ls_oxygen', 'disp_crew']
+            'disp_rcs_dv', 'disp_ls_food', 'disp_ls_water', 'disp_ls_oxygen', 'disp_crew', 'disp_heat', 'disp_to_atm']
 BARS = ['bar_ec', 'bar_lf', 'bar_ox', 'bar_mono', 'bar_xenon', 'bar_ablator', 'bar_ls_food', 'bar_ls_water',
         'bar_ls_oxygen']
-LOCAL_SWITCHES = ('cabin_light', 'backlight')     # the cockpit's own lights: cockpit/lighting, nothing for the game
+LOCAL_SWITCHES = ('cabin_light', 'backlight', 'fan')     # the cockpit's own: nothing for the game (the fan: no effect yet)
 EVENT_TIMER_BUTTONS = ('evt_start', 'evt_stop', 'evt_reset', 'evt_min', 'evt_sec')
 CHARGE_RATE_SMOOTHING = 0.3         # weight of the newest sample in the EC/s display
 
@@ -120,11 +120,22 @@ def render(cockpit, wanted):
     outputs.lamp('lamp_chute', vessel.get('chute') == 'deployed')
     for switch in SWITCHES_WITH_LAMP:
         outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.switch_wanted(switch)))
+    _render_reentry(cockpit, outputs, fresh)
     outside = cockpit.telemetry.get('tlm/thermal', {}).get('outside') if fresh else None
     outputs.text('disp_outside', fit_number(outside, 0, 4, signed=True))
     pressure = cockpit.flight.get('p') if fresh else None
     outputs.text('disp_pressure', fit_number(pressure / 1000 if pressure is not None else None, 2, 4))
     outputs.bar('bar_ablator', fraction_left(cockpit.resources.get('total', {}), 'Ablator') if fresh else 0.0)
+
+
+def _render_reentry(cockpit, outputs, fresh):
+    """The hottest part against its limit, the time to the atmosphere, and what KSP says of opening the chutes now."""
+    hottest = cockpit.telemetry.get('tlm/thermal', {}).get('max') if fresh else None
+    outputs.text('disp_heat', fit_number(hottest * 100 if hottest is not None else None, 0, 4))
+    outputs.text('disp_to_atm', fit_number(time_to_atmosphere(cockpit) if fresh else None, 0, 5))
+    safety = cockpit.vessel.get('chute_safe') if fresh else None
+    for state in ('safe', 'risky', 'unsafe'):
+        outputs.lamp(f'lamp_chute_{state}', safety == state)
 
 
 def _render_life_support(cockpit, outputs, fresh):

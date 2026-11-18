@@ -9,6 +9,7 @@ RAILS_WARP_RATES = [1, 5, 10, 50, 100, 1000, 10000, 100000]     # KSP's rails wa
 PHYSICS_WARP_MAX_FACTOR = 3
 WARP_TO_SECONDS_AHEAD = 4       # warp at a rate only while the time left is at least this many seconds of it
 SPEED_MODES = ('orbit', 'surface', 'target')
+SCIENCE_ACTIONS = ('run', 'transmit', 'dump', 'reset')
 # KSP puts SAS back to stability when it is switched on, and can drop a mode set in the same moment: the wanted mode
 # is set again this long after either.
 SAS_MODE_SET_AGAIN_AFTER_S = (0.5, 1.5)
@@ -37,7 +38,7 @@ class CommandHandler:
             'cmd/undock': lambda request: undock(self.link),
             'cmd/control_from': lambda request: control_from_port(self.link, bool(request.get('port'))),
             'cmd/node': self.maneuver_node, 'cmd/pause': self.pause, 'cmd/game': self.save_or_load,
-            'cmd/warp': self.warp, 'cmd/rotate': self.rotate, 'cmd/translate': self.translate,
+            'cmd/science': self.science, 'cmd/warp': self.warp, 'cmd/rotate': self.rotate, 'cmd/translate': self.translate,
         }
 
     def run(self, topic, request):
@@ -178,6 +179,17 @@ class CommandHandler:
             return
         prograde, normal, radial = (float(component) for component in request['dv'])
         control.add_node(float(request['ut']), prograde=prograde, normal=normal, radial=radial)
+
+    # ---------- science ----------
+    def science(self, request):
+        """{'all': true}: run every experiment that can run; {'index', 'action'}: run, transmit, dump or reset one."""
+        watched = self.link.parts.experiments
+        if request.get('all'):
+            for item in watched:
+                if item.available() and not item.has_data() and not item.inoperable():
+                    item.experiment.run()
+        elif request.get('action') in SCIENCE_ACTIONS:
+            getattr(watched[int(request['index'])].experiment, request['action'])()
 
     # ---------- game ----------
     def pause(self, request):
