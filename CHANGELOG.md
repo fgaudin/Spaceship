@@ -3,6 +3,53 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-18 — the console's zones get their target sizes
+
+- **The camera monitor goes to the top of MAIN's centre**, with the ENG module under it.
+- **RECOVERY · BRAKES and LINK · ANTENNA** fill the ENG module's free column, above ENGINES · ABORT (still on the `sys` and
+  `com` buses). The COM module is gone; SYS is one row, with SOLO under it.
+- **ELECTRICAL and PROPELLANT** leave SYS for a new module, RES (still on the `sys` bus), in the right column of MAIN, under AUX.
+  SYS closes up to 2 × 2 U, and COM and SOLO shift left in OVERHEAD.
+- **LOW is centred under MAIN**, with an outline running from MAIN's bottom corners around it (`taper` in `console.json`),
+  to show the console's shape. The 1 U between them is only a drawing distance.
+- **OVERHEAD is 6 × 3 U, MAIN 6 × 6 U and LOW 3 × 3 U.** SOLO (PAD REQUEST and ORBIT) moves to OVERHEAD, the burn
+  computer (CMP: PAD, ENTRY, BURN) to LOW under LAB, and the camera monitor next to the FDAI, inside MAIN's 6 U.
+- **The centre of MAIN is a column:** CAUTION & WARNING, ASCENT · DESCENT, then ENGINE, with ENGINES · ABORT beside ENGINE
+  and the camera monitor below. **CAMERA** and **ACTION GROUPS** form a new module, AUX (still on the `lab` bus), at the
+  top of MAIN's right column, CAMERA first.
+
+## 2026-11-18 — the cross-pointer goes
+
+- **CROSS-POINTER is removed**, with its logic (`cross_pointer.py`), settings, the `xp_mode` input and its outputs.
+  The landing end-to-end test now checks the alignment on retrograde from `tlm/flight`, and no longer tests the dot.
+- **LOW zone:** LAB is one row (NAVIGATION, ACTION GROUPS, CAMERA) with SOLO under it, so the zone is 3 U wide.
+
+## 2026-11-18 — the MFD goes, ASCENT · DESCENT grows
+
+- **The MFD is removed** (page, module and top-bar link): the I/O panels now show what the crew used from it. What
+  goes with it: the orbit drawing, the ascent tapes, and the docking gate and capture-envelope graphics.
+- **ASCENT · DESCENT is 2 × 1 U**, so ENG is 4 U wide with a free slot under the panel. It gains **Q KPA**
+  (`disp_q`, from `tlm/flight.q`) and **TIME TO IMPACT S** (`disp_impact`): radar altitude over the sink rate, as on the
+  MFD, now with dashes when the orbit's periapsis is above sea level.
+- **MAIN zone:** RDV moves to the top left, and the FDAI slides down into the MFD's place.
+
+## 2026-11-18 — time to the apsides on ORBIT
+
+- **TIME TO APO and TIME TO PERI** (`disp_t_apo`, `disp_t_peri`, from `tlm/orbit`) sit beside the apoapsis and periapsis,
+  as hh.mm.ss with up to 999 hours; dashes on an escape orbit or once the periapsis is past. ORBIT grows to 2 × 1 U, so
+  the SOLO module is 3 U wide, because a second column of 7-digit displays does not fit on 1 U.
+
+## 2026-11-18 — ASCENT · DESCENT
+
+- **ASCENT and LANDING are one panel** on the `eng` bus. The altitude is in metres on 8 digits, with **ALT REF**
+  choosing the sea or the ground (RADAR). H SPEED, V SPEED and SPEED follow the **SPEED REF knob**: ORBIT uses the new
+  `v_orb` of `tlm/flight`, SURF and TGT the surface. The vertical speed is the same against both. G, HOVER TIME and
+  GEAR come along (`led_gear`, `disp_hover` and the `gear` input move from `lab` to `eng`); `disp_srf`, `disp_radar`,
+  `disp_ld_vs` and `disp_ld_hs` are gone, for `disp_hs`, `disp_vs` and `disp_speed`.
+- **MET** moves to CAUTION & WARNING, and **THRUST** to ENGINES · ABORT as a vertical bar (`"vertical": true`).
+- **PRESSURE KPA** joins OUTSIDE °C on RECOVERY · BRAKES, from `tlm/flight.p`. Both displays have 4 digits, to fit.
+- Toggles can name their positions (`"positions": ["RADAR", "SEA"]`), in the console and the cut templates.
+
 ## 2026-11-18 — the FDAI on a 4" round screen
 
 - **A 4" round screen** (720 × 720, a 101.5 mm circle) replaces the 7": with only the ball and its roll ring on it, the

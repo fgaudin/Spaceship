@@ -38,6 +38,11 @@ body { margin: 0; background: radial-gradient(ellipse at top, #1b1e21, var(--bg)
 /* the zone's grid of U, faint, so that free places show */
 .zone-grid { position: relative; background-image: linear-gradient(#ffffff0d 1px, transparent 1px), linear-gradient(90deg, #ffffff0d 1px, transparent 1px);
   background-size: 100mm 100mm; outline: 1px solid #ffffff0d; }
+/* a zone narrowing from the one above: it starts at that zone's bottom edge, its title inside the outline */
+.zone.tapered { position: relative; margin-top: -14mm; }
+.zone.tapered .zone-title { position: absolute; transform: translateY(-100%); margin: 0; border: 0; text-align: center; }
+.zone-taper { position: absolute; left: 0; top: 0; pointer-events: none; }
+.zone-taper path { fill: #ffffff06; stroke: #ffffff66; stroke-width: 2px; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
 /* a module fills its slots exactly; its frame shows in the panels' clearance, and a light edge just inside its
    footprint (thinner than the clearance, so on no panel) shows what belongs together. Nothing is drawn outside. */
 .module { position: absolute; background: #08090a; }
@@ -151,6 +156,8 @@ body.lighting-known.backlight .toggle .pos {
 /* bar graph */
 .bar { display: flex; gap: 3px; padding: 4px; background: #070707; border-radius: 3px; box-shadow: inset 0 0 0 1px #000; }
 .bar i { width: .55rem; height: 1.6rem; border-radius: 1px; background: #1a1d1a; }
+.bar.vertical { flex-direction: column-reverse; }
+.bar.vertical i { width: 1.6rem; height: .55rem; }
 .bar i.on { background: var(--green); box-shadow: 0 0 5px #35e06f88; }
 .bar i.on.hi { background: var(--amber); box-shadow: 0 0 5px #ffb00088; }
 .bar i.on.top { background: var(--red); box-shadow: 0 0 5px #ff3b2f88; }

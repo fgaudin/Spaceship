@@ -61,6 +61,7 @@ RESIDUAL_MIN_M_S, RESIDUAL_FRACTION = 0.5, 0.02     # Δv residual after cutoff:
 ENTRY_G_FORCE = 0.05                # the 0.05 G light (as on Mercury): drag is felt, the entry has begun
 
 # Gravitational parameter μ (m³/s²) and radius (m) of the bodies a Mun trip visits, for the TWR display.
+SINKING_ABOVE_M_S = 0.1           # slower than this, the vessel is not coming down: no time to impact
 BODIES = {'Kerbin': (3.5316e12, 600000.0), 'Mun': (6.5138398e10, 200000.0), 'Minmus': (1.7658e9, 60000.0)}
 STANDARD_GRAVITY = 9.80665
 STANDARD_PRESSURE_PA = 101325.0
@@ -83,13 +84,6 @@ CAPTURE_LAMP_WITHIN_M = 10.0
 STATION_NAME_CHARACTERS = 12        # the display of the first station or relay on the way
 
 # ---------- experimental panels ----------
-CROSS_POINTER_SIZE = 9              # LEDs on a side
-CROSS_POINTER_MODES = ['NODE', 'RETRO', 'PRO', 'PORT', 'OFFSET', 'DRIFT']
-# Full scales, finest first: the value at the edge of the matrix (four LEDs from the centre).
-CROSS_POINTER_ANGLE_SCALES_DEG = (4.0, 20.0, 90.0)
-CROSS_POINTER_OFFSET_SCALES_M = (1.0, 4.0, 20.0, 100.0)
-CROSS_POINTER_DRIFT_SCALES_M_S = (2.0, 10.0, 50.0, 250.0)
-CROSS_POINTER_MOVING_ABOVE_M_S = 1.0    # under this speed prograde and retrograde mean nothing
 ACTION_GROUP_COUNT = 10
 BODY_NAME_CHARACTERS = 8
 CAMERA_NAME_CHARACTERS = 16

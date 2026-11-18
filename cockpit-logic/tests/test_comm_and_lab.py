@@ -1,55 +1,24 @@
-"""COM panel, LAB panel and the cross-pointer."""
+"""COM panel and LAB panel."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cockpit import Cockpit  # noqa: E402
-from cockpit.cross_pointer import cross_pointer  # noqa: E402
 from test_logic import fed, topics  # noqa: E402
 
-COM, LAB = 'panel/com/out/', 'panel/lab/out/'
-LAB_IN = 'panel/lab/in/'
-
-
-def dot(rows):
-    """(row, column, colour) of the pointer's dot: the only LED that is not the white centre."""
-    found = [(r, c, colour) for r, row in enumerate(rows) for c, colour in enumerate(row) if colour not in '.w']
-    return found[0] if found else None
-
-
-# ---------- cross-pointer ----------
-def test_cross_pointer_scales_and_colours():
-    scales = (4.0, 20.0, 90.0)
-    pointer = cross_pointer(0.2, -0.3, scales)
-    assert pointer.nulled and pointer.full_scale == 4.0 and dot(pointer.rows) == (4, 4, 'g')
-    pointer = cross_pointer(2.0, 4.0, scales)                   # right and up: two columns right, top row
-    assert dot(pointer.rows) == (0, 6, 'a') and pointer.rows[4][4] == 'w' and not pointer.nulled
-    pointer = cross_pointer(-10.0, 1.0, scales)                 # the coarser scale takes over
-    assert pointer.full_scale == 20.0 and dot(pointer.rows) == (4, 2, 'a')
-    pointer = cross_pointer(170.0, 0.0, scales)                 # beyond every scale: held on the edge, red
-    assert dot(pointer.rows) == (4, 8, 'r')
-    assert cross_pointer(None, None, scales).rows == ['.' * 9] * 9
-
-
-def test_cross_pointer_modes():
-    c = Cockpit()
-    fed(c, flight={'v_right': 3.0, 'v_fwd': -40.0, 'v_down': 1.0, 'speed': 40.1})
-    c.handle('tlm/node', {'set': True, 'ut': 500, 'dv': [10, 0, 0], 'att_err': 3.2, 'yaw': 2.0, 'pitch': -2.0}, 0)
-    assert dot(c.published[LAB + 'mx_xp']['rows']) == (6, 6, 'a')       # NODE: nose must go right and down
-    assert c.published[LAB + 'disp_xp_right']['text'] == '+2.0' and c.published[LAB + 'disp_xp_scale']['text'] == '4.0'
-    c.handle(LAB_IN + 'xp_mode', {'v': 1}, 0)                           # RETRO: flying backwards, nearly aligned
-    assert c.published[LAB + 'disp_xp_scale']['text'] == '20.0'
-    assert c.published[LAB + 'disp_xp_right']['text'] == '-4.3' and c.published[LAB + 'disp_xp_up']['text'] == '+1.4'
-    c.handle(LAB_IN + 'xp_mode', {'v': 5}, 0)                           # DRIFT: 3 m/s right, 1 m/s down
-    assert c.published[LAB + 'disp_xp_right']['text'] == '+3.0' and c.published[LAB + 'disp_xp_up']['text'] == '-1.0'
-    assert dot(c.published[LAB + 'mx_xp']['rows']) == (4, 5, 'a')
-    c.handle(LAB_IN + 'xp_mode', {'v': 4}, 0)                           # OFFSET: no port targeted
-    assert c.published[LAB + 'disp_xp_right']['text'] == '-----' and dot(c.published[LAB + 'mx_xp']['rows']) is None
-    port = {'right': 0.1, 'up': -0.05, 'fwd': 5, 'v_right': 0, 'v_up': 0, 'yaw': 0, 'pitch': 0, 'roll': 0,
-            'axial': 5, 'x': 0, 'z': 0, 'v_axial': -0.1, 'angle': 0}
-    c.handle('tlm/target', {'set': True, 'name': 'Target', 'range': 5, 'closing': 0.1, 'port': port}, 0)
-    assert c.published[LAB + 'lamp_xp_null']['on']
+COM, LAB, ENG = 'panel/com/out/', 'panel/lab/out/', 'panel/eng/out/'
+LAB_IN, ENG_IN = 'panel/lab/in/', 'panel/eng/in/'
 
 
 # ---------- landing ----------
+def test_orbit_panel_counts_down_to_the_apsides():
+    c = Cockpit(); fed(c)
+    c.handle('tlm/orbit', {'apo': 80000.0, 'peri': 70000.0, 't_apo': 3725.9, 't_peri': 442800.0}, 1)
+    assert c.published[LAB + 'disp_t_apo']['text'] == '01.02.05'
+    assert c.published[LAB + 'disp_t_peri']['text'] == '123.00.00'
+    c.handle('tlm/orbit', {'apo': None, 'peri': 70000.0, 't_apo': None, 't_peri': -5.0}, 2)      # escaping, periapsis past
+    assert c.published[LAB + 'disp_t_apo']['text'] == '-------'
+    assert c.published[LAB + 'disp_t_peri']['text'] == '-------'
+
+
 def test_landing_hover_time_gear_and_orbit():
     c = Cockpit()
     lander = {'situation': 'sub_orbital', 'mass': 4000.0, 'thrust_avail': 20000.0, 'isp': 300.0, 'gear': False}
@@ -64,20 +33,19 @@ def test_landing_hover_time_gear_and_orbit():
     over_the_mun(0)
     # 1000 kg of propellant: Δv = 300·g0·ln(4000/3000) = 846 m/s; Mun gravity at 5.6 km is 1.541 m/s², and hovering
     # spends Δv at that rate: 549 s
-    assert c.published[LAB + 'disp_hover']['text'] == '549'
-    assert c.published[LAB + 'disp_radar']['text'] == '5000'
+    assert c.published[ENG + 'disp_hover']['text'] == '549'
     # ORBIT, on the lab bus: km above the surface, and the inclination
     assert c.published[LAB + 'disp_apo']['text'] == '10.00' and c.published[LAB + 'disp_peri']['text'] == '-50.00'
     assert c.published[LAB + 'disp_incl']['text'] == '12.35'
     # an engine that cannot lift the lander: no hover time
     over_the_mun(1, thrust_avail=5000.0)
-    assert c.published[LAB + 'disp_hover']['text'] == '----'
-    # GEAR is on the landing panel: the switch commands it, the LED blinks until the game agrees
-    assert c.published[LAB + 'led_gear'] == {'on': False, 'blink': False}
-    out = topics(c.handle(LAB_IN + 'gear', {'v': 1}, 2))
-    assert out['cmd/gear'] == {'on': True} and out[LAB + 'led_gear'] == {'on': True, 'blink': True}
+    assert c.published[ENG + 'disp_hover']['text'] == '----'
+    # GEAR is on ASCENT · DESCENT: the switch commands it, the LED blinks until the game agrees
+    assert c.published[ENG + 'led_gear'] == {'on': False, 'blink': False}
+    out = topics(c.handle(ENG_IN + 'gear', {'v': 1}, 2))
+    assert out['cmd/gear'] == {'on': True} and out[ENG + 'led_gear'] == {'on': True, 'blink': True}
     over_the_mun(3, gear=True)
-    assert c.published[LAB + 'led_gear'] == {'on': True, 'blink': False}
+    assert c.published[ENG + 'led_gear'] == {'on': True, 'blink': False}
 
 
 def test_navigation_figures():

@@ -19,7 +19,7 @@ SAVE = sys.argv[sys.argv.index('--save') + 1]
 KERBIN_MU, KERBIN_RADIUS_KM = 3.5316e12, 600.0
 TARGET_APOAPSIS_KM = 80.0
 # where the pilot reads each figure: ASCENT (eng) for the altitude and the surface speed, ORBIT (lab bus) for the apsides
-DISPLAYS = {'ALT': ('eng', 'disp_alt'), 'VEL': ('eng', 'disp_srf'), 'APO': ('lab', 'disp_apo'), 'PERI': ('lab', 'disp_peri')}
+DISPLAYS = {'ALT': ('eng', 'disp_alt'), 'VEL': ('eng', 'disp_speed'), 'APO': ('lab', 'disp_apo'), 'PERI': ('lab', 'disp_peri')}
 SAS_MODE = {'stability': 0, 'prograde': 1, 'maneuver': 9}
 EVENT_SOURCE = {'MAN': 0, 'TIG': 1, 'APO': 2}
 
@@ -216,11 +216,11 @@ while time.time() < deadline:
 else:
     problem('apoapsis never reached 80 km')
 press('eng', 'eng_cutoff')
-log(f"CUTOFF at apoapsis {read_display('APO')} km, altitude {read_display('ALT')} km, speed {read_display('VEL')} m/s")
+log(f"CUTOFF at apoapsis {read_display('APO')} km, altitude {read_display('ALT') / 1000:.1f} km, speed {read_display('VEL')} m/s")
 pin('eng', 'throttle', 0)
 
 # ---------- coast out of the atmosphere ----------
-wait(lambda: (read_display('ALT') or 0) >= 70.0, 180)
+wait(lambda: (read_display('ALT') or 0) >= 70000, 180)
 apoapsis, periapsis = read_display('APO'), read_display('PERI')
 log(f'out of the atmosphere: apoapsis {apoapsis} km, periapsis {periapsis} km')
 

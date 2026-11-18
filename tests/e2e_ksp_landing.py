@@ -1,22 +1,19 @@
-"""A Mun landing flown on the LAB panel's figures, in KSP.
+"""A Mun landing flown on the ASCENT · DESCENT panel's figures, in KSP.
 
     .venv/bin/python tests/e2e_ksp_landing.py --save <a save with a lander in low Mun orbit>
 
-Loads the save. Checks the cross-pointer's signs (NODE and RETRO: turn the nose and watch the dot move the other
-way), then brakes out of orbit, falls, and starts the final braking at 1.3 times the height needed to stop at full
+Loads the save, aligns on surface retrograde, brakes out of orbit, falls, and starts the final braking at 1.3 times the height needed to stop at full
 thrust (worked out by the test). It then lands, checking that HOVER TIME drains at about a second per second near
 the hover.
 
-Everything is commanded through panel inputs, except what no panel can do yet: the navball's speed reference
-(orbit / surface) and the raw yaw and pitch inputs used to disturb the attitude.
+Everything is commanded through panel inputs.
 """
 import json, math, sys, time
 import krpc
 import paho.mqtt.client as mqtt
 
 SAVE = sys.argv[sys.argv.index('--save') + 1]
-SAS_MODE = {'stability': 0, 'retrograde': 2, 'radial': 5, 'maneuver': 9}      # positions of the SAS MODE selector
-XP_MODE = {'NODE': 0, 'RETRO': 1, 'PRO': 2, 'PORT': 3, 'OFFSET': 4, 'DRIFT': 5}
+SAS_MODE = {'stability': 0, 'retrograde': 2}      # positions of the SAS MODE selector
 seen = {}
 cli = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='e2e-landing')
 cli.on_message = lambda c, u, m: seen.__setitem__(m.topic, json.loads(m.payload or b'{}'))
@@ -68,65 +65,36 @@ def number(panel, name):
 
 
 lab = lambda name: seen.get(f'panel/lab/out/{name}') or {}
+eng = lambda name: seen.get(f'panel/eng/out/{name}') or {}
 flight = lambda: seen['tlm/flight']
-pointer = lambda: (number('lab', 'disp_xp_right'), number('lab', 'disp_xp_up'))
+ALIGNED_WITHIN_DEG = 1.0
 
 
-def disturb(axis, seconds=1.0):
-    """Push the nose right (yaw) or up (pitch) by hand for a moment; SAS in stability then holds the new attitude."""
-    setattr(vessel.control, axis, 1.0)
-    time.sleep(seconds)
-    setattr(vessel.control, axis, 0.0)
-    time.sleep(2.0)
-
-
-def check_fly_to_signs(mode):
-    """With the dot centred: nose right → the dot goes left; nose up → the dot goes down."""
-    pin('eng', 'sas_mode', SAS_MODE['stability'])
-    time.sleep(1.0)
-    right_before, up_before = pointer()
-    disturb('yaw')
-    right_after, _ = pointer()
-    check(f'{mode}: nose right → the dot moves left', right_after < right_before - 1, (right_before, right_after))
-    _, up_before = pointer()
-    disturb('pitch')
-    _, up_after = pointer()
-    check(f'{mode}: nose up → the dot moves down', up_after < up_before - 1, (up_before, up_after))
+def off_retrograde():
+    """Degrees between the vessel's tail-first axis and its velocity over the ground."""
+    now = flight()
+    return math.degrees(math.atan2(math.hypot(now['v_right'], now['v_down']), now['v_fwd'] * -1))
 
 
 # ---------- setup ----------
 for panel, control, value in (('eng', 'cb_main', 1), ('eng', 'throttle', 0), ('eng', 'eng_arm', 0), ('eng', 'rcs', 0),
-                              ('lab', 'gear', 0), ('eng', 'sas', 0), ('eng', 'sas_mode', 0), ('lab', 'xp_mode', 0)):
+                              ('eng', 'gear', 0), ('eng', 'sas', 0), ('eng', 'sas_mode', 0)):
     pin(panel, control, value)
 pin('eng', 'sas', 1)
 check('telemetry from the lander', wait(lambda: seen['tlm/vessel']['name'] == vessel.name and 'v_right' in flight(), 15))
 
-# ---------- cross-pointer NODE ----------
-node = vessel.control.add_node(sc.ut + 900, prograde=30, normal=10, radial=-8)
-pin('eng', 'sas_mode', SAS_MODE['maneuver'])
-check('NODE: SAS on the node → dot centred, NULL lit',
-      wait(lambda: lab('lamp_xp_null').get('on') and lab('mx_xp')['rows'][4][4] == 'g', 60), (pointer(), lab('mx_xp')))
-check_fly_to_signs('NODE')
-node.remove()
-press('cmp', 'pad_clr')                         # the cockpit had loaded the game's node as its PAD
-
-# ---------- cross-pointer RETRO, then the braking burn out of orbit ----------
+# ---------- retrograde, then the braking burn out of orbit ----------
 pin('eng', 'speed_ref', 0); pin('eng', 'speed_ref', 1)     # SPEED REF knob to SURF
 check('SPEED REF knob → navball on surface', wait(lambda: vessel.control.speed_mode.name == 'surface', 5),
       vessel.control.speed_mode.name)
-pin('lab', 'xp_mode', XP_MODE['RETRO'])
 pin('eng', 'sas_mode', SAS_MODE['retrograde'])
-retro_ok = wait(lambda: lab('lamp_xp_null').get('on'), 60)
-check('RETRO: SAS on surface retrograde → dot centred, NULL lit', retro_ok, pointer())
-check_fly_to_signs('RETRO')
-pin('eng', 'sas_mode', SAS_MODE['retrograde'])
-aligned = wait(lambda: lab('lamp_xp_null').get('on'), 60)
-check('HOVER TIME shown', number('lab', 'disp_hover') is not None, lab('disp_hover'))
+aligned = wait(lambda: off_retrograde() < ALIGNED_WITHIN_DEG, 60)
+check('HOVER TIME shown', number('eng', 'disp_hover') is not None, eng('disp_hover'))
 if not aligned:
     # Burning off retrograde swings the velocity, SAS chases the moving marker and the speed never drops: the tank
     # empties and the lander falls. A crew would not light the engine; neither does the test.
     check('aligned on retrograde before the braking burn', False,
-          (pointer(), seen['tlm/vessel'].get('sas'), seen['tlm/vessel'].get('sas_mode')))
+          (off_retrograde(), seen['tlm/vessel'].get('sas'), seen['tlm/vessel'].get('sas_mode')))
     print(f'{len(fails)} FAILED (burn not attempted)')
     sys.exit(1)
 
@@ -142,25 +110,23 @@ def burn_over():
     craft = seen['tlm/vessel']
     exhaust_velocity = (craft['isp'] or 300) * 9.80665
     delta_v_done = exhaust_velocity * math.log(mass_start / craft['mass'])
-    return flight()['speed'] < 30 or delta_v_done > delta_v_budget or not lab('lamp_xp_null').get('on') and \
-        seen['tlm/time']['ut'] - burn_started > 5 and pointer()[0] is not None and max(map(abs, pointer())) > 15
+    return flight()['speed'] < 30 or delta_v_done > delta_v_budget or \
+        seen['tlm/time']['ut'] - burn_started > 5 and off_retrograde() > 15
 
 
 wait(burn_over, 120)
 pin('eng', 'throttle', 0)
-check('braking burn: speed over the ground under 30 m/s', flight()['speed'] < 30, (flight(), pointer()))
+check('braking burn: speed over the ground under 30 m/s', flight()['speed'] < 30, flight())
 note(f"after the braking burn: radar {flight()['radar']:.0f} m, V/S {flight()['vs']:.1f} m/s, H/S {flight()['hs']:.1f} m/s")
 
 # ---------- free fall ----------
-pin('lab', 'gear', 1)
-check('GEAR (landing panel) → KSP, LED steady', wait(lambda: seen['tlm/vessel'].get('gear') and lab('led_gear') == {'on': True, 'blink': False}, 10))
+pin('eng', 'gear', 1)
+check('GEAR (ASCENT · DESCENT) → KSP, LED steady', wait(lambda: seen['tlm/vessel'].get('gear') and eng('led_gear') == {'on': True, 'blink': False}, 10))
 wait(lambda: flight()['vs'] < -15, 60)
 
-pin('lab', 'xp_mode', XP_MODE['DRIFT'])
 time.sleep(1.0)
-drift_right, drift_up = pointer()
-check('DRIFT: SAS on retrograde → hardly any speed across the axis', abs(drift_right) < 5 and abs(drift_up) < 5,
-      (drift_right, drift_up, flight()['speed']))
+check('SAS on retrograde → hardly any speed across the axis', abs(flight()['v_right']) < 5 and abs(flight()['v_down']) < 5,
+      flight())
 
 # ---------- the final braking: from 1.3 times the height needed to stop at full thrust ----------
 def braking_height():
@@ -182,7 +148,7 @@ check('stopped above the ground', radar_stopped > 5 and seen['tlm/vessel']['situ
 # ---------- final descent and touchdown ----------
 hover_throttle = None
 touchdown_speed = None
-hover_start = (seen['tlm/time']['ut'], number('lab', 'disp_hover'))
+hover_start = (seen['tlm/time']['ut'], number('eng', 'disp_hover'))
 deadline = time.time() + 240
 while time.time() < deadline:
     now, craft = flight(), seen['tlm/vessel']
@@ -195,7 +161,7 @@ while time.time() < deadline:
     throttle = hover_throttle + 0.08 * (wanted_vertical_speed - now['vs'])
     cli.publish('panel/eng/in/throttle', json.dumps({'v': round(max(0.0, min(1.0, throttle)), 3)}), qos=1, retain=True)
     time.sleep(0.1)
-hover_end = (seen['tlm/time']['ut'], number('lab', 'disp_hover'))
+hover_end = (seen['tlm/time']['ut'], number('eng', 'disp_hover'))
 pin('eng', 'throttle', 0); pin('eng', 'eng_arm', 0)
 pin('eng', 'sas_mode', SAS_MODE['stability'])
 if None not in (hover_start[1], hover_end[1]) and hover_end[0] - hover_start[0] > 10:
@@ -208,6 +174,5 @@ check('touchdown slower than 4 m/s', touchdown_speed is not None and touchdown_s
 time.sleep(6)
 check('landed and upright', seen['tlm/vessel']['situation'] == 'landed' and seen['tlm/attitude']['pitch'] > 65,       # Mun slopes reach 15° and more
       (seen['tlm/vessel']['situation'], seen['tlm/attitude']['pitch']))
-pin('lab', 'xp_mode', 0)
 print('all passed' if not fails else f'{len(fails)} FAILED')
 sys.exit(1 if fails else 0)

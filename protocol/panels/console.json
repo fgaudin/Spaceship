@@ -5,8 +5,8 @@
       "id": "overhead",
       "title": "OVERHEAD",
       "size": [
-        8,
-        2
+        6,
+        3
       ],
       "modules": [
         {
@@ -17,10 +17,10 @@
           ]
         },
         {
-          "module": "com",
+          "module": "solo",
           "at": [
-            3,
-            0
+            0,
+            1
           ]
         }
       ]
@@ -29,50 +29,50 @@
       "id": "main",
       "title": "MAIN",
       "size": [
-        8,
-        5
+        6,
+        6
       ],
       "modules": [
         {
-          "module": "fdai",
+          "module": "rdv",
           "at": [
             0,
             0
-          ]
-        },
-        {
-          "module": "mfd",
-          "at": [
-            0,
-            2
           ]
         },
         {
           "module": "eng",
           "at": [
             2,
-            0
-          ]
-        },
-        {
-          "module": "cmp",
-          "at": [
-            2,
             2
           ]
         },
         {
-          "module": "rdv",
+          "module": "aux",
           "at": [
             5,
             0
+          ]
+        },
+        {
+          "module": "res",
+          "at": [
+            5,
+            2
+          ]
+        },
+        {
+          "module": "fdai",
+          "at": [
+            0,
+            2
           ]
         },
         {
           "module": "cam",
           "at": [
-            5,
-            2
+            2,
+            0
           ]
         }
       ]
@@ -81,9 +81,13 @@
       "id": "low",
       "title": "LOW",
       "size": [
-        8,
-        2
+        3,
+        3
       ],
+      "taper": {
+        "from": "main",
+        "height_u": 1
+      },
       "modules": [
         {
           "module": "lab",
@@ -93,10 +97,10 @@
           ]
         },
         {
-          "module": "solo",
+          "module": "cmp",
           "at": [
-            3,
-            0
+            0,
+            1
           ]
         }
       ]

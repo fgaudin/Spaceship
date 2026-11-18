@@ -115,7 +115,7 @@ def test_no_link_when_telemetry_stale():
     fed(c, 0)
     out = topics(c.tick(5.0))
     assert out[O + 'cw_no_link'] == {'on': True, 'blink': True}
-    assert out[O + 'disp_alt'] == {'text': '------', 'blank': False, 'blink': False}
+    assert out[O + 'disp_alt'] == {'text': '--------', 'blank': False, 'blink': False}
 
 
 def test_sas_panel_wins_and_disagree_lamp():
@@ -139,14 +139,15 @@ def test_gear_game_wins_no_resend():
     c.handle('panel/lab/in/gear', {'v': 1}, 1)
     out = topics(fed(c, 3))
     assert 'cmd/gear' not in out
-    assert out.get('panel/lab/out/led_gear', c.published['panel/lab/out/led_gear']) == {'on': True, 'blink': True}
+    assert out.get(O + 'led_gear', c.published[O + 'led_gear']) == {'on': True, 'blink': True}
 
 
 def test_ascent_displays_and_formats():
     c = Cockpit()
     fed(c)
-    assert c.published[O + 'disp_alt']['text'] == '12.35'         # km
-    assert c.published[O + 'disp_srf']['text'] == '323.0'         # surface speed, m/s
+    assert c.published[O + 'disp_alt']['text'] == '12346'         # above the sea, m
+    c.handle(P + 'alt_ref', {'v': 1}, 0.1)
+    assert c.published[O + 'disp_alt']['text'] == '12000'         # ALT REF on RADAR
     assert c.published[O + 'disp_g']['text'] == '1.50'
     assert c.published[O + 'disp_met']['text'] == format_mission_time(65)
     assert fit_number(123456.78, 1, 7) == '123456.8'
@@ -563,6 +564,34 @@ def test_fuel_cell_outside_temperature_and_ablator():
     c.handle('tlm/thermal', {'max': 0.3, 'outside': -42.4}, 2)
     assert c.published[S + 'led_fuel_cell'] == {'on': True, 'blink': False}
     assert c.published[S + 'disp_outside']['text'] == '-42' and c.published[S + 'bar_ablator'] == {'v': 0.75}
+
+
+def test_speeds_follow_the_speed_reference_knob():
+    c = Cockpit(); fed(c, flight={'v_orb': 500.0, 'vs': 300.0})
+    shown = lambda: [c.published[O + name]['text'] for name in ('disp_hs', 'disp_vs', 'disp_speed')]
+    assert shown() == ['400.0', '+300.0', '500.0']                    # ORBIT: horizontal from the total and the vertical
+    c.handle(P + 'speed_ref', {'v': 1}, 1)
+    assert shown() == ['300.0', '+300.0', '323.0']                  # SURF
+    c.handle(P + 'speed_ref', {'v': 2}, 2)
+    assert shown() == ['300.0', '+300.0', '323.0']                  # TGT reads the surface too
+
+
+def test_dynamic_pressure_and_time_to_impact():
+    c = Cockpit(); fed(c, flight={'q': 12340.0, 'radar': 500.0, 'vs': -20.0})
+    assert c.published[O + 'disp_q']['text'] == '12.34'
+    assert c.published[O + 'disp_impact']['text'] == '25'
+    fed(c, 1, flight={'radar': 500.0, 'vs': 20.0})
+    assert c.published[O + 'disp_impact']['text'] == '-----'                # climbing
+    c.handle('tlm/flight', {'radar': 90000.0, 'vs': -20.0}, 2)
+    c.handle('tlm/orbit', {'apo': 120000.0, 'peri': 80000.0}, 2)
+    assert c.published[O + 'disp_impact']['text'] == '-----'                # descending along an orbit that stays up
+
+
+def test_outside_pressure_in_kilopascals():
+    c = Cockpit(); fed(c, flight={'p': 101325.0})
+    assert c.published['panel/sys/out/disp_pressure']['text'] == '101.3'
+    fed(c, 1, flight={'p': 520.0})
+    assert c.published['panel/sys/out/disp_pressure']['text'] == '0.52'
 
 
 def test_fdai_controls_set_how_the_ball_is_drawn():

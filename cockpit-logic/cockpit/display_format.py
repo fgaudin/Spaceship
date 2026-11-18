@@ -27,3 +27,12 @@ def format_mission_time(seconds):
     """Mission elapsed time as hh.mm.ss (hours wrap at 100)."""
     seconds = max(0, int(seconds))
     return f'{seconds // 3600 % 100:02d}.{seconds // 60 % 60:02d}.{seconds % 60:02d}'
+
+
+def format_time_to(seconds, digits=7):
+    """A countdown as hh.mm.ss, the hours growing to fill the display. Dashes when unknown or already past."""
+    if seconds is None or not math.isfinite(seconds) or seconds < 0:
+        return '-' * digits
+    seconds = int(seconds)
+    text = f'{seconds // 3600:02d}.{seconds // 60 % 60:02d}.{seconds % 60:02d}'
+    return text if len(text.replace('.', '')) <= digits else 'E' * digits

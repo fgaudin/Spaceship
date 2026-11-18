@@ -1,0 +1,211 @@
+{
+  "id": "aux",
+  "title": "CAMERA · ACTION GROUPS",
+  "fw": "virtual-0.1",
+  "board": "olimex-esp32-poe",
+  "panels": [
+    {
+      "id": "camera",
+      "title": "CAMERA",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "lab",
+      "items": [
+        {
+          "type": "alpha",
+          "id": "txt_cam",
+          "label": "ON THE MONITOR",
+          "out": "txt_cam",
+          "chars": 16,
+          "at": [
+            40,
+            44
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_cam",
+          "label": "CAMERA",
+          "digits": 2,
+          "out": "disp_cam",
+          "at": [
+            85,
+            44
+          ]
+        },
+        {
+          "type": "led",
+          "id": "led_cam_live",
+          "label": "LIVE",
+          "out": "led_cam_live",
+          "color": "green",
+          "at": [
+            26,
+            64
+          ]
+        },
+        {
+          "type": "button",
+          "id": "cam_prev",
+          "label": "◂ CAM",
+          "in": "cam_prev",
+          "at": [
+            50,
+            64
+          ]
+        },
+        {
+          "type": "button",
+          "id": "cam_next",
+          "label": "CAM ▸",
+          "in": "cam_next",
+          "at": [
+            74,
+            64
+          ]
+        }
+      ]
+    },
+    {
+      "id": "action_groups",
+      "title": "ACTION GROUPS",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        1
+      ],
+      "bus": "lab",
+      "items": [
+        {
+          "type": "lamp_button",
+          "id": "ag_1",
+          "label": "AG 1",
+          "color": "amber",
+          "in": "ag_1",
+          "out": "lamp_ag_1",
+          "at": [
+            38,
+            20
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_2",
+          "label": "AG 2",
+          "color": "amber",
+          "in": "ag_2",
+          "out": "lamp_ag_2",
+          "at": [
+            62,
+            20
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_3",
+          "label": "AG 3",
+          "color": "amber",
+          "in": "ag_3",
+          "out": "lamp_ag_3",
+          "at": [
+            38,
+            36
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_4",
+          "label": "AG 4",
+          "color": "amber",
+          "in": "ag_4",
+          "out": "lamp_ag_4",
+          "at": [
+            62,
+            36
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_5",
+          "label": "AG 5",
+          "color": "amber",
+          "in": "ag_5",
+          "out": "lamp_ag_5",
+          "at": [
+            38,
+            52
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_6",
+          "label": "AG 6",
+          "color": "amber",
+          "in": "ag_6",
+          "out": "lamp_ag_6",
+          "at": [
+            62,
+            52
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_7",
+          "label": "AG 7",
+          "color": "amber",
+          "in": "ag_7",
+          "out": "lamp_ag_7",
+          "at": [
+            38,
+            68
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_8",
+          "label": "AG 8",
+          "color": "amber",
+          "in": "ag_8",
+          "out": "lamp_ag_8",
+          "at": [
+            62,
+            68
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_9",
+          "label": "AG 9",
+          "color": "amber",
+          "in": "ag_9",
+          "out": "lamp_ag_9",
+          "at": [
+            38,
+            84
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "ag_10",
+          "label": "AG 10",
+          "color": "amber",
+          "in": "ag_10",
+          "out": "lamp_ag_10",
+          "at": [
+            62,
+            84
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -8,7 +8,7 @@ from ..messages import PanelOutputs, switch_lamp
 SWITCHES_WITH_LAMP = ('solar', 'brakes', 'fuel_cell', 'lights')
 LAMPS = ['lamp_chute', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
          *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP)]
-DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside']
+DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside', 'disp_pressure']
 BARS = ['bar_ec', 'bar_lf', 'bar_ox', 'bar_mono', 'bar_ablator']
 LOCAL_SWITCHES = ('cabin_light', 'backlight')     # the cockpit's own lights: cockpit/lighting, nothing for the game
 EVENT_TIMER_BUTTONS = ('evt_start', 'evt_stop', 'evt_reset', 'evt_min', 'evt_sec')
@@ -114,7 +114,9 @@ def render(cockpit, wanted):
     for switch in SWITCHES_WITH_LAMP:
         outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.switch_wanted(switch)))
     outside = cockpit.telemetry.get('tlm/thermal', {}).get('outside') if fresh else None
-    outputs.text('disp_outside', fit_number(outside, 0, 5, signed=True))
+    outputs.text('disp_outside', fit_number(outside, 0, 4, signed=True))
+    pressure = cockpit.flight.get('p') if fresh else None
+    outputs.text('disp_pressure', fit_number(pressure / 1000 if pressure is not None else None, 2, 4))
     outputs.bar('bar_ablator', fraction_left(cockpit.resources.get('total', {}), 'Ablator') if fresh else 0.0)
 
 

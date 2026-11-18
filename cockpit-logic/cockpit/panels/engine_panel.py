@@ -1,4 +1,4 @@
-"""The eng bus: caution and warning, ascent displays, engine and staging, engine status matrix and abort, and the
+"""The eng bus: caution and warning, ascent and descent displays, engine and staging, engine status matrix and abort, and the
 ATTITUDE panel (on the FDAI module): its switches, attitude and rate displays, and the settings of the ball."""
 import math
 
@@ -7,15 +7,16 @@ from ..alarms import ALARMS, stage_fuel_fraction
 from ..display_format import fit_number, format_mission_time
 from ..engines import IDLE, OFF, THRUSTING
 from ..messages import PanelOutputs, switch_lamp
-from ..performance import stage_delta_v, thrust_to_weight
+from ..performance import hover_time, speeds_in_reference, stage_delta_v, thrust_to_weight, time_to_impact
 
 SWITCHES_WITH_LAMP = ('sas', 'rcs')
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
          'lamp_contact', 'lamp_05g', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
-         'led_rcs_fine', *ALARMS]
+         'led_rcs_fine', 'led_gear', *ALARMS]
 # display → (digits, the dashes shown without telemetry)
-DISPLAYS = {'disp_alt': 6, 'disp_srf': 5, 'disp_g': 4, 'disp_met': 7, 'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5,
-            'disp_twr': 4, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
+DISPLAYS = {'disp_alt': 8, 'disp_hs': 5, 'disp_vs': 5, 'disp_speed': 5, 'disp_g': 4, 'disp_q': 4, 'disp_hover': 4,
+            'disp_impact': 5, 'disp_met': 7,
+            'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5, 'disp_twr': 4, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
             'disp_rate_yaw': 4, 'disp_rate_roll': 4}
 BARS = ['bar_fuel', 'bar_thrust']
 
@@ -120,6 +121,7 @@ def _render_lamps(cockpit, outputs):
     for switch in SWITCHES_WITH_LAMP:
         outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.switch_wanted(switch)))
     outputs.lamp('led_rcs_fine', cockpit.is_on('rcs_fine'))
+    outputs.lamp('led_gear', *switch_lamp(vessel.get('gear'), cockpit.switch_wanted('gear')))
     # SPEED REF's LED: lit when the game reports its reference, blinking when that is not the knob's (KSP changes it
     # by itself: to surface low down, to target near one).
     game_mode = vessel.get('speed_mode') if fresh else None
@@ -134,6 +136,23 @@ def _render_lamps(cockpit, outputs):
     outputs.lamp('lamp_05g', fresh and drag_felt and descending)
 
 
+def _render_ascent_descent(cockpit, outputs):
+    """Altitude above the ground or the sea (ALT REF), the speeds against the SPEED REF knob's reference, g, dynamic
+    pressure, hover time and time to impact."""
+    flight = cockpit.flight
+    horizontal, vertical, total = speeds_in_reference(cockpit)
+    altitude = flight.get('radar' if cockpit.is_on('alt_ref') else 'alt')
+    outputs.text('disp_alt', fit_number(round(altitude) if altitude is not None else None, 0, 8))    # never "-0"
+    outputs.text('disp_hs', fit_number(horizontal, 1, 5))
+    outputs.text('disp_vs', fit_number(vertical, 1, 5, signed=True))
+    outputs.text('disp_speed', fit_number(total, 1, 5))
+    outputs.text('disp_g', fit_number(flight.get('g'), 2, 4))
+    pressure = flight.get('q')
+    outputs.text('disp_q', fit_number(pressure / 1000 if pressure is not None else None, 2, 4))
+    outputs.text('disp_hover', fit_number(hover_time(cockpit), 0, 4))
+    outputs.text('disp_impact', fit_number(time_to_impact(cockpit), 0, 5))
+
+
 def _render_displays(cockpit, outputs):
     vessel, flight = cockpit.vessel, cockpit.flight
     if not cockpit.telemetry_is_fresh():
@@ -143,10 +162,7 @@ def _render_displays(cockpit, outputs):
         outputs.bar('bar_thrust', 0.0)
         outputs.raw('mx_eng', {'rows': [OFF * S.ENGINE_GRID_SIZE] * S.ENGINE_GRID_SIZE})
         return
-    altitude = flight.get('alt')
-    outputs.text('disp_alt', fit_number(altitude / 1000 if altitude is not None else None, 2, DISPLAYS['disp_alt']))
-    outputs.text('disp_srf', fit_number(flight.get('speed'), 1, DISPLAYS['disp_srf']))
-    outputs.text('disp_g', fit_number(flight.get('g'), 2, DISPLAYS['disp_g']))
+    _render_ascent_descent(cockpit, outputs)
     outputs.text('disp_dv', fit_number(stage_delta_v(cockpit), 0, DISPLAYS['disp_dv']))
     outputs.text('disp_twr', fit_number(thrust_to_weight(cockpit), 2, DISPLAYS['disp_twr']))
     _render_attitude(cockpit, outputs)

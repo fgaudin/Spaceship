@@ -1,4 +1,4 @@
-"""The vehicle's performance figures shown on several panels: local gravity, stage Δv, TWR, hover time."""
+"""The vehicle's figures shown on several panels: local gravity, stage Δv, TWR, hover time, speeds, time to impact."""
 import math
 
 from . import settings as S
@@ -42,3 +42,26 @@ def hover_time(cockpit):
     if delta_v is None or not gravity or ratio is None or ratio < 1:
         return None
     return delta_v / gravity
+
+
+def speeds_in_reference(cockpit):
+    """(horizontal, vertical, total) m/s against what the SPEED REF knob selects: the orbit, or the surface (also for
+    TGT: a speed against a target says nothing of the ground below). Turning with the planet only adds sideways
+    speed, so the vertical speed is the same in both. Each is None when unknown."""
+    flight = cockpit.flight
+    vertical = flight.get('vs')
+    if cockpit.selected('speed_ref', S.SPEED_MODES) != 'orbit':
+        return flight.get('hs'), vertical, flight.get('speed')
+    total = flight.get('v_orb')
+    if total is None or vertical is None:
+        return None, vertical, total
+    return math.sqrt(max(total ** 2 - vertical ** 2, 0.0)), vertical, total
+
+
+def time_to_impact(cockpit):
+    """Seconds to the ground at the present sink rate (gravity and braking ignored). None when not sinking, or on an
+    orbit that stays above the surface."""
+    radar, vertical, periapsis = cockpit.flight.get('radar'), cockpit.flight.get('vs'), cockpit.orbit.get('peri')
+    if radar is None or vertical is None or vertical >= -S.SINKING_ABOVE_M_S or (periapsis or 0) > 0:
+        return None
+    return radar / -vertical

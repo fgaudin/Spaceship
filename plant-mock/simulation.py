@@ -365,6 +365,7 @@ class Plant:
                          'paused': self.paused or self.frozen},
             'tlm/flight': {'alt': round(altitude, 1), 'radar': round(altitude, 1), 'vs': round(vertical_speed, 2),
                            'hs': round(horizontal_speed, 2), 'speed': round(math.hypot(*air_velocity), 2),
+                           'v_orb': round(math.hypot(self.velocity_x, self.velocity_y), 2),
                            'q': round(self.dynamic_pressure, 1), 'g': round(self.g_force, 3),
                            'vn': 0.0, 've': round(horizontal_speed, 2), 'lat': 0.0,
                            'v_right': 0.0, 'v_fwd': round(velocity_forward, 2), 'v_down': round(velocity_down, 2),

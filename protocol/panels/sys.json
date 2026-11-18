@@ -5,131 +5,6 @@
   "board": "olimex-esp32-poe",
   "panels": [
     {
-      "id": "electrical",
-      "title": "ELECTRICAL",
-      "size": [
-        1,
-        1
-      ],
-      "at": [
-        0,
-        0
-      ],
-      "bus": "sys",
-      "items": [
-        {
-          "type": "bar",
-          "id": "bar_ec",
-          "label": "CHARGE",
-          "out": "bar_ec",
-          "segments": 10,
-          "at": [
-            32,
-            35
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_ec",
-          "label": "EC",
-          "out": "disp_ec",
-          "digits": 5,
-          "at": [
-            70,
-            35
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_ec_rate",
-          "label": "EC/S",
-          "out": "disp_ec_rate",
-          "digits": 5,
-          "color": "green",
-          "at": [
-            30,
-            66
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "solar",
-          "label": "SOLAR",
-          "in": "solar",
-          "led": {
-            "out": "led_solar",
-            "color": "green"
-          },
-          "at": [
-            62,
-            66
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "fuel_cell",
-          "label": "FUEL CELL",
-          "in": "fuel_cell",
-          "led": {
-            "out": "led_fuel_cell",
-            "color": "green"
-          },
-          "at": [
-            86,
-            66
-          ]
-        }
-      ]
-    },
-    {
-      "id": "propellant",
-      "title": "PROPELLANT",
-      "size": [
-        1,
-        1
-      ],
-      "at": [
-        1,
-        0
-      ],
-      "bus": "sys",
-      "items": [
-        {
-          "type": "bar",
-          "id": "bar_lf",
-          "label": "FUEL",
-          "out": "bar_lf",
-          "segments": 10,
-          "at": [
-            34,
-            40
-          ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_ox",
-          "label": "OXID",
-          "out": "bar_ox",
-          "segments": 10,
-          "at": [
-            70,
-            40
-          ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_mono",
-          "label": "MONO",
-          "out": "bar_mono",
-          "segments": 10,
-          "at": [
-            50,
-            68
-          ]
-        }
-      ]
-    },
-    {
       "id": "event_timer",
       "title": "EVENT TIMER",
       "size": [
@@ -137,7 +12,7 @@
         1
       ],
       "at": [
-        2,
+        0,
         0
       ],
       "bus": "sys",
@@ -244,79 +119,50 @@
       ]
     },
     {
-      "id": "recovery_brakes",
-      "title": "RECOVERY · BRAKES",
+      "id": "lights",
+      "title": "LIGHTS",
       "size": [
         1,
         1
       ],
       "at": [
-        0,
-        1
+        1,
+        0
       ],
       "bus": "sys",
       "items": [
         {
-          "type": "guarded_toggle",
-          "id": "chute_arm",
-          "label": "CHUTE ARM",
-          "in": "chute_arm",
-          "led": {
-            "out": "led_chute_armed",
-            "color": "amber"
-          },
+          "type": "toggle",
+          "id": "cabin_light",
+          "label": "CABIN",
+          "in": "cabin_light",
           "at": [
-            24,
-            42
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "chute_deploy",
-          "label": "CHUTE",
-          "color": "green",
-          "in": "chute_deploy",
-          "out": "lamp_chute",
-          "at": [
-            50,
-            42
+            26,
+            52
           ]
         },
         {
           "type": "toggle",
-          "id": "brakes",
-          "label": "BRAKES",
-          "in": "brakes",
+          "id": "backlight",
+          "label": "BACKLIGHT",
+          "in": "backlight",
+          "at": [
+            50,
+            52
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "lights",
+          "label": "EXTERNAL",
+          "in": "lights",
           "led": {
-            "out": "led_brakes",
-            "color": "green"
+            "out": "led_lights",
+            "color": "white"
           },
           "at": [
-            76,
-            42
-          ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_ablator",
-          "label": "ABLATOR",
-          "segments": 10,
-          "out": "bar_ablator",
-          "at": [
-            30,
-            80
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_outside",
-          "label": "OUTSIDE °C",
-          "digits": 5,
-          "out": "disp_outside",
-          "color": "green",
-          "at": [
-            72,
-            80
+            74,
+            52
           ]
         }
       ]
@@ -329,8 +175,8 @@
         1
       ],
       "at": [
-        1,
-        1
+        2,
+        0
       ],
       "bus": "sys",
       "items": [
@@ -430,55 +276,6 @@
           "at": [
             78,
             78
-          ]
-        }
-      ]
-    },
-    {
-      "id": "lights",
-      "title": "LIGHTS",
-      "size": [
-        1,
-        1
-      ],
-      "at": [
-        2,
-        1
-      ],
-      "bus": "sys",
-      "items": [
-        {
-          "type": "toggle",
-          "id": "cabin_light",
-          "label": "CABIN",
-          "in": "cabin_light",
-          "at": [
-            26,
-            52
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "backlight",
-          "label": "BACKLIGHT",
-          "in": "backlight",
-          "at": [
-            50,
-            52
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "lights",
-          "label": "EXTERNAL",
-          "in": "lights",
-          "led": {
-            "out": "led_lights",
-            "color": "white"
-          },
-          "at": [
-            74,
-            52
           ]
         }
       ]

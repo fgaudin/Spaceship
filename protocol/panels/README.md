@@ -35,14 +35,14 @@ does not notice. A module's heartbeat is `panel/<module>/status`.
 | panel `at` | where the panel sits on the module, in U from the module's top-left corner (`[column, row]`) |
 | panel `bus` | the topic namespace of its controls |
 | item `at` | the centre of the control block (indicator LED, component and legend), in mm from the faceplate's top-left corner. The panel title takes the top 12 mm. |
-| item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot` (a lever), `knob` (a continuous knob, 0 to 1 over 270°), `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`). `toggle`, `guarded_toggle` and `rotary` take an indicator LED above them: `"led": {"out", "color"}` |
+| item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot` (a lever), `knob` (a continuous knob, 0 to 1 over 270°), `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`). `toggle`, `guarded_toggle` and `rotary` take an indicator LED above them: `"led": {"out", "color"}`. A `toggle` can name its positions, `"positions": ["RADAR", "SEA"]` (up, down); a `bar` can stand up with `"vertical": true` |
 
 Not there yet: a `pin` per control, for when the boards are designed.
 
 The same files make the laser-cut templates of the faceplates (SVG for LightBurn, with the components' cutouts
 from `panels/cut/footprints.json`): [panels/cut/README.md](../../panels/cut/README.md).
 
-A **glass module** (a Raspberry Pi and a screen: FDAI, MFD, CAM) has a panel with a `screen` instead of controls:
+A **glass module** (a Raspberry Pi and a screen: FDAI, CAM) has a panel with a `screen` instead of controls:
 
 ```json
 { "id": "fdai", "title": "FDAI", "size": [2, 2], "at": [0, 0], "items": [],
@@ -76,6 +76,8 @@ Components are drawn at about their real size: 0.36" 7-segment digits (9 mm high
 
 Each zone is a grid of U; a module's `at` is its top-left corner on it. A zone's optional `size` ([width, height]
 in U) makes it bigger than what it holds, so that its free places show. The zones are drawn one under the other, flat.
+A zone's optional `taper` (`{"from": "main", "height_u": 1}`) centres it under a wider zone above and draws the console's
+outline from that zone's bottom corners around it; `height_u` is only the drawn distance between them.
 The firmware never reads this file.
 
 ## Changing the layout

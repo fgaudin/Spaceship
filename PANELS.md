@@ -25,11 +25,12 @@ Priority: **A** = cannot fly the mission without it, **B** = needed to fly it by
   SOI CHANGE, ABORT MODE (ABORT fires the craft's abort group), the NAVBALL lamps, CB MAIN BUS (power now follows the
   electric charge), SAVE ARM, the rendezvous plate (GATE, OVERSPEED, LOS RATE), ALIGNED and the landing predictions
   (TO GROUND, BRAKE HEIGHT, BRAKE) are gone. New: HOVER TIME, the docking rates, fuel cells, ablator, outside
-  temperature, a LIGHTS panel (cabin, backlight, external). The current list is the README's; the sections below
+  temperature, a LIGHTS panel (cabin, backlight, external). ASCENT and LANDING then merged into ASCENT · DESCENT.
+  The current list is the README's; the sections below
   are the original plan.
 
 Built as virtual panels so far: 4 to 8 and 13 to 16 (ENG, SYS), 1 as the burn computer (CMP), the I/O part of 12 (RDV),
-2 and 9 to 12 on glass (FDAI, MFD). The glass versions of 9 to 12 are candidates to drop once the I/O panels are flown.
+2 on glass (FDAI). The MFD, which carried 9 to 12 on glass, was removed on 2026-11-18: the I/O panels replace it.
 
 ## 1. Summary
 

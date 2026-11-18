@@ -39,20 +39,20 @@ Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus**
 the simulation and injecting failures are on the SIMSUP page.
 
 **Modules** (on the CONSOLE page): ENG (C&W, ascent displays, propulsion, staging, abort, attitude), SYS, CMP (burn
-computer), RDV (target and docking), COM (radio link), SOLO (PAD requests and the orbit), LAB (experimental panels), and the glass modules FDAI, MFD and CAM
-(camera monitor), drawn as screens with the live page in them. FDAI, MFD and CAM are also pages of their own (for a
+computer), RDV (target and docking), SOLO (PAD requests and the orbit), LAB (experimental panels), and the glass modules FDAI and CAM
+(camera monitor), drawn as screens with the live page in them. FDAI and CAM are also pages of their own (for a
 Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
-**SYS** (I/O module, overhead): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
+**SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with ELECTRICAL and PROPELLANT; RECOVERY · BRAKES on the ENG module): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
 current stage (fuel, oxidizer, monoprop bars), event timer (manual,
 or counting down to TIG / apoapsis / periapsis / SOI change; with COUNT DOWN on, the manual timer counts down from a
 value set with MIN + and SEC +10 and blinks at zero), recovery (chute arm + deploy, brakes, the ablator left, the
-outside temperature), time warp and game (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
+outside temperature and air pressure), time warp and game (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
 event the timer's source selects; pause, quick save, quick load), lights (CABIN and BACKLIGHT light the cockpit itself
 through `cockpit/lighting`: on the console page the plates brighten and the legends glow; EXTERNAL is the craft's
 lights).
 
-**ENG** (I/O module): ASCENT (altitude in km, surface speed, g, MET, thrust bar); ENGINE (ENG ARM, throttle,
+**ENG** (I/O module): CAUTION & WARNING, with the MET; ASCENT · DESCENT (altitude in m, above the sea or the ground by ALT REF; horizontal, vertical and total speed against the orbit or the surface by the SPEED REF knob, TGT reading the surface; g, dynamic pressure in kPa, TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; GEAR); ENGINE (ENG ARM, throttle,
 STAGE ARM and STAGE, the stage number, CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
 equation and TWR against the local gravity, both for the engines the next staging lights before ignition); an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
@@ -90,24 +90,16 @@ docking procedures). DOCKING: range and closing speed to the target vessel (KM L
 100 km), CAPTURE inside the capture envelope, DOCKED, and UNDOCK behind a guarded UNDOCK ARM. The
 CLOSING caution still watches the course's ρ/400 s braking gate. Signs checked in KSP by `tests/e2e_ksp_docking.py`.
 
-**COM** (I/O panel): the radio link to the ground. AOS and LOS lamps (acquisition and loss of signal; the one that
+**COM** (the LINK · ANTENNA panel, on the ENG module, on the `com` bus): the radio link to the ground. AOS and LOS lamps (acquisition and loss of signal; the one that
 just came on blinks for 10 s), signal strength bar, the first station or relay on the way and the number of hops, how
 long the link has been in its present state, and ANTENNA DEPLOY (acts only when moved, so a restart cannot retract
 the antennas).
 
 **LAB** (I/O panel, experimental): panels tried here before they earn a place in the cockpit.
-- CROSS-POINTER: a 9 × 9 LED matrix and a selector, in place of a screen for the precise phases. One dot around a
-  white centre; the full scale adapts and is shown beside it; NULL lights when the dot is on the centre at the finest
-  scale; a red dot on the edge is beyond the coarsest scale. NODE, RETRO, PRO and PORT are angles to turn the nose
-  ("fly to the dot": the burn direction, surface retrograde or prograde, facing the target port); OFFSET is where the
-  target port is, right and up, in metres; DRIFT is the speed over the ground across the vessel's own axis (for a
-  lander standing on its tail: which way it slides).
-- LANDING: radar altitude, vertical and horizontal speed, HOVER TIME (the seconds the stage can hold the craft
-  still: its Δv over the local gravity; dashes when the engines cannot lift it), and GEAR.
 - NAVIGATION: body orbited, latitude, longitude.
-- ORBIT (on the SOLO module, on the `lab` bus): apoapsis and periapsis in km, inclination.
-- ACTION GROUPS: the craft's ten custom groups, each button lit while its group is on.
-- CAMERA: CAM ◂ ▸ pick the camera shown on the monitor, with its name and number, and a LIVE LED.
+- ORBIT (on the SOLO module, on the `lab` bus, 2 U wide): apoapsis and periapsis in km, the time to each, inclination.
+- ACTION GROUPS (on the AUX module in MAIN, on the `lab` bus): the craft's ten custom groups, each button lit while its group is on.
+- CAMERA (on the AUX module in MAIN, on the `lab` bus): CAM ◂ ▸ pick the camera shown on the monitor, with its name and number, and a LIVE LED.
 
 **CAM** (glass panel, http://localhost:8650/cam.html): a monitor for the craft's cameras, fed by the
 Kerbcast mod's WebRTC streams (hull cameras, docking port cameras, kerbals' helmets, the
@@ -130,11 +122,6 @@ debrief with the crew's response times. Vehicle failures act in KSP through the 
 reaction wheels, parachutes, comms, telemetry); instrument failures in the cockpit (false alarm, dark panel, frozen
 display, stuck switch). How it works: [simsup/README.md](simsup/README.md).
 
-**MFD** (glass panel, http://localhost:8650/mfd.html): ORBIT (orbit drawing and apsides), ASCENT (altitude, V/S,
-speed and apoapsis tapes, q and g), LANDING (drift cross-pointer in the heading frame, radar altitude, time to impact,
-TWR), DOCKING (range, closing speed and line-of-sight rate against the course's ρ/400 s braking gate; port alignment
-and capture envelope when a docking port is targeted). `mfd.html?demo=1` runs without a broker.
-
 **FDAI** (glass module, 2 × 2 U, its panel ATTITUDE: the ball on a 4" round screen, pitch, heading and roll with their
 rates on 7-segment displays beside it, the FDAI controls in the corners around it (MARKERS top left, NEEDLES and ERROR
 SCALE at the bottom), and under them SAS, SAS MODE with TGT, A-TGT and MNVR,
@@ -152,14 +139,14 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 ### Where the code is
 | Part | Files |
 |---|---|
-| Cockpit logic | [cockpit-logic/cockpit/](cockpit-logic/cockpit/): `core.py` (the `Cockpit` class: messages in, outputs out), `settings.py` (every threshold and table), `alarms.py` (caution and warning), `burn_computer.py`, `node_mirror.py` (PAD ↔ KSP maneuver node), `engines.py` (engine status matrix), `event_timer.py`, `cross_pointer.py`, `panels/` (one module per panel: its inputs and its outputs), `messages.py` and `display_format.py` (payloads and number formats). [service.py](cockpit-logic/service.py) is the MQTT shell. |
+| Cockpit logic | [cockpit-logic/cockpit/](cockpit-logic/cockpit/): `core.py` (the `Cockpit` class: messages in, outputs out), `settings.py` (every threshold and table), `alarms.py` (caution and warning), `burn_computer.py`, `node_mirror.py` (PAD ↔ KSP maneuver node), `engines.py` (engine status matrix), `event_timer.py`, `panels/` (one module per panel: its inputs and its outputs), `messages.py` and `display_format.py` (payloads and number formats). [service.py](cockpit-logic/service.py) is the MQTT shell. |
 | KSP gateway | [gateway-ksp/gateway.py](gateway-ksp/gateway.py) (main loop) and [gateway-ksp/ksp/](gateway-ksp/ksp/): `vessel_link.py` (kRPC connection, streams, telemetry payloads), `parts_watch.py` (engines, stage propellant, heat, ground contact, docking ports), `target.py` (rendezvous and docking geometry, target selection, undocking), `commands.py` (`cmd/*` → kRPC), `streams.py`. |
 | Flight dynamics | [flight-dynamics/](flight-dynamics/): `orbits.py` (two-body orbits), `planner.py` (the four PADs), `service.py`. [README](flight-dynamics/README.md). |
 | Mission Control | [panels/virtual/mcc/](panels/virtual/mcc/): `mcc.js` (tabs, poll, loop), `bus.js`, `roster.js`, one module per console in `consoles/`. Architecture: [mcc/README.md](panels/virtual/mcc/README.md). |
 | SimSup | [simsup/](simsup/): `simsup_core.py` (the logic), `service.py`, `scenarios.json`; the page is `panels/virtual/simsup.*`. Architecture: [simsup/README.md](simsup/README.md). |
 | Laser-cut faceplates | [panels/cut/](panels/cut/): `make_templates.py` (SVG templates for LightBurn from `protocol/panels/`, with layout checks), `footprints.json` (each component's cutout and size, placeholders until the parts are in hand). [README](panels/cut/README.md). |
 | Mock plant | [plant-mock/](plant-mock/): `simulation.py` (the model), `vehicle.py` (planet and launcher constants), `plant.py` (the service). |
-| Virtual panel | [panels/virtual/](panels/virtual/): `shell.js` (every page's top bar and navigation, from one list of pages), `bus.js` (every page's bus connection), `panel.js` (the console: zones, modules and panels at their physical size, overview and module view, one bus connection per module, layout checks, keyboard), `widgets.js` (one builder per item type), `seven_segment.js`; `cam.js` (camera monitor), `fdai.js`, `mfd.js`, `simsup.js`, `mcc/`. A new page: its HTML header holds only its own status items, it loads `shell.js`, and it gets one line in `PAGES` in `shell.js`. |
+| Virtual panel | [panels/virtual/](panels/virtual/): `shell.js` (every page's top bar and navigation, from one list of pages), `bus.js` (every page's bus connection), `panel.js` (the console: zones, modules and panels at their physical size, overview and module view, one bus connection per module, layout checks, keyboard), `widgets.js` (one builder per item type), `seven_segment.js`; `cam.js` (camera monitor), `fdai.js`, `simsup.js`, `mcc/`. A new page: its HTML header holds only its own status items, it loads `shell.js`, and it gets one line in `PAGES` in `shell.js`. |
 
 ### Rules the cockpit logic implements
 - ENG ARM gates the throttle; STAGE needs STAGE ARM (and an edge, holding does not stage twice); ABORT needs ABORT ARM.
@@ -193,6 +180,6 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 .venv/bin/python tests/e2e_ksp_simsup.py --save lor3-selftest-pad    # every SimSup failure, freeze and load in KSP (25 checks)
 .venv/bin/python tests/rehearsal_ksp_ascent.py --save lor3-selftest-pad   # pad to orbit from the panels and the stick topics; prints gaps and alarms
 .venv/bin/python tests/e2e_ksp_boosters.py --save lor3-selftest-pad   # engine matrix through booster flameouts and staging (9 checks; launches)
-.venv/bin/python tests/e2e_ksp_landing.py --save lor3-selftest-pdi    # a Mun landing on the LAB figures: cross-pointer signs, time to ground, BRAKE lamp (24 checks)
+.venv/bin/python tests/e2e_ksp_landing.py --save lor3-selftest-pdi    # a Mun landing on the ASCENT · DESCENT figures
 ```
 (`.venv`: `python3 -m venv .venv && .venv/bin/pip install pytest paho-mqtt==2.1.0 krpc==0.7.0`.)

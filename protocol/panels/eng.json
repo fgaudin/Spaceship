@@ -171,42 +171,90 @@
             63,
             74
           ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_met",
+          "label": "MET",
+          "digits": 7,
+          "out": "disp_met",
+          "color": "green",
+          "at": [
+            126,
+            82
+          ]
         }
       ]
     },
     {
-      "id": "ascent",
-      "title": "ASCENT",
+      "id": "ascent_descent",
+      "title": "ASCENT · DESCENT",
       "size": [
-        1,
+        2,
         1
       ],
       "at": [
-        2,
-        0
+        0,
+        1
       ],
       "bus": "eng",
       "items": [
         {
           "type": "seg7",
           "id": "disp_alt",
-          "label": "ALT KM",
-          "digits": 6,
+          "label": "ALT M",
+          "digits": 8,
           "out": "disp_alt",
           "at": [
-            32,
-            31
+            38,
+            30
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "alt_ref",
+          "label": "ALT REF",
+          "in": "alt_ref",
+          "positions": [
+            "RADAR",
+            "SEA"
+          ],
+          "at": [
+            88,
+            29
           ]
         },
         {
           "type": "seg7",
-          "id": "disp_srf",
-          "label": "SURF SPEED M/S",
+          "id": "disp_hs",
+          "label": "H SPEED M/S",
           "digits": 5,
-          "out": "disp_srf",
+          "out": "disp_hs",
           "at": [
-            74,
-            31
+            125,
+            30
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_vs",
+          "label": "V SPEED M/S",
+          "digits": 5,
+          "out": "disp_vs",
+          "at": [
+            125,
+            54
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_speed",
+          "label": "SPEED M/S",
+          "digits": 5,
+          "out": "disp_speed",
+          "at": [
+            125,
+            78
           ]
         },
         {
@@ -217,31 +265,57 @@
           "out": "disp_g",
           "color": "green",
           "at": [
-            24,
-            58
+            168,
+            28
           ]
         },
         {
           "type": "seg7",
-          "id": "disp_met",
-          "label": "MET",
-          "digits": 7,
-          "out": "disp_met",
+          "id": "disp_q",
+          "label": "Q KPA",
+          "digits": 4,
+          "out": "disp_q",
           "color": "green",
           "at": [
-            66,
-            58
+            168,
+            49
           ]
         },
         {
-          "type": "bar",
-          "id": "bar_throttle",
-          "label": "THRUST",
-          "segments": 10,
-          "out": "bar_thrust",
+          "type": "seg7",
+          "id": "disp_impact",
+          "label": "TIME TO IMPACT S",
+          "digits": 5,
+          "out": "disp_impact",
           "at": [
-            50,
-            82
+            38,
+            54
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_hover",
+          "label": "HOVER TIME S",
+          "digits": 4,
+          "out": "disp_hover",
+          "color": "green",
+          "at": [
+            38,
+            78
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "gear",
+          "label": "GEAR",
+          "in": "gear",
+          "led": {
+            "out": "led_gear",
+            "color": "green"
+          },
+          "at": [
+            168,
+            74
           ]
         }
       ]
@@ -255,7 +329,7 @@
       ],
       "at": [
         0,
-        1
+        2
       ],
       "bus": "eng",
       "items": [
@@ -390,6 +464,192 @@
       ]
     },
     {
+      "id": "recovery_brakes",
+      "title": "RECOVERY · BRAKES",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        0
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "guarded_toggle",
+          "id": "chute_arm",
+          "label": "CHUTE ARM",
+          "in": "chute_arm",
+          "led": {
+            "out": "led_chute_armed",
+            "color": "amber"
+          },
+          "at": [
+            24,
+            42
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "chute_deploy",
+          "label": "CHUTE",
+          "color": "green",
+          "in": "chute_deploy",
+          "out": "lamp_chute",
+          "at": [
+            50,
+            42
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "brakes",
+          "label": "BRAKES",
+          "in": "brakes",
+          "led": {
+            "out": "led_brakes",
+            "color": "green"
+          },
+          "at": [
+            76,
+            42
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_ablator",
+          "label": "ABLATOR",
+          "segments": 10,
+          "out": "bar_ablator",
+          "at": [
+            17,
+            80
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_outside",
+          "label": "OUTSIDE °C",
+          "digits": 4,
+          "out": "disp_outside",
+          "color": "green",
+          "at": [
+            47.8,
+            80
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_pressure",
+          "label": "PRESSURE KPA",
+          "digits": 4,
+          "out": "disp_pressure",
+          "color": "green",
+          "at": [
+            80.4,
+            80
+          ]
+        }
+      ]
+    },
+    {
+      "id": "link_antenna",
+      "title": "LINK · ANTENNA",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        2,
+        1
+      ],
+      "bus": "com",
+      "items": [
+        {
+          "type": "annunciator",
+          "id": "link",
+          "label": "LINK",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_aos",
+              "label": "AOS",
+              "color": "green"
+            },
+            {
+              "out": "lamp_los",
+              "label": "LOS",
+              "color": "red"
+            }
+          ],
+          "at": [
+            34,
+            24
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_signal",
+          "label": "SIGNAL",
+          "segments": 10,
+          "out": "bar_signal",
+          "at": [
+            78,
+            24
+          ]
+        },
+        {
+          "type": "alpha",
+          "id": "txt_via",
+          "label": "VIA",
+          "out": "txt_via",
+          "chars": 12,
+          "at": [
+            38,
+            45
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_hops",
+          "label": "HOPS",
+          "digits": 1,
+          "out": "disp_hops",
+          "at": [
+            76,
+            45
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_link_time",
+          "label": "IN THIS STATE MIN.SEC",
+          "digits": 5,
+          "out": "disp_link_time",
+          "color": "green",
+          "at": [
+            33,
+            73
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "antenna",
+          "label": "ANTENNA DEPLOY",
+          "in": "antenna",
+          "led": {
+            "out": "led_antenna",
+            "color": "green"
+          },
+          "at": [
+            71,
+            73
+          ]
+        }
+      ]
+    },
+    {
       "id": "engines_abort",
       "title": "ENGINES · ABORT",
       "size": [
@@ -398,7 +658,7 @@
       ],
       "at": [
         2,
-        1
+        2
       ],
       "bus": "eng",
       "items": [
@@ -410,7 +670,7 @@
           "rows": 9,
           "cols": 9,
           "at": [
-            40,
+            33,
             34
           ]
         },
@@ -422,8 +682,20 @@
           "out": "disp_eng_on",
           "color": "green",
           "at": [
-            76,
+            68,
             34
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_throttle",
+          "label": "THRUST",
+          "segments": 10,
+          "vertical": true,
+          "out": "bar_thrust",
+          "at": [
+            87,
+            38
           ]
         },
         {

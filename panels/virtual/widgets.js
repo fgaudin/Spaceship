@@ -27,7 +27,8 @@ export function createWidgetBuilders(registry, publishInput) {
   /* The bat-handle switch shared by plain and guarded toggles. */
   function createToggleSwitch(item, onFlip) {
     const button = createElement('button', 'toggle', { type: 'button', title: item.label });
-    button.innerHTML = '<span class="nut"></span><span class="bat"></span><span class="pos on">ON</span><span class="pos off">OFF</span>';
+    const [onLegend, offLegend] = item.positions || ['ON', 'OFF'];
+    button.innerHTML = `<span class="nut"></span><span class="bat"></span><span class="pos on">${onLegend}</span><span class="pos off">${offLegend}</span>`;
     let position = item.default ?? 0;
     const set = (value) => {
       position = value ? 1 : 0;
@@ -133,9 +134,9 @@ export function createWidgetBuilders(registry, publishInput) {
       return [display.node];
     },
 
-    /* An LED bar graph: payload {v: 0..1}. The top segments are amber then red. */
+    /* An LED bar graph: payload {v: 0..1}, filling upward when `vertical`. The top segments are amber then red. */
     bar(item) {
-      const bar = createElement('div', 'bar');
+      const bar = createElement('div', item.vertical ? 'bar vertical' : 'bar');
       const segmentCount = item.segments || 10;
       const segments = [];
       for (let index = 0; index < segmentCount; index++) {

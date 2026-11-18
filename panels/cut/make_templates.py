@@ -152,7 +152,7 @@ def component(item, footprint, settings):
         front = bounds(size_shape(0, 0, fp['front']))
         if kind in ('lamp_button', 'button') and item.get('label'):
             guide_text.append(text(0, 0, item['label'], small))
-        for index, position in enumerate(fp.get('positions', [])[:2] if kind == 'toggle' else []):
+        for index, position in enumerate(item.get('positions', fp.get('positions', []))[:2] if kind == 'toggle' else []):
             y = (front[1] + small / 2 + 0.5) if index == 0 else (front[3] - small / 2 - 0.5)
             legends.append(text(front[2] + 1, y, position, small, 'start'))
 
@@ -169,7 +169,9 @@ def component(item, footprint, settings):
     elif kind in ('seg7', 'bar', 'alpha'):
         count, pitch = {'seg7': (item.get('digits', 1), fp.get('digit_pitch')), 'bar': (item.get('segments', 10), fp.get('segment_pitch')),
                         'alpha': (item.get('chars', 8), fp.get('char_pitch'))}[kind]
-        window = rect(0, 0, count * pitch + 2 * fp['pad'], fp['height'], fp['corner_radius'])
+        length = count * pitch + 2 * fp['pad']
+        width, height = (fp['height'], length) if item.get('vertical') else (length, fp['height'])
+        window = rect(0, 0, width, height, fp['corner_radius'])
         cut.append(window)
         front = bounds(window)
         if kind == 'seg7':

@@ -167,8 +167,27 @@ function buildModule(module) {
   return element;
 }
 
+/* A zone that narrows from a wider one above it: centred under it, with the console's outline running from that zone's
+   bottom corners down around this one. */
+function layOutTaper(section, grid, title, [parentWidthMm, widthMm, heightMm], taperMm) {
+  const insetMm = (parentWidthMm - widthMm) / 2, rightMm = insetMm + widthMm, bottomMm = taperMm + heightMm;
+  const outline = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  outline.classList.add('zone-taper');
+  outline.setAttribute('viewBox', `0 0 ${parentWidthMm} ${bottomMm}`);
+  Object.assign(outline.style, { width: mm(parentWidthMm), height: mm(bottomMm) });
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('d', `M0 0 L${insetMm} ${taperMm} V${bottomMm} H${rightMm} V${taperMm} L${parentWidthMm} 0`);
+  outline.appendChild(path);
+  section.classList.add('tapered');
+  Object.assign(section.style, { width: mm(parentWidthMm), paddingTop: mm(taperMm) });
+  Object.assign(title.style, { left: mm(insetMm), width: mm(widthMm), top: mm(taperMm) });
+  grid.style.marginLeft = mm(insetMm);
+  section.prepend(outline);
+}
+
 function buildConsole(consoleLayout, definitions) {
   const overview = document.getElementById('overview');
+  const zoneWidthsMm = new Map();
   for (const zone of consoleLayout.zones) {
     const placed = zone.modules.filter((entry) => {
       if (definitions.has(entry.module)) return true;
@@ -189,7 +208,17 @@ function buildConsole(consoleLayout, definitions) {
     if (zone.size && (usedWidth > zone.size[0] || usedHeight > zone.size[1])) reportLayout(`zone ${zone.id}: modules go past its size`);
     Object.assign(grid.style, { width: mm(width * U_MM), height: mm(height * U_MM) });
     checkGrid(placed, sizeOf, (entry) => entry.module, `zone ${zone.id}`);
-    section.append(createElement('div', 'zone-title', { textContent: zone.title }), grid);
+    const title = createElement('div', 'zone-title', { textContent: zone.title });
+    section.append(title, grid);
+    zoneWidthsMm.set(zone.id, width * U_MM);
+    if (zone.taper) {
+      const parentWidthMm = zoneWidthsMm.get(zone.taper.from);
+      if (parentWidthMm > width * U_MM) {
+        layOutTaper(section, grid, title, [parentWidthMm, width * U_MM, height * U_MM], zone.taper.height_u * U_MM);
+      } else {
+        reportLayout(`zone ${zone.id}: tapers from ${zone.taper.from}, which must be a wider zone above it`);
+      }
+    }
     overview.appendChild(section);
   }
 }

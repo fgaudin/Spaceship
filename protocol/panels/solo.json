@@ -109,7 +109,7 @@
       "id": "orbit",
       "title": "ORBIT",
       "size": [
-        1,
+        2,
         1
       ],
       "at": [
@@ -125,7 +125,19 @@
           "digits": 7,
           "out": "disp_apo",
           "at": [
-            50,
+            52,
+            30
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_t_apo",
+          "label": "TIME TO APO",
+          "digits": 7,
+          "out": "disp_t_apo",
+          "color": "green",
+          "at": [
+            148,
             30
           ]
         },
@@ -136,7 +148,19 @@
           "digits": 7,
           "out": "disp_peri",
           "at": [
-            50,
+            52,
+            54
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_t_peri",
+          "label": "TIME TO PERI",
+          "digits": 7,
+          "out": "disp_t_peri",
+          "color": "green",
+          "at": [
+            148,
             54
           ]
         },
@@ -148,7 +172,7 @@
           "out": "disp_incl",
           "color": "green",
           "at": [
-            50,
+            52,
             78
           ]
         }

@@ -72,6 +72,7 @@ class VesselLink:
         streams = self.streams
         body = vessel.orbit.body
         over_the_ground = vessel.flight(body.reference_frame)   # speeds relative to the turning surface
+        around_the_body = vessel.flight(body.non_rotating_reference_frame)  # the speed along the orbit
         against_the_horizon = vessel.flight()                   # pitch, heading, roll against the local horizon
         # Axes of the local horizon (x up, y north, z east), moving with the ground: the vessel's velocity in this
         # frame is its surface velocity already split into up, north and east.
@@ -108,6 +109,7 @@ class VesselLink:
                 'vertical_speed': (over_the_ground, 'vertical_speed'),
                 'horizontal_speed': (over_the_ground, 'horizontal_speed'),
                 'speed': (over_the_ground, 'speed'),
+                'orbital_speed': (around_the_body, 'speed'),
                 'dynamic_pressure': (over_the_ground, 'dynamic_pressure'),
                 'g_force': (over_the_ground, 'g_force'),
                 'latitude': (over_the_ground, 'latitude'),
@@ -217,7 +219,8 @@ class VesselLink:
         right, forward, down = now['velocity_right_forward_down']
         return {'alt': round(now['altitude'], 3), 'radar': round(now['radar_altitude'], 3),
                 'vs': round(now['vertical_speed'], 3), 'hs': round(now['horizontal_speed'], 3),
-                'speed': round(now['speed'], 3), 'q': round(now['dynamic_pressure'], 3), 'g': round(now['g_force'], 3),
+                'speed': round(now['speed'], 3), 'v_orb': round(now['orbital_speed'], 3),
+                'q': round(now['dynamic_pressure'], 3), 'g': round(now['g_force'], 3),
                 'lat': round(now['latitude'], 3), 'lon': round(now['longitude'], 3),
                 'vn': round(travel['north'], 2) if travel else None,
                 've': round(travel['east'], 2) if travel else None,
