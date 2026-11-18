@@ -65,7 +65,12 @@ SINKING_ABOVE_M_S = 0.1           # slower than this, the vessel is not coming d
 BODIES = {'Kerbin': (3.5316e12, 600000.0), 'Mun': (6.5138398e10, 200000.0), 'Minmus': (1.7658e9, 60000.0)}
 STANDARD_GRAVITY = 9.80665
 STANDARD_PRESSURE_PA = 101325.0
-PROPELLANT_KG_PER_UNIT = 5.0        # liquid fuel, oxidizer and solid fuel in KSP
+RESOURCE_KG_PER_UNIT = {'LiquidFuel': 5.0, 'Oxidizer': 5.0, 'SolidFuel': 7.5, 'MonoPropellant': 4.0, 'XenonGas': 0.1}
+ROCKET_PROPELLANTS = ('LiquidFuel', 'Oxidizer', 'SolidFuel')    # assumed burnt when the engines do not say
+# TAC Life Support (its LifeSupport.cfg): units each kerbal uses per second, recyclers not counted
+LIFE_SUPPORT_USE_PER_KERBAL_S = {'Food': 1.6927083333e-05, 'Water': 1.1188078704e-05, 'Oxygen': 0.001713537562385}
+LOW_LIFE_SUPPORT_FRACTION = 0.10
+RCS_SPECIFIC_IMPULSE_S = 240.0      # the stock RCS thrusters in vacuum: RCS Δv is an estimate
 
 # ---------- rendezvous and docking (the course's docking chapter) ----------
 BRAKING_GATE_TIME_S = 400.0         # allowed closing speed = range / 400 s ...

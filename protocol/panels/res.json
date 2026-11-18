@@ -1,6 +1,6 @@
 {
   "id": "res",
-  "title": "ELECTRICAL · PROPELLANT",
+  "title": "ELECTRICAL · PROPELLANT · LIFE SUPPORT",
   "fw": "virtual-0.1",
   "board": "olimex-esp32-poe",
   "panels": [
@@ -24,9 +24,10 @@
           "out": "bar_ec",
           "segments": 10,
           "at": [
-            32,
-            35
-          ]
+            14,
+            42
+          ],
+          "vertical": true
         },
         {
           "type": "seg7",
@@ -35,8 +36,8 @@
           "out": "disp_ec",
           "digits": 5,
           "at": [
-            70,
-            35
+            60,
+            27
           ]
         },
         {
@@ -47,8 +48,8 @@
           "digits": 5,
           "color": "green",
           "at": [
-            30,
-            66
+            60,
+            47
           ]
         },
         {
@@ -61,8 +62,8 @@
             "color": "green"
           },
           "at": [
-            62,
-            66
+            42,
+            76
           ]
         },
         {
@@ -75,8 +76,8 @@
             "color": "green"
           },
           "at": [
-            86,
-            66
+            74,
+            76
           ]
         }
       ]
@@ -100,8 +101,9 @@
           "label": "FUEL",
           "out": "bar_lf",
           "segments": 10,
+          "vertical": true,
           "at": [
-            34,
+            20,
             40
           ]
         },
@@ -111,8 +113,9 @@
           "label": "OXID",
           "out": "bar_ox",
           "segments": 10,
+          "vertical": true,
           "at": [
-            70,
+            40,
             40
           ]
         },
@@ -122,9 +125,143 @@
           "label": "MONO",
           "out": "bar_mono",
           "segments": 10,
+          "vertical": true,
           "at": [
-            50,
-            68
+            60,
+            40
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_xenon",
+          "label": "XENON",
+          "out": "bar_xenon",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            80,
+            40
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_burn_time",
+          "label": "BURN TIME S",
+          "out": "disp_burn_time",
+          "digits": 5,
+          "at": [
+            30,
+            78
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_rcs_dv",
+          "label": "RCS ΔV M/S",
+          "out": "disp_rcs_dv",
+          "digits": 4,
+          "color": "green",
+          "at": [
+            74,
+            78
+          ]
+        }
+      ]
+    },
+    {
+      "id": "life_support",
+      "title": "LIFE SUPPORT",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        2
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "bar",
+          "id": "bar_ls_food",
+          "label": "FOOD",
+          "out": "bar_ls_food",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            11,
+            40
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_ls_water",
+          "label": "WATER",
+          "out": "bar_ls_water",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            31,
+            40
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_ls_oxygen",
+          "label": "O2",
+          "out": "bar_ls_oxygen",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            51,
+            40
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ls_food",
+          "label": "FOOD H",
+          "out": "disp_ls_food",
+          "digits": 4,
+          "color": "green",
+          "at": [
+            79,
+            27
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ls_water",
+          "label": "WATER H",
+          "out": "disp_ls_water",
+          "digits": 4,
+          "color": "green",
+          "at": [
+            79,
+            47
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ls_oxygen",
+          "label": "O2 H",
+          "out": "disp_ls_oxygen",
+          "digits": 4,
+          "color": "green",
+          "at": [
+            79,
+            67
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_crew",
+          "label": "CREW",
+          "out": "disp_crew",
+          "digits": 2,
+          "at": [
+            31,
+            80
           ]
         }
       ]

@@ -44,7 +44,7 @@
         {
           "type": "annunciator",
           "id": "cw",
-          "cols": 4,
+          "cols": 5,
           "cells": [
             {
               "out": "cw_low_fuel",
@@ -145,10 +145,20 @@
               "out": "cw_comm",
               "label": "COMM LOST",
               "color": "amber"
+            },
+            {
+              "out": "cw_ls_low",
+              "label": "LS LOW",
+              "color": "amber"
+            },
+            {
+              "out": "cw_ls_out",
+              "label": "LS OUT",
+              "color": "red"
             }
           ],
           "at": [
-            126,
+            135,
             43
           ]
         },

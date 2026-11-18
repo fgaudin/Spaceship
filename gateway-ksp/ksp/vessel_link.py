@@ -132,6 +132,7 @@ class VesselLink:
                 'outside_temperature': (over_the_ground, 'static_air_temperature'),
                 'speed_mode': (control, 'speed_mode'),
                 'available_thrust': (vessel, 'available_thrust'),
+                'crew_count': (vessel, 'crew_count'),
                 'specific_impulse': (vessel, 'specific_impulse'),
                 'can_communicate': (vessel.comms, 'can_communicate'),
                 'body': (orbit, 'body'),
@@ -234,7 +235,7 @@ class VesselLink:
         sas_mode = SAS_MODE_FROM_KRPC.get(now['sas_mode'].name, now['sas_mode'].name) if now['sas'] else None
         return {'name': self.vessel_name, 'mass': round(now['mass'], 1), 'thrust': round(now['thrust'], 1),
                 'thrust_avail': round(now['available_thrust'], 1), 'isp': round(now['specific_impulse'], 1),
-                'situation': situation, 'stage': now['stage'], 'throttle': round(now['throttle'], 3),
+                'situation': situation, 'crew': now['crew_count'], 'stage': now['stage'], 'throttle': round(now['throttle'], 3),
                 'sas': now['sas'], 'rcs': now['rcs'], 'gear': now['gear'], 'lights': now['lights'],
                 'brakes': now['brakes'], 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
                 'solar': self.parts.solar_deployed_state(), 'chute': self.parts.parachute_state(),

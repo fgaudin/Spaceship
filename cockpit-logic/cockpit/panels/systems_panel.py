@@ -1,15 +1,18 @@
-"""SYS module: electrical, propellant, event timer, recovery, time warp and game, lights."""
+"""The sys bus: electrical, propellant, life support, event timer, recovery, time warp, save, lights."""
 
 from .. import settings as S
 from ..alarms import fraction_left
 from ..display_format import fit_number, format_event_time
 from ..messages import PanelOutputs, switch_lamp
+from ..performance import burn_time, life_support_hours, rcs_delta_v
 
 SWITCHES_WITH_LAMP = ('solar', 'brakes', 'fuel_cell', 'lights')
-LAMPS = ['lamp_chute', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
+LAMPS = ['lamp_chute', 'lamp_revert', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
          *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP)]
-DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside', 'disp_pressure']
-BARS = ['bar_ec', 'bar_lf', 'bar_ox', 'bar_mono', 'bar_ablator']
+DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside', 'disp_pressure', 'disp_burn_time',
+            'disp_rcs_dv', 'disp_ls_food', 'disp_ls_water', 'disp_ls_oxygen', 'disp_crew']
+BARS = ['bar_ec', 'bar_lf', 'bar_ox', 'bar_mono', 'bar_xenon', 'bar_ablator', 'bar_ls_food', 'bar_ls_water',
+        'bar_ls_oxygen']
 LOCAL_SWITCHES = ('cabin_light', 'backlight')     # the cockpit's own lights: cockpit/lighting, nothing for the game
 EVENT_TIMER_BUTTONS = ('evt_start', 'evt_stop', 'evt_reset', 'evt_min', 'evt_sec')
 CHARGE_RATE_SMOOTHING = 0.3         # weight of the newest sample in the EC/s display
@@ -35,6 +38,8 @@ def handle_input(cockpit, change):
         return cockpit.command('cmd/pause', {'on': change.on}) if change.moved else []
     if control in ('quicksave', 'quickload'):
         return cockpit.command('cmd/game', {control: True}) if change.pressed else []
+    if control == 'revert':
+        return cockpit.command('cmd/game', {'revert': True}) if change.pressed and cockpit.is_on('revert_arm') else []
     if control in LOCAL_SWITCHES:
         return []
     return None
@@ -103,6 +108,7 @@ def render(cockpit, wanted):
     fresh = cockpit.telemetry_is_fresh()
     vessel, clock = cockpit.vessel, cockpit.clock
     _render_electrical_and_propellant(cockpit, outputs, fresh)
+    _render_life_support(cockpit, outputs, fresh)
     _render_event_timer(cockpit, outputs, fresh)
 
     warp_rate = clock.get('warp') or 1
@@ -110,6 +116,7 @@ def render(cockpit, wanted):
     outputs.lamp('led_warp', warp_rate > 1)
     outputs.lamp('led_pause', clock.get('paused'))
     outputs.lamp('led_chute_armed', cockpit.is_on('chute_arm'))
+    outputs.lamp('lamp_revert', cockpit.is_on('revert_arm'))
     outputs.lamp('lamp_chute', vessel.get('chute') == 'deployed')
     for switch in SWITCHES_WITH_LAMP:
         outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.switch_wanted(switch)))
@@ -120,14 +127,25 @@ def render(cockpit, wanted):
     outputs.bar('bar_ablator', fraction_left(cockpit.resources.get('total', {}), 'Ablator') if fresh else 0.0)
 
 
+def _render_life_support(cockpit, outputs, fresh):
+    totals = cockpit.resources.get('total', {})
+    for name, resource in (('food', 'Food'), ('water', 'Water'), ('oxygen', 'Oxygen')):
+        outputs.bar(f'bar_ls_{name}', fraction_left(totals, resource) if fresh else 0.0)
+        outputs.text(f'disp_ls_{name}', fit_number(life_support_hours(cockpit, resource) if fresh else None, 1, 4))
+    crew = cockpit.vessel.get('crew') if fresh else None
+    outputs.text('disp_crew', f'{crew:2d}' if crew is not None else '--')
+
+
 def _render_electrical_and_propellant(cockpit, outputs, fresh):
-    totals, stage = cockpit.resources.get('total', {}), cockpit.resources.get('stage', {})
+    totals = cockpit.resources.get('total', {})
     charge = totals.get('ElectricCharge')
-    stage_fuel = fraction_left(stage, 'LiquidFuel') or fraction_left(stage, 'SolidFuel')
     outputs.bar('bar_ec', fraction_left(totals, 'ElectricCharge') if fresh else 0.0)
-    outputs.bar('bar_lf', stage_fuel if fresh else 0.0)
-    outputs.bar('bar_ox', fraction_left(stage, 'Oxidizer') if fresh else 0.0)
-    outputs.bar('bar_mono', fraction_left(totals, 'MonoPropellant') if fresh else 0.0)
+    # the propellant of the whole vessel; the current stage's fuel is on the ENGINE panel
+    for bar, resource in (('bar_lf', 'LiquidFuel'), ('bar_ox', 'Oxidizer'), ('bar_mono', 'MonoPropellant'),
+                          ('bar_xenon', 'XenonGas')):
+        outputs.bar(bar, fraction_left(totals, resource) if fresh else 0.0)
+    outputs.text('disp_burn_time', fit_number(burn_time(cockpit) if fresh else None, 0, 5))
+    outputs.text('disp_rcs_dv', fit_number(rcs_delta_v(cockpit) if fresh else None, 1, 4))
     outputs.text('disp_ec', fit_number(charge['amount'], 1, 5) if charge and fresh else '-----')
     outputs.text('disp_ec_rate', fit_number(cockpit.charge_rate, 2, 5, signed=True) if charge and fresh else '-----')
 

@@ -35,6 +35,8 @@ ALARMS = {
     'cw_att': Alarm('ATT ERR', CAUTION),
     'cw_resid': Alarm('DV RESID', CAUTION),
     'cw_closing': Alarm('CLOSING', CAUTION),
+    'cw_ls_low': Alarm('LS LOW', CAUTION),
+    'cw_ls_out': Alarm('LS OUT', WARNING),
 }
 
 DESCENDING_SITUATIONS = ('flying', 'sub_orbital')
@@ -68,11 +70,14 @@ def fraction_left(resources, name):
 
 
 def stage_fuel_fraction(resources):
-    """Liquid and solid fuel left in the current stage, as a fraction; None when the stage has none."""
+    """Liquid and solid fuel left in the current stage, as a fraction, or its xenon for a stage with neither (an ion
+    stage). None when the stage has none of them."""
     stage = resources.get('stage', {})
     amount = sum(stage.get(name, {}).get('amount', 0) for name in ('LiquidFuel', 'SolidFuel'))
     capacity = sum(stage.get(name, {}).get('max', 0) for name in ('LiquidFuel', 'SolidFuel'))
-    return amount / capacity if capacity > 0 else None
+    if capacity > 0:
+        return amount / capacity
+    return fraction_left(stage, 'XenonGas')
 
 
 def braking_gate(target_range):
@@ -82,6 +87,18 @@ def braking_gate(target_range):
 
 def _is_below(fraction, limit):
     return fraction is not None and fraction < limit
+
+
+def _life_support_alarms(vessel, totals, active):
+    """Only with a crew aboard and for what the vessel carries (TAC Life Support adds these resources)."""
+    if not vessel.get('crew'):
+        return
+    fractions = [fraction_left(totals, name) for name in S.LIFE_SUPPORT_USE_PER_KERBAL_S]
+    fractions = [fraction for fraction in fractions if fraction is not None]
+    if any(fraction < S.LOW_LIFE_SUPPORT_FRACTION for fraction in fractions):
+        active.add('cw_ls_low')
+    if any(fraction <= 0 for fraction in fractions):
+        active.add('cw_ls_out')
 
 
 def _vehicle_alarms(cockpit, active):
@@ -99,6 +116,7 @@ def _vehicle_alarms(cockpit, active):
         active.add('cw_rcs_low')
     if (cockpit.telemetry.get('tlm/thermal', {}).get('max') or 0) >= S.OVERHEAT_FRACTION:
         active.add('cw_overheat')
+    _life_support_alarms(vessel, totals, active)
     if vessel.get('comm') is False:
         active.add('cw_comm')
     # SAS switch against the game for a while

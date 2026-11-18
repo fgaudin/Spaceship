@@ -44,17 +44,17 @@ computer), RDV (target and docking), SOLO (PAD requests and the orbit), LAB (exp
 Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
 **SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with ELECTRICAL and PROPELLANT; RECOVERY · BRAKES on the ENG module): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
-current stage (fuel, oxidizer, monoprop bars), event timer (manual,
+whole vessel (fuel, oxidizer, monoprop and xenon bars) with BURN TIME (the stage's propellant at the present thrust, or at full thrust) and RCS ΔV (an estimate, from the stock thrusters' 240 s), life support (TAC Life Support: food, water and oxygen bars, the hours each lasts for the crew aboard, recyclers not counted, and CREW; LS LOW and LS OUT on the annunciator), event timer (manual,
 or counting down to TIG / apoapsis / periapsis / SOI change; with COUNT DOWN on, the manual timer counts down from a
 value set with MIN + and SEC +10 and blinks at zero), recovery (chute arm + deploy, brakes, the ablator left, the
-outside temperature and air pressure), time warp and game (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
-event the timer's source selects; pause, quick save, quick load), lights (CABIN and BACKLIGHT light the cockpit itself
+outside temperature and air pressure), time warp (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
+event the timer's source selects; pause), save (QUICK SAVE, QUICK LOAD, and REVERT TO LAUNCH behind the guarded REVERT ARM), lights (CABIN and BACKLIGHT light the cockpit itself
 through `cockpit/lighting`: on the console page the plates brighten and the legends glow; EXTERNAL is the craft's
 lights).
 
 **ENG** (I/O module): CAUTION & WARNING, with the MET; ASCENT · DESCENT (altitude in m, above the sea or the ground by ALT REF; horizontal, vertical and total speed against the orbit or the surface by the SPEED REF knob, TGT reading the surface; g, dynamic pressure in kPa, TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; GEAR); ENGINE (ENG ARM, throttle,
 STAGE ARM and STAGE, the stage number, CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
-equation and TWR against the local gravity, both for the engines the next staging lights before ignition); an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
+equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off); an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
 flamed out or gone; engines staged away leave the matrix, and so does an engine that ran dry in an earlier stage and
 is still attached) with a count of burning engines; CUTOFF (throttle to 0, held until the lever is back at idle; the lamp blinks while the lever is still up);

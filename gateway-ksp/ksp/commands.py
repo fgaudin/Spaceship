@@ -184,10 +184,13 @@ class CommandHandler:
         self.link.connection.krpc.paused = bool(request.get('on'))
 
     def save_or_load(self, request):
+        """Quick save, quick load, or back to the launch of this flight."""
         if request.get('quicksave'):
             self.link.space_center.quicksave()
         elif request.get('quickload'):
             self.link.space_center.quickload()      # the vessel object changes: the main loop binds again
+        elif request.get('revert') and self.link.space_center.can_revert_to_launch():
+            self.link.space_center.revert_to_launch()   # the same: a new vessel object
 
     def warp(self, request):
         """{'to_ut'}: warp to a time (worked on by continue_warp_to); {'step': ±1} or {'stop'}: manual warp."""

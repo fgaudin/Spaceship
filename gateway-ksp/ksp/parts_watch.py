@@ -2,9 +2,10 @@
 and docking ports. Rebuilt after every staging, because parts leave and kRPC streams on them go stale."""
 from .streams import FAST_HZ, SLOW_HZ, StreamGroup, read_or
 
-TOTAL_RESOURCES = ('ElectricCharge', 'LiquidFuel', 'Oxidizer', 'MonoPropellant', 'Ablator')
+TOTAL_RESOURCES = ('ElectricCharge', 'LiquidFuel', 'Oxidizer', 'MonoPropellant', 'XenonGas', 'Ablator',
+                   'Food', 'Water', 'Oxygen')     # the last three: TAC Life Support
 FUEL_CELL = 'fuel cell'          # in the name of the resource converter of the stock fuel cells
-STAGE_PROPELLANTS = ('LiquidFuel', 'Oxidizer', 'SolidFuel', 'MonoPropellant')
+STAGE_PROPELLANTS = ('LiquidFuel', 'Oxidizer', 'SolidFuel', 'MonoPropellant', 'XenonGas')
 PARACHUTE_OUT_STATES = {'semi_deployed', 'deployed'}
 
 
@@ -22,6 +23,7 @@ class WatchedEngine:
         self.rated_thrust = streams.attribute(engine, 'max_thrust', SLOW_HZ)
         self.vacuum_specific_impulse = round(engine.vacuum_specific_impulse, 1)
         self.sea_level_specific_impulse = round(engine.kerbin_sea_level_specific_impulse, 1)
+        self.propellants = list(engine.propellant_names)    # what it burns: an ion engine leaves the rocket fuel alone
         self.active = streams.attribute(engine, 'active', SLOW_HZ)
         self.thrust = streams.attribute(engine, 'thrust', SLOW_HZ)
         self.available_thrust = streams.attribute(engine, 'available_thrust', SLOW_HZ)
@@ -31,7 +33,7 @@ class WatchedEngine:
         return {'x': self.right, 'z': self.down, 'stage': self.stage, 'on': self.active(),
                 'thrust': round(self.thrust(), 1), 'max': round(self.available_thrust(), 1), 'fuel': self.has_fuel(),
                 'rated': round(self.rated_thrust(), 1), 'isp_vac': self.vacuum_specific_impulse,
-                'isp_sl': self.sea_level_specific_impulse}
+                'isp_sl': self.sea_level_specific_impulse, 'propellants': self.propellants}
 
 
 class PartsWatch:

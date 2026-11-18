@@ -1,4 +1,4 @@
-import os, sys
+import math, os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cockpit import Cockpit  # noqa: E402
 from cockpit.display_format import fit_number, format_mission_time  # noqa: E402
@@ -455,7 +455,7 @@ def test_speed_reference_knob_acts_only_when_moved_and_its_led_shows_the_game():
     assert c.published[O + 'led_speed_ref'] == {'on': True, 'blink': False}
 
 
-def test_twr_and_stage_delta_v_on_the_pad_come_from_the_engines_to_ignite():
+def test_stage_delta_v_on_the_pad_comes_from_the_engines_to_ignite():
     c = Cockpit()
     pad = {'stage': 4, 'mass': 20000.0, 'thrust': 0.0, 'thrust_avail': 0.0, 'isp': 0.0}
     fed(c, vessel=pad, flight={'alt': 70.0, 'p': 101325.0},
@@ -465,13 +465,13 @@ def test_twr_and_stage_delta_v_on_the_pad_come_from_the_engines_to_ignite():
     engine = {'x': 0, 'z': 0, 'stage': 3, 'on': False, 'thrust': 0.0, 'max': 0.0, 'fuel': True,
               'rated': 300000.0, 'isp_vac': 310.0, 'isp_sl': 285.0}
     c.handle('tlm/engines', {'engines': [engine], 'stage': 4, 'limit': 1.0, 'gimbal_locked': False}, 0)
-    # TWR 300 kN / (20 t × 9.81) = 1.53; Δv 285 s × g0 × ln(20 / 10) = 1937 m/s at sea level
-    assert c.published[O + 'disp_twr']['text'] == '1.53'
+    # Δv 285 s × g0 × ln(20 / 10) = 1937 m/s at sea level; no thrust yet, so the TWR is 0
+    assert c.published[O + 'disp_twr']['text'] == '0.00'
     assert c.published[O + 'disp_dv']['text'] == '1937'
     # an engine lit but giving nothing is a flameout, not "before ignition": no figures
     c.handle('tlm/engines', {'engines': [{**engine, 'on': True, 'stage': 4}], 'stage': 4, 'limit': 1.0,
                              'gimbal_locked': False}, 1)
-    assert c.published[O + 'disp_twr']['text'] == '----'
+    assert c.published[O + 'disp_dv']['text'] == '-----' and c.published[O + 'disp_twr']['text'] == '0.00'
 
 
 def test_hand_controller_axes_become_rotate_and_translate_commands():
@@ -585,6 +585,73 @@ def test_dynamic_pressure_and_time_to_impact():
     c.handle('tlm/flight', {'radar': 90000.0, 'vs': -20.0}, 2)
     c.handle('tlm/orbit', {'apo': 120000.0, 'peri': 80000.0}, 2)
     assert c.published[O + 'disp_impact']['text'] == '-----'                # descending along an orbit that stays up
+
+
+def test_propellant_panel_shows_the_vessel_burn_time_and_rcs():
+    c = Cockpit()
+    resources = {'stage': {'LiquidFuel': {'amount': 90.0, 'max': 90.0}, 'Oxidizer': {'amount': 110.0, 'max': 110.0}},
+                 'total': {'LiquidFuel': {'amount': 45.0, 'max': 180.0}, 'Oxidizer': {'amount': 110.0, 'max': 220.0},
+                           'MonoPropellant': {'amount': 50.0, 'max': 100.0}, 'XenonGas': {'amount': 300.0, 'max': 400.0}}}
+    fed(c, vessel={'mass': 4000.0, 'thrust': 0.0, 'thrust_avail': 20000.0, 'isp': 300.0}, resources=resources)
+    sys_out = 'panel/sys/out/'
+    assert c.published[sys_out + 'bar_lf'] == {'v': 0.25} and c.published[sys_out + 'bar_xenon'] == {'v': 0.75}
+    # 1000 kg at 20 kN and 300 s: 147 s; 200 kg of monopropellant at 240 s: 121 m/s
+    assert c.published[sys_out + 'disp_burn_time']['text'] == '147'
+    assert c.published[sys_out + 'disp_rcs_dv']['text'] == '120.7'
+
+
+def test_an_ion_stage_counts_its_xenon_only():
+    c = Cockpit()
+    stage = {'LiquidFuel': {'amount': 90.0, 'max': 90.0}, 'XenonGas': {'amount': 400.0, 'max': 800.0}}
+    fed(c, vessel={'mass': 1000.0, 'thrust': 2000.0, 'thrust_avail': 2000.0, 'isp': 4200.0},
+        resources={'stage': stage, 'total': {}})
+    c.handle('tlm/engines', {'engines': [{'x': 0.0, 'z': 0.0, 'on': True, 'stage': 3, 'thrust': 2000.0, 'max': 2000.0, 'fuel': True,
+                                         'propellants': ['XenonGas', 'ElectricCharge']}]}, 0)
+    c.tick(0)
+    # 40 kg of xenon at 2 kN and 4200 s: 824 s
+    assert c.published['panel/sys/out/disp_burn_time']['text'] == '824'
+    assert fit_number(4200 * 9.80665 * math.log(1000 / 960), 0, 5) == c.published[O + 'disp_dv']['text']
+
+
+def test_life_support_panel_and_its_alarms():
+    c = Cockpit()
+    def aboard(t, oxygen, crew=3):
+        totals = {'Food': {'amount': 4.388, 'max': 4.388}, 'Water': {'amount': 2.9, 'max': 2.9},
+                  'Oxygen': {'amount': oxygen, 'max': 444.152}}
+        fed(c, t, vessel={'crew': crew}, resources={'stage': {}, 'total': totals})
+    aboard(0, 444.152)
+    sys_out = 'panel/sys/out/'
+    assert c.published[sys_out + 'disp_crew']['text'] == ' 3' and c.published[sys_out + 'bar_ls_oxygen'] == {'v': 1.0}
+    assert c.published[sys_out + 'disp_ls_oxygen']['text'] == '24.0' and c.published[sys_out + 'disp_ls_food']['text'] == '24.0'
+    assert not c.published[O + 'cw_ls_low']['on']
+    aboard(1, 20.0)
+    assert c.published[O + 'cw_ls_low']['on'] and not c.published[O + 'cw_ls_out']['on']
+    aboard(2, 0.0)
+    assert c.published[O + 'cw_ls_out']['on']
+    aboard(3, 0.0, crew=0)                                                  # nobody aboard: nothing to warn about
+    assert not c.published[O + 'cw_ls_out']['on'] and c.published[sys_out + 'disp_ls_oxygen']['text'] == '----'
+
+
+def test_twr_follows_the_present_thrust():
+    c = Cockpit()
+    def flying(t, thrust):
+        fed(c, t, vessel={'mass': 1000.0, 'thrust': thrust, 'thrust_avail': 20000.0, 'isp': 300.0},
+            flight={'alt': 0.0})
+        c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 80000.0, 'peri': -100000.0}, t)
+    flying(0, 0.0)
+    assert c.published[O + 'disp_twr']['text'] == '0.00'
+    flying(1, 9810.0)
+    assert c.published[O + 'disp_twr']['text'] == '1.00'
+
+
+def test_revert_to_launch_needs_its_arm_switch():
+    c = Cockpit(); fed(c)
+    SYS_IN = 'panel/sys/in/'
+    assert 'cmd/game' not in topics(c.handle(SYS_IN + 'revert', {'v': 1}, 1))
+    c.handle(SYS_IN + 'revert', {'v': 0}, 1.1)
+    out = topics(c.handle(SYS_IN + 'revert_arm', {'v': 1}, 2))
+    assert out['panel/sys/out/lamp_revert'] == {'on': True, 'blink': False}
+    assert topics(c.handle(SYS_IN + 'revert', {'v': 1}, 3))['cmd/game'] == {'revert': True}
 
 
 def test_outside_pressure_in_kilopascals():

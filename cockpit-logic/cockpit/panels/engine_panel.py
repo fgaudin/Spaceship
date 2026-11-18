@@ -7,7 +7,7 @@ from ..alarms import ALARMS, stage_fuel_fraction
 from ..display_format import fit_number, format_mission_time
 from ..engines import IDLE, OFF, THRUSTING
 from ..messages import PanelOutputs, switch_lamp
-from ..performance import hover_time, speeds_in_reference, stage_delta_v, thrust_to_weight, time_to_impact
+from ..performance import current_thrust_to_weight, hover_time, speeds_in_reference, stage_delta_v, time_to_impact
 
 SWITCHES_WITH_LAMP = ('sas', 'rcs')
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
@@ -164,7 +164,7 @@ def _render_displays(cockpit, outputs):
         return
     _render_ascent_descent(cockpit, outputs)
     outputs.text('disp_dv', fit_number(stage_delta_v(cockpit), 0, DISPLAYS['disp_dv']))
-    outputs.text('disp_twr', fit_number(thrust_to_weight(cockpit), 2, DISPLAYS['disp_twr']))
+    outputs.text('disp_twr', fit_number(current_thrust_to_weight(cockpit), 2, DISPLAYS['disp_twr']))
     _render_attitude(cockpit, outputs)
     mission_time = cockpit.clock.get('met')
     outputs.text('disp_met', format_mission_time(mission_time) if mission_time is not None else '--.--.--')

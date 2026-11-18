@@ -44,8 +44,7 @@ for c, v in (('cb_main', 1), ('eng_arm', 0), ('stage_arm', 0), ('abort_arm', 0),
 wait(lambda: seen.get('tlm/vessel', {}).get('situation') == 'pre_launch', what='reset')
 check('telemetry flowing', 'tlm/flight' in seen and 'tlm/vessel' in seen)
 check('gateway status mock', seen.get('gateway/status', {}).get('plant') == 'mock')
-check('TWR and stage Δv on the pad, before ignition', wait(lambda: '-' not in (out('disp_twr') or {}).get('text', '-')
-                                                            and float(out('disp_twr')['text']) > 1, what='pad TWR') and
+check('TWR 0 and stage Δv on the pad, before ignition', wait(lambda: (out('disp_twr') or {}).get('text') == '0.00', what='pad TWR') and
       '-' not in out('disp_dv')['text'])
 
 inp('lamp_test', 1, retain=False)

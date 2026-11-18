@@ -3,8 +3,37 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-18 — SAVE gets its own panel, with REVERT TO LAUNCH
+
+- **TIME WARP · GAME is split** into TIME WARP (with PAUSE) and **SAVE** (QUICK SAVE, QUICK LOAD).
+- **REVERT TO LAUNCH** on SAVE acts only with the guarded **REVERT ARM** on, and is lit while armed. It sends
+  `cmd/game {"revert": true}`, which the gateway passes on when KSP allows a revert.
+
+## 2026-11-18 — TWR shows the present thrust
+
+- **TWR** on ENGINE is now the thrust the engines give at this moment over the local weight, so it follows the throttle and
+  reads 0.00 with the engines off. HOVER TIME still checks the full thrust available.
+
+## 2026-11-18 — LIFE SUPPORT, with TAC Life Support
+
+- **A LIFE SUPPORT panel** on the RES module (`sys` bus): FOOD, WATER and O2 bars, how many hours each lasts for the crew
+  aboard (TAC's own rates, recyclers not counted), and CREW. The gateway adds `Food`, `Water` and `Oxygen` to
+  `tlm/resources` and `crew` to `tlm/vessel`.
+- **LS LOW** (a caution, under 10 %) and **LS OUT** (a warning, one of them empty) join the annunciator, now 5 columns
+  wide. Both need a crew aboard.
+
+## 2026-11-18 — the PROPELLANT panel says what is left to do
+
+- **The bars show the whole vessel** (FUEL, OXID, MONO and the new **XENON**, `XenonGas`); the current stage's fuel stays on
+  ENGINE, which now follows the xenon of an ion stage, as does LOW FUEL.
+- **BURN TIME S** (`disp_burn_time`): the stage's propellant at the present thrust, or at full thrust when not burning.
+  **RCS ΔV M/S** (`disp_rcs_dv`): an estimate from the monopropellant and the stock thrusters' 240 s.
+- **Stage figures count what the engines burn** (`propellants` in `tlm/engines`), at each resource's own density, so an
+  ion stage ignores its rocket fuel. Solid fuel is now 7.5 kg per unit, its real value, instead of 5.
+
 ## 2026-11-18 — the console's zones get their target sizes
 
+- **The ELECTRICAL and PROPELLANT bars stand vertical**, with those two panels rearranged around them.
 - **The camera monitor goes to the top of MAIN's centre**, with the ENG module under it.
 - **RECOVERY · BRAKES and LINK · ANTENNA** fill the ENG module's free column, above ENGINES · ABORT (still on the `sys` and
   `com` buses). The COM module is gone; SYS is one row, with SOLO under it.

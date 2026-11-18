@@ -168,8 +168,8 @@
       ]
     },
     {
-      "id": "time_warp_game",
-      "title": "TIME WARP · GAME",
+      "id": "time_warp",
+      "title": "TIME WARP",
       "size": [
         1,
         1
@@ -254,18 +254,33 @@
             "color": "amber"
           },
           "at": [
-            22,
+            50,
             78
           ]
-        },
+        }
+      ]
+    },
+    {
+      "id": "save",
+      "title": "SAVE",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        3,
+        0
+      ],
+      "bus": "sys",
+      "items": [
         {
           "type": "button",
           "id": "quicksave",
           "label": "QUICK SAVE",
           "in": "quicksave",
           "at": [
-            52,
-            78
+            30,
+            32
           ]
         },
         {
@@ -274,8 +289,30 @@
           "label": "QUICK LOAD",
           "in": "quickload",
           "at": [
-            78,
-            78
+            70,
+            32
+          ]
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "revert_arm",
+          "label": "REVERT ARM",
+          "in": "revert_arm",
+          "at": [
+            30,
+            72
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "revert",
+          "label": "REVERT TO LAUNCH",
+          "color": "red",
+          "in": "revert",
+          "out": "lamp_revert",
+          "at": [
+            70,
+            72
           ]
         }
       ]
