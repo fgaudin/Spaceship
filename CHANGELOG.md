@@ -3,9 +3,21 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-19 — the console's final shape
+
+- **LOW joins MAIN:** MAIN is 6 U wide for 4 U, then narrows through a 4 × 2 U block to the 3 U burn computer, inside one
+  tapering outline (`outline` in `console.json`, replacing `taper`). The hand controllers stay outside the U grid.
+- **OVERHEAD** is cut to its 4 × 2 U and centred (`"align": "center"`).
+
+## 2026-11-19 — the annunciator holds alarms only
+
+- **0.05 G** moves to REENTRY · RECOVERY, above the chute lamps (now `panel/sys/out/lamp_05g`), and **CONTACT** to LANDING AID,
+  under the touchdown lamps: neither is an alarm.
+  The annunciator is left with 20 cells, 5 × 4.
+
 ## 2026-11-19 — a FAN switch
 
-- **LIGHTS becomes LIGHTS · FAN**, with a FAN toggle (`panel/sys/in/fan`). It does nothing in the virtual cockpit.
+- **LIGHTS becomes LIGHTS · FAN**, with a FAN toggle above the light switches (`panel/sys/in/fan`). It does nothing in the virtual cockpit.
 
 ## 2026-11-19 — LANDING AID
 

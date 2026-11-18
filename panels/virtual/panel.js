@@ -2,7 +2,7 @@
    a dumb I/O node standing in for its board. Nothing reflows: a module is W×H U (1 U = 100 mm), its panels sit at
    fixed U positions and their controls at fixed mm positions; only the zoom changes.
 
-     protocol/panels/console.json   the capsule: zones (overhead, main, low), each a grid of modules in U
+     protocol/panels/console.json   the capsule: zones (overhead, main), each a grid of modules in U
      protocol/panels/<module>.json  one module (one board): its panels, their controls, each panel's bus namespace
 
    One view, like a map: the wheel zooms around the pointer, dragging pans, every control works at any zoom.
@@ -167,27 +167,25 @@ function buildModule(module) {
   return element;
 }
 
-/* A zone that narrows from a wider one above it: centred under it, with the console's outline running from that zone's
-   bottom corners down around this one. */
-function layOutTaper(section, grid, title, [parentWidthMm, widthMm, heightMm], taperMm) {
-  const insetMm = (parentWidthMm - widthMm) / 2, rightMm = insetMm + widthMm, bottomMm = taperMm + heightMm;
-  const outline = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  outline.classList.add('zone-taper');
-  outline.setAttribute('viewBox', `0 0 ${parentWidthMm} ${bottomMm}`);
-  Object.assign(outline.style, { width: mm(parentWidthMm), height: mm(bottomMm) });
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  path.setAttribute('d', `M0 0 L${insetMm} ${taperMm} V${bottomMm} H${rightMm} V${taperMm} L${parentWidthMm} 0`);
-  outline.appendChild(path);
-  section.classList.add('tapered');
-  Object.assign(section.style, { width: mm(parentWidthMm), paddingTop: mm(taperMm) });
-  Object.assign(title.style, { left: mm(insetMm), width: mm(widthMm), top: mm(taperMm) });
-  grid.style.marginLeft = mm(insetMm);
-  section.prepend(outline);
+/* A zone with a shape of its own (`outline`, corners in U): the grid is cut to it and the outline drawn around it. */
+function buildOutlinedZone(grid, outline, widthMm, heightMm) {
+  const corners = outline.map(([x, y]) => [x * U_MM, y * U_MM]);
+  grid.style.clipPath = `polygon(${corners.map(([x, y]) => `${mm(x)} ${mm(y)}`).join(', ')})`;
+  const body = createElement('div', 'zone-body');
+  Object.assign(body.style, { width: mm(widthMm), height: mm(heightMm) });
+  const drawing = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  drawing.classList.add('zone-outline');
+  drawing.setAttribute('viewBox', `0 0 ${widthMm} ${heightMm}`);
+  Object.assign(drawing.style, { width: mm(widthMm), height: mm(heightMm) });
+  const shape = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+  shape.setAttribute('points', corners.map((corner) => corner.join(',')).join(' '));
+  drawing.appendChild(shape);
+  body.append(grid, drawing);
+  return body;
 }
 
 function buildConsole(consoleLayout, definitions) {
   const overview = document.getElementById('overview');
-  const zoneWidthsMm = new Map();
   for (const zone of consoleLayout.zones) {
     const placed = zone.modules.filter((entry) => {
       if (definitions.has(entry.module)) return true;
@@ -208,17 +206,9 @@ function buildConsole(consoleLayout, definitions) {
     if (zone.size && (usedWidth > zone.size[0] || usedHeight > zone.size[1])) reportLayout(`zone ${zone.id}: modules go past its size`);
     Object.assign(grid.style, { width: mm(width * U_MM), height: mm(height * U_MM) });
     checkGrid(placed, sizeOf, (entry) => entry.module, `zone ${zone.id}`);
-    const title = createElement('div', 'zone-title', { textContent: zone.title });
-    section.append(title, grid);
-    zoneWidthsMm.set(zone.id, width * U_MM);
-    if (zone.taper) {
-      const parentWidthMm = zoneWidthsMm.get(zone.taper.from);
-      if (parentWidthMm > width * U_MM) {
-        layOutTaper(section, grid, title, [parentWidthMm, width * U_MM, height * U_MM], zone.taper.height_u * U_MM);
-      } else {
-        reportLayout(`zone ${zone.id}: tapers from ${zone.taper.from}, which must be a wider zone above it`);
-      }
-    }
+    if (zone.align === 'center') section.classList.add('centered');
+    const body = zone.outline ? buildOutlinedZone(grid, zone.outline, width * U_MM, height * U_MM) : grid;
+    section.append(createElement('div', 'zone-title', { textContent: zone.title }), body);
     overview.appendChild(section);
   }
 }

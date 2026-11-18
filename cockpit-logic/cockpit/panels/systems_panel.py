@@ -7,7 +7,7 @@ from ..messages import PanelOutputs, switch_lamp
 from ..performance import burn_time, life_support_hours, rcs_delta_v, time_to_atmosphere
 
 SWITCHES_WITH_LAMP = ('solar', 'brakes', 'fuel_cell', 'lights')
-LAMPS = ['lamp_chute', 'lamp_revert', 'lamp_chute_safe', 'lamp_chute_risky', 'lamp_chute_unsafe', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
+LAMPS = ['lamp_chute', 'lamp_revert', 'lamp_05g', 'lamp_chute_safe', 'lamp_chute_risky', 'lamp_chute_unsafe', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
          *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP)]
 DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside', 'disp_pressure', 'disp_burn_time',
             'disp_rcs_dv', 'disp_ls_food', 'disp_ls_water', 'disp_ls_oxygen', 'disp_crew', 'disp_heat', 'disp_to_atm']
@@ -133,7 +133,11 @@ def _render_reentry(cockpit, outputs, fresh):
     hottest = cockpit.telemetry.get('tlm/thermal', {}).get('max') if fresh else None
     outputs.text('disp_heat', fit_number(hottest * 100 if hottest is not None else None, 0, 4))
     outputs.text('disp_to_atm', fit_number(time_to_atmosphere(cockpit) if fresh else None, 0, 5))
-    safety = cockpit.vessel.get('chute_safe') if fresh else None
+    flight, vessel = cockpit.flight, cockpit.vessel
+    drag_felt = (flight.get('g') or 0) >= S.ENTRY_G_FORCE and not vessel.get('thrust')
+    descending = (flight.get('vs') or 0) < 0 and vessel.get('situation') in ('flying', 'sub_orbital')
+    outputs.lamp('lamp_05g', fresh and drag_felt and descending)
+    safety = vessel.get('chute_safe') if fresh else None
     for state in ('safe', 'risky', 'unsafe'):
         outputs.lamp(f'lamp_chute_{state}', safety == state)
 

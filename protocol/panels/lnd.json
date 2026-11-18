@@ -67,7 +67,23 @@
           ],
           "at": [
             50,
-            70
+            59
+          ]
+        },
+        {
+          "type": "annunciator",
+          "id": "contact",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_contact",
+              "label": "CONTACT",
+              "color": "blue"
+            }
+          ],
+          "at": [
+            50,
+            83
           ]
         }
       ]

@@ -11,7 +11,7 @@ from ..performance import current_thrust_to_weight, hover_time, speeds_in_refere
 
 SWITCHES_WITH_LAMP = ('sas', 'rcs')
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
-         'lamp_contact', 'lamp_05g', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
+         'lamp_contact', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
          'led_rcs_fine', 'led_gear', 'lamp_td_sink', 'lamp_td_drift', 'lamp_td_upright', 'lamp_td_gear', *ALARMS]
 # display → (digits, the dashes shown without telemetry)
 DISPLAYS = {'disp_alt': 8, 'disp_hs': 5, 'disp_vs': 5, 'disp_speed': 5, 'disp_g': 4, 'disp_q': 4, 'disp_hover': 4,
@@ -108,7 +108,7 @@ def fdai_settings(cockpit):
 
 
 def _render_lamps(cockpit, outputs):
-    vessel, flight = cockpit.vessel, cockpit.flight
+    vessel = cockpit.vessel
     fresh = cockpit.telemetry_is_fresh()
     outputs.lamp('led_eng_arm', cockpit.is_on('eng_arm'))
     outputs.lamp('lamp_stage', cockpit.is_on('stage_arm'))
@@ -133,9 +133,6 @@ def _render_lamps(cockpit, outputs):
     # event lights
     landed = bool(vessel.get('contact')) and vessel.get('situation') != 'pre_launch'    # the pad is not a landing
     outputs.lamp('lamp_contact', fresh and landed)
-    drag_felt = (flight.get('g') or 0) >= S.ENTRY_G_FORCE and not vessel.get('thrust')
-    descending = (flight.get('vs') or 0) < 0 and vessel.get('situation') in ('flying', 'sub_orbital')
-    outputs.lamp('lamp_05g', fresh and drag_felt and descending)
 
 
 def _render_touchdown_lamps(cockpit, outputs, fresh):
@@ -175,7 +172,7 @@ def _render_ascent_descent(cockpit, outputs):
 
 
 def _render_displays(cockpit, outputs):
-    vessel, flight = cockpit.vessel, cockpit.flight
+    vessel = cockpit.vessel
     if not cockpit.telemetry_is_fresh():
         for display, digits in DISPLAYS.items():
             outputs.text(display, '--.--.--' if display == 'disp_met' else '-' * digits)

@@ -11,7 +11,7 @@ firmware can be generated from the same files.
 - **Module**: one board (an Olimex ESP32-POE), one PoE cable, one definition file. It carries one or more panels,
   held side by side by a frame adapter, so the same panels can make a 3×1, a 1×3 or an L. It is the unit that is
   plugged in, swapped, or taken to the bench. Two modules of the same shape can trade places.
-- **Console**: where the modules sit in the capsule, in zones (overhead, main, low).
+- **Console**: where the modules sit in the capsule, in zones (overhead, main).
 
 A panel's controls publish into the panel's own **bus namespace** (`"bus": "eng"` → `panel/eng/in/<control>`,
 `panel/eng/out/<output>`), not the module's. A panel moved to another module keeps its topics, so the cockpit logic
@@ -76,8 +76,8 @@ Components are drawn at about their real size: 0.36" 7-segment digits (9 mm high
 
 Each zone is a grid of U; a module's `at` is its top-left corner on it. A zone's optional `size` ([width, height]
 in U) makes it bigger than what it holds, so that its free places show. The zones are drawn one under the other, flat.
-A zone's optional `taper` (`{"from": "main", "height_u": 1}`) centres it under a wider zone above and draws the console's
-outline from that zone's bottom corners around it; `height_u` is only the drawn distance between them.
+`"align": "center"` centres a zone over the others. `outline` (corners in U, clockwise) gives a zone a shape of its own: its grid is
+cut to that shape and the outline drawn around it, as MAIN's taper down to the burn computer. A module's `at` may be fractional.
 The firmware never reads this file.
 
 ## Changing the layout

@@ -372,11 +372,11 @@ def test_contact_and_entry_lights():
     fed(c, 1, vessel={'contact': True, 'situation': 'flying'}, flight={'vs': -1.0})
     assert c.published[O + 'lamp_contact']['on']
     fed(c, 2, vessel={'thrust': 0.0, 'situation': 'sub_orbital'}, flight={'vs': -300.0, 'g': 0.02})
-    assert not c.published[O + 'lamp_05g']['on']
+    assert not c.published['panel/sys/out/lamp_05g']['on']
     fed(c, 3, vessel={'thrust': 0.0, 'situation': 'sub_orbital'}, flight={'vs': -300.0, 'g': 0.06})
-    assert c.published[O + 'lamp_05g']['on']
+    assert c.published['panel/sys/out/lamp_05g']['on']
     fed(c, 4, vessel={'thrust': 0.0, 'situation': 'flying'}, flight={'vs': 200.0, 'g': 0.5})   # coasting upwards: not an entry
-    assert not c.published[O + 'lamp_05g']['on']
+    assert not c.published['panel/sys/out/lamp_05g']['on']
 
 
 def test_more_cautions():

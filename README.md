@@ -24,7 +24,7 @@ The mock and the gateway both write `tlm/*` and every topic has one writer, so s
 Topics, payloads and rules: [protocol/topics.md](protocol/topics.md).
 
 ### The virtual console
-Every I/O module of the capsule, at its physical size and laid out as in the capsule: zones (overhead, main, low)
+Every I/O module of the capsule, at its physical size and laid out as in the capsule: zones (overhead, main)
 of modules, each module one board carrying panels of W×H U (1 U = 100 mm) with their controls at fixed places
 ([protocol/panels/README.md](protocol/panels/README.md)). Nothing reflows; only the zoom changes. It works like a map:
 the wheel zooms around the pointer, dragging pans, and every control works at any zoom, so several modules can be

@@ -5,8 +5,8 @@
       "id": "overhead",
       "title": "OVERHEAD",
       "size": [
-        6,
-        3
+        4,
+        2
       ],
       "modules": [
         {
@@ -23,14 +23,15 @@
             1
           ]
         }
-      ]
+      ],
+      "align": "center"
     },
     {
       "id": "main",
       "title": "MAIN",
       "size": [
         6,
-        6
+        7
       ],
       "modules": [
         {
@@ -95,28 +96,40 @@
             1,
             4
           ]
-        }
-      ]
-    },
-    {
-      "id": "low",
-      "title": "LOW",
-      "size": [
-        3,
-        3
-      ],
-      "taper": {
-        "from": "main",
-        "height_u": 1
-      },
-      "modules": [
+        },
         {
           "module": "cmp",
           "at": [
-            0,
-            0
+            1.5,
+            6
           ]
         }
+      ],
+      "outline": [
+        [
+          0,
+          0
+        ],
+        [
+          6,
+          0
+        ],
+        [
+          6,
+          4
+        ],
+        [
+          4.5,
+          7
+        ],
+        [
+          1.5,
+          7
+        ],
+        [
+          0,
+          4
+        ]
       ]
     }
   ]

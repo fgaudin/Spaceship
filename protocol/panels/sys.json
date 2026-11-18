@@ -112,12 +112,22 @@
       "items": [
         {
           "type": "toggle",
+          "id": "fan",
+          "label": "FAN",
+          "in": "fan",
+          "at": [
+            50,
+            30
+          ]
+        },
+        {
+          "type": "toggle",
           "id": "cabin_light",
           "label": "CABIN",
           "in": "cabin_light",
           "at": [
-            15,
-            52
+            26,
+            68
           ]
         },
         {
@@ -126,8 +136,8 @@
           "label": "BACKLIGHT",
           "in": "backlight",
           "at": [
-            38,
-            52
+            50,
+            68
           ]
         },
         {
@@ -140,18 +150,8 @@
             "color": "white"
           },
           "at": [
-            61,
-            52
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "fan",
-          "label": "FAN",
-          "in": "fan",
-          "at": [
-            84,
-            52
+            74,
+            68
           ]
         }
       ]

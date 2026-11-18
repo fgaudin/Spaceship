@@ -127,16 +127,6 @@
               "color": "amber"
             },
             {
-              "out": "lamp_05g",
-              "label": "0.05 G",
-              "color": "green"
-            },
-            {
-              "out": "lamp_contact",
-              "label": "CONTACT",
-              "color": "blue"
-            },
-            {
               "out": "cw_chute",
               "label": "CHUTE",
               "color": "amber"
