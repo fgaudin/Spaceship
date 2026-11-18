@@ -38,27 +38,31 @@ selectors (click / shift-click / wheel), 7-segment displays, LED bar graphs, an 
 Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus** checkbox shows a live sniffer. Resetting
 the simulation and injecting failures are on the SIMSUP page.
 
-**Modules** (on the CONSOLE page): ENG (propulsion, staging, abort, SAS/RCS, C&W), SYS, CMP (burn computer), RDV
-(rendezvous and docking), COM (radio link), SOLO, LAB (experimental panels), and the glass modules FDAI, MFD and CAM
+**Modules** (on the CONSOLE page): ENG (C&W, ascent displays, propulsion, staging, abort, attitude), SYS, CMP (burn
+computer), RDV (target and docking), COM (radio link), SOLO (PAD requests and the orbit), LAB (experimental panels), and the glass modules FDAI, MFD and CAM
 (camera monitor), drawn as screens with the live page in them. FDAI, MFD and CAM are also pages of their own (for a
 Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
-**SYS** (I/O panel): electrical (charge bar, EC and EC/s, solar panels), propellant for the current stage
-(fuel, oxidizer, monoprop bars; stage Δv from the rocket equation, TWR against the local gravity; before ignition
-both are for the engines the next staging lights), event timer (manual,
+**SYS** (I/O module, overhead): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
+current stage (fuel, oxidizer, monoprop bars), event timer (manual,
 or counting down to TIG / apoapsis / periapsis / SOI change; with COUNT DOWN on, the manual timer counts down from a
-value set with MIN + and SEC +10 and blinks at zero), chute arm + deploy, brakes, time warp (slower / faster / stop, and
-WARP TO EVT: warp until 60 to 80 s before the event the timer's source selects), game (pause; quick save and quick load
-behind SAVE ARM).
+value set with MIN + and SEC +10 and blinks at zero), recovery (chute arm + deploy, brakes, the ablator left, the
+outside temperature), time warp and game (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
+event the timer's source selects; pause, quick save, quick load), lights (CABIN and BACKLIGHT light the cockpit itself
+through `cockpit/lighting`: on the console page the plates brighten and the legends glow; EXTERNAL is the craft's
+lights).
 
-**ENG additions**: an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
+**ENG** (I/O module): ASCENT (altitude in km, surface speed, g, MET, thrust bar); ENGINE (ENG ARM, throttle,
+STAGE ARM and STAGE, the stage number, CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
+equation and TWR against the local gravity, both for the engines the next staging lights before ignition); an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
 flamed out or gone; engines staged away leave the matrix, and so does an engine that ran dry in an earlier stage and
 is still attached) with a count of burning engines; CUTOFF (throttle to 0, held until the lever is back at idle; the lamp blinks while the lever is still up);
-THRUST LIMIT knob and GIMBAL LOCK; two event lights, 0.05 G (drag is felt with the engine off while descending: the
-entry has begun) and CONTACT (landed, or a leg or wheel touches the ground); SPEED REF knob (the navball's speed reference, which SAS PRO and RETRO follow: orbit, surface or target; it acts
-only when turned, and three lamps show the game's actual reference, since KSP changes it by itself); ABORT MODE selector (what ABORT does: `ABORT_SEQUENCES`
-in [cockpit-logic/cockpit/settings.py](cockpit-logic/cockpit/settings.py)); SAS modes TGT, A-TGT and MNVR.
+ABORT behind ABORT ARM fires KSP's abort group, and only that (what the craft's builder wired to it); two event
+lights in the C&W grid, 0.05 G (drag is felt with the engine off while descending: the entry has begun) and CONTACT
+(landed, or a leg or wheel touches the ground); ATTITUDE: SAS, SAS MODE (with TGT, A-TGT and MNVR), SPEED REF knob
+(the navball's speed reference, which SAS PRO and RETRO follow: orbit, surface or target; it acts only when turned,
+and its LED blinks while the game's reference is another one, since KSP changes it by itself), RCS, RCS FINE.
 
 **Hand controllers** (`hc`, no page yet): the USB joysticks will publish `panel/hc/in/rot_pitch`, `rot_yaw`,
 `rot_roll`, `trans_right`, `trans_up` and `trans_fwd` (−1 to 1); tests publish them today. The cockpit passes them on
@@ -78,13 +82,14 @@ from then on thrust / mass is counted and the throttle is cut when the PAD's Δv
 fine as about 0.1 s of thrust: fly small burns on a low THRUST LIMIT (measured in KSP: 5 m/s asked, 4.65 delivered at
 4.2 m/s²; 7.5 delivered at 41.6 m/s²).
 
-**RDV** (I/O panel): target name on an alphanumeric display, ◂ TGT / TGT ▸ (vessels around the same body, nearest
-first), PORT ▸ (the target's free docking ports), CLEAR, CTRL FROM PORT; a DOCKED lamp and UNDOCK behind a guarded UNDOCK ARM. Range, closing speed and line-of-sight rate
-against the course's ρ/400 s braking gate (OVERSPEED lamp, CLOSING caution). With a port targeted (PORT LED), three
-plates in the order of the manoeuvre, all in the pilot's own axes so no roll is needed to read them: 1 yaw and pitch
-to face the port squarely (ALIGNED under 2°; roll is shown against the port's own "up"), 2 where the port is, right and
-up, each with its rate, 3 distance and closing speed, CAPTURE inside the capture envelope. Signs checked in KSP by
-`tests/e2e_ksp_docking.py`.
+**RDV** (I/O module): TARGET: target name on an alphanumeric display, ◂ TGT / TGT ▸ (vessels around the same body,
+nearest first), PORT ▸ (the target's free docking ports), CLEAR, CTRL FROM PORT. With a port targeted (PORT LED),
+ROTATION and TRANSLATION, in the pilot's own axes so no roll is needed to read them: yaw, pitch and roll to face the
+port squarely (roll against the port's own "up"), each with its rate in °/s; where the port is, LATERAL (+ right) and
+VERTICAL (+ up), and the RANGE along its axis, each with its rate (the range rate is negative while closing, as in
+docking procedures). DOCKING: range and closing speed to the target vessel (KM LED from
+100 km), CAPTURE inside the capture envelope, DOCKED, and UNDOCK behind a guarded UNDOCK ARM. The
+CLOSING caution still watches the course's ρ/400 s braking gate. Signs checked in KSP by `tests/e2e_ksp_docking.py`.
 
 **COM** (I/O panel): the radio link to the ground. AOS and LOS lamps (acquisition and loss of signal; the one that
 just came on blinks for 10 s), signal strength bar, the first station or relay on the way and the number of hops, how
@@ -98,9 +103,10 @@ the antennas).
   ("fly to the dot": the burn direction, surface retrograde or prograde, facing the target port); OFFSET is where the
   target port is, right and up, in metres; DRIFT is the speed over the ground across the vessel's own axis (for a
   lander standing on its tail: which way it slides).
-- LANDING: radar altitude, vertical and horizontal speed, seconds to the ground in free fall, and the height needed
-  to stop at full thrust; BRAKE lights at 1.6 times that height and blinks at 1.3 times.
-- NAVIGATION: body orbited, latitude, longitude, inclination.
+- LANDING: radar altitude, vertical and horizontal speed, HOVER TIME (the seconds the stage can hold the craft
+  still: its Δv over the local gravity; dashes when the engines cannot lift it), and GEAR.
+- NAVIGATION: body orbited, latitude, longitude.
+- ORBIT (on the SOLO module, on the `lab` bus): apoapsis and periapsis in km, inclination.
 - ACTION GROUPS: the craft's ten custom groups, each button lit while its group is on.
 - CAMERA: CAM ◂ ▸ pick the camera shown on the monitor, with its name and number, and a LIVE LED.
 
@@ -112,7 +118,7 @@ launch pad camera). It shows the camera the LAB panel selects (`cam/select`) and
 
 **SOLO** (I/O module, `index.html#solo`): for a pilot flying without Mission Control. CIRC, PLANE, RDV TGT and INJECT
 (knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which it reads up to the burn computer as CAPCOM
-would; the display says what it sent or why not. How it works: [flight-dynamics/README.md](flight-dynamics/README.md).
+would; the display says what it sent or why not. The ORBIT panel sits next to it. How it works: [flight-dynamics/README.md](flight-dynamics/README.md).
 
 **MCC** (Mission Control, http://localhost:8650/mcc.html): one tab per flight controller (FLIGHT, FIDO, RETRO,
 GUIDO, BOOSTER, EECOM, CAPCOM), meant for one laptop per controller on the same network. A go/no-go poll run by
@@ -135,7 +141,7 @@ from `tlm/attitude` (pitch, heading, roll against the local horizon), with a rol
 three fly-to error needles (to prograde or retrograde, ±5° or ±50° full scale), three rate scales and a NO ATT flag when
 the telemetry is older than 2 s. Bezel keys N, S, R, M. `fdai.html?demo=1` runs without a broker.
 
-To fly the mock: CB MAIN BUS on, open the ENG ARM guard and arm, push the throttle, open STAGE ARM and arm, press STAGE.
+To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE ARM and arm, press STAGE.
 
 ### Where the code is
 | Part | Files |
@@ -151,24 +157,26 @@ To fly the mock: CB MAIN BUS on, open the ENG ARM guard and arm, push the thrott
 
 ### Rules the cockpit logic implements
 - ENG ARM gates the throttle; STAGE needs STAGE ARM (and an edge, holding does not stage twice); ABORT needs ABORT ARM.
-- CB MAIN BUS off: every lamp and display dark, throttle commanded to 0, inputs ignored.
+- No power (the craft's electric charge is gone; or `cb_main` off, an input kept for a breaker that may come back):
+  every lamp, display and cockpit light dark, throttle commanded to 0, sticks released, inputs ignored
+  (`cockpit/power`).
 - LAMP TEST: every lamp on, displays show 8.8.8.
 - Caution & warning, cautions (amber, MASTER CAUTION): LOW FUEL, LOW POWER, HIGH Q, SAS DISAGREE, FLAMEOUT, RCS LOW,
   CLOSING (above the braking gate), THROTTLE (lever up with ENG ARM off), ATT ERR (over 5° off the burn attitude from
-  30 s before TIG), ΔV RESID (after cutoff, over 0.5 m/s or 2 %), PERI LOW (in orbit with the periapsis in the
-  atmosphere or the terrain), SOI CHANGE (within 2 min), CHUTE (descending under 15 km, parachute neither armed nor
+  30 s before TIG), ΔV RESID (after cutoff, over 0.5 m/s or 2 %), CHUTE (descending under 15 km, parachute neither armed nor
   out), COMM LOST. Warnings (red, MASTER ALARM blinking + tone): HIGH G, NO LINK, ENG FAIL, SINK RATE, OVERHEAT (a part
   over 80 % of its temperature limit), GEAR UP (under 300 m, descending, gear up). Pressing the master button acknowledges: the master lamp and tone go
   off, the annunciator stays lit (steady) while the condition lasts; a condition that clears and returns needs a new ack.
 - KSP is the authority: indicator LEDs show the game's state and blink when it disagrees with the switch; SAS, RCS and
-  lights are re-commanded once a second while they disagree (panel wins), gear is not (game wins).
+  external lights are re-commanded once a second while they disagree (panel wins); gear, solar panels and fuel
+  cells are not (game wins).
   The SAS mode last selected is sent again, up to five times, when the game shows another one (KSP falls back to
   stability when SAS is switched on).
 - NO LINK when telemetry is older than 2 s or the plant reports disconnected; displays then show dashes.
 
 ### Tests
 ```sh
-.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the panels and the burn computer (58)
+.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the panels and the burn computer (63)
 .venv/bin/python tests/e2e_mock.py                    # end to end on the running stack with the mock (76 checks; `MQTT_PORT` selects another broker)
 .venv/bin/python tests/e2e_ksp.py                     # end to end with KSP and gateway-ksp (85 checks; loads a save in orbit)
 .venv/bin/python tests/e2e_ksp_docking.py --save lor3-rdv-handover   # docking display signs in KSP (8 checks)

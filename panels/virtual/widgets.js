@@ -187,7 +187,7 @@ export function createWidgetBuilders(registry, publishInput) {
       wrapper.appendChild(knob);
       set(position);
       inputs.set(item.in, { read: () => position, restore: set, retained: true });
-      return [wrapper];
+      return [...createIndicatorFor(item), wrapper];
     },
 
     /* A lever or knob with a continuous value, 0 to 1 (throttle, thrust limiter). */
@@ -217,6 +217,61 @@ export function createWidgetBuilders(registry, publishInput) {
         },
       });
       return [slider, readout];
+    },
+
+    /* A continuous knob, 0 to 1 over 270° (thrust limiter): drag up or down, the wheel, or the arrow keys. */
+    knob(item) {
+      const SWEEP_DEGREES = 270, STEP = 0.05, DRAG_PX_FOR_FULL_TURN = 160, MIN_MS_BETWEEN_PUBLISHES = 50;
+      const wrapper = createElement('div', 'knob-wrap');
+      const knob = createElement('button', 'rotary knob', { type: 'button', title: `${item.label} (drag up or down, wheel, arrows)` });
+      const pointer = createElement('span', 'ptr');
+      knob.appendChild(pointer);
+      for (const [fraction, text] of [[0, '0'], [0.5, '50'], [1, '100']]) {
+        const radians = (-SWEEP_DEGREES / 2 + SWEEP_DEGREES * fraction) * Math.PI / 180;
+        const tick = createElement('span', 'tick', { textContent: text });
+        tick.style.left = `${50 + 44 * Math.sin(radians)}%`;
+        tick.style.top = `${54 - 44 * Math.cos(radians)}%`;
+        wrapper.appendChild(tick);
+      }
+      wrapper.appendChild(knob);
+      const readout = createElement('div', 'pot-val');
+      let value = item.default ?? 0, lastPublished = 0;
+      const show = () => {
+        pointer.style.transform = `rotate(${-SWEEP_DEGREES / 2 + SWEEP_DEGREES * value}deg)`;
+        readout.textContent = `${Math.round(value * 100)} %`;
+      };
+      const publish = () => publishInput(item.in, value, true);
+      const set = (next, final) => {
+        value = Math.round(Math.max(0, Math.min(1, next)) * 100) / 100;
+        show();
+        const now = performance.now();
+        if (final || now - lastPublished > MIN_MS_BETWEEN_PUBLISHES) { lastPublished = now; publish(); }
+      };
+      let drag = null;
+      knob.addEventListener('pointerdown', (event) => {
+        knob.setPointerCapture(event.pointerId);
+        drag = { y: event.clientY, value };
+      });
+      knob.addEventListener('pointermove', (event) => {
+        if (drag) set(drag.value + (drag.y - event.clientY) / DRAG_PX_FOR_FULL_TURN, false);
+      });
+      const endDrag = () => { if (drag) { drag = null; publish(); } };     // the final position, always
+      knob.addEventListener('pointerup', endDrag);
+      knob.addEventListener('pointercancel', endDrag);
+      knob.addEventListener('wheel', (event) => { event.preventDefault(); set(value + (event.deltaY < 0 ? STEP : -STEP), true); },
+        { passive: false });
+      knob.addEventListener('keydown', (event) => {
+        if (event.key === 'ArrowRight' || event.key === 'ArrowUp') { event.preventDefault(); set(value + STEP, true); }
+        if (event.key === 'ArrowLeft' || event.key === 'ArrowDown') { event.preventDefault(); set(value - STEP, true); }
+      });
+      show();
+      inputs.set(item.in, {
+        read: () => value,
+        restore: (restored) => { value = Number(restored); show(); },
+        retained: true,
+        nudge: (amount) => set(value + amount, true),
+      });
+      return [wrapper, readout];
     },
 
     /* A keypad: every key press is published on the same input, with the key as value (not retained). The layout

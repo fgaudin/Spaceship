@@ -422,7 +422,7 @@ function connectConsole() {
   const client = connectBus({
     name: 'console',
     onConnect(connected) {
-      connected.subscribe(['gateway/status', 'cockpit/status'], { qos: 1 });
+      connected.subscribe(['gateway/status', 'cockpit/status', 'cockpit/lighting'], { qos: 1 });
       if (!sniffer.box.hidden) connected.subscribe(SNIFFER_TOPICS, { qos: 1 });
     },
     onMessage(topic, payloadText) {
@@ -434,6 +434,11 @@ function connectConsole() {
         document.getElementById('plant').textContent = `plant: ${payload.plant || '?'} ${payload.connected ? '✓' : '✗'}${vessel}`;
       } else if (topic === 'cockpit/status') {
         document.getElementById('cockpit').textContent = `cockpit: ${payload.online ? '✓' : '✗'}`;
+      } else if (topic === 'cockpit/lighting') {
+        // LIGHTS panel: the cabin light brightens the plates, the backlight makes the legends glow
+        document.body.classList.add('lighting-known');
+        document.body.classList.toggle('cabin-light', Boolean(payload.cabin));
+        document.body.classList.toggle('backlight', Boolean(payload.backlight));
       }
     },
   });

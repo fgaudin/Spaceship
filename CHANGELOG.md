@@ -3,6 +3,49 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-18 — panel review: fewer repeats, ASCENT and ORBIT panels, power from the battery, LIGHTS
+
+After flying the panels (NOTES.md): an instrument that repeats another, or needs a selector to be read, goes.
+
+- **C&W:** PERI LOW and SOI CHANGE are gone (the ORBIT panel and the event timer show them); 0.05 G and CONTACT
+  moved into the grid in their place, so the separate FLIGHT EVENTS box is gone too.
+- **ASCENT replaces DISPLAYS:** DISP A and its selector are gone; altitude (km), surface speed and g have their own
+  displays, next to MET and the thrust bar. **ORBIT** (new, on the SOLO module next to PAD REQUEST, `lab` bus):
+  apoapsis, periapsis, and the inclination taken from NAVIGATION.
+- **ENGINE:** THRUST LIMIT is a knob (new item type `knob`: 0 to 1 over 270°, drag, wheel or arrows); stage Δv and
+  TWR moved here from PROPELLANT · STAGE (now PROPELLANT), and STAGE FUEL from DISPLAYS. Their maths
+  (`cockpit/performance.py`) is shared with LANDING.
+- **ABORT fires the abort group, and only that.** ABORT MODE and its four sequences (staging, forced SAS and RCS…)
+  are gone: what happens is what the craft's builder wired to the abort group. MCC RETRO no longer advises a mode.
+- **ATTITUDE:** the NAVBALL lamps are gone: SPEED REF has an LED (new: `led` on a rotary) that blinks while the
+  game's reference is not the knob's. GEAR moved to LANDING, LIGHTS to the LIGHTS panel, CB MAIN BUS is gone.
+- **Power follows the electric charge.** Out of charge, every lamp, display and cockpit light goes dark, the
+  throttle is cut, the sticks released and the inputs ignored, as CB MAIN BUS off did; `cockpit/power` says so
+  (flight dynamics now reads it instead of the breaker). The `cb_main` input still works, for a breaker that may
+  come back on the hardware.
+- **LIGHTS** (new, overhead): CABIN and BACKLIGHT are the cockpit's own lights (`cockpit/lighting`: on the console
+  page the plates brighten and the legends glow, so the switches finally do something there); EXTERNAL is the
+  craft's lights, as the old LIGHTS switch.
+- **SYS:** FUEL CELL switch with its LED (gateway: the stock fuel cells' resource converters, `cmd/fuel_cell`,
+  `tlm/vessel.fuel_cell`; the mock has one giving 1.5 EC/s); RECOVERY gets the ablator left (Ablator in
+  `tlm/resources`) and the outside temperature (`tlm/thermal.outside`, °C); TIME WARP and GAME merged into one panel,
+  and quick save and quick load no longer need SAVE ARM, which is gone.
+- **LANDING:** TO GROUND, BRAKE HEIGHT and the BRAKE lamp are gone; HOVER TIME shows how long the stage can hold the
+  craft still (its Δv over the local gravity; dashes when the engines cannot lift it). GEAR is here now.
+- **RDV:** the RENDEZVOUS plate is gone with GATE, OVERSPEED and LOS RATE (the CLOSING caution still watches the
+  braking gate). The docking plates are renamed for what they show and rearranged: ROTATION (was DOCK 1) shows the
+  yaw, pitch and roll rates (°/s, the angles differentiated over game time, so their signs agree with the angles)
+  instead of ALIGNED; TRANSLATION (DOCK 2) reads in docking terms, LATERAL, VERTICAL and RANGE (along the port's
+  axis), each with its RATE: the range rate is now negative while closing (it was shown as a positive closing
+  speed), so the three rates all say how fast the figure above them changes; DOCKING
+  (DOCK 3, next to TARGET) the range (with the KM LED) and closing speed to the target vessel. The module is 2 × 2 U
+  now. Only panel ids and titles changed: the controls and their topics are the same.
+- Layout check: 0 issues (TARGET and DOCKING controls moved a few mm apart: the overlap seen now and then on TARGET
+  was a real near miss). Cut templates: the C&W overlaps are gone; ASCENT's wider real digits are reported.
+- Tests: the cockpit unit tests follow (63, new: power from charge, lights, fuel cell, outside temperature and
+  ablator, docking rates, hover time, ORBIT); `tests/e2e_*` and the ascent rehearsal read the new displays; the KSP
+  landing test brakes on its own computed height instead of the BRAKE lamp. Not run against KSP or the mock yet.
+
 ## 2026-11-17 — laser-cut templates of the faceplates
 
 - **`panels/cut/make_templates.py`** makes the faceplates' cutting templates from the panel definitions, so the

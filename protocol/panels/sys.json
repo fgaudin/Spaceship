@@ -47,8 +47,8 @@
           "digits": 5,
           "color": "green",
           "at": [
-            38,
-            64
+            30,
+            66
           ]
         },
         {
@@ -61,15 +61,29 @@
             "color": "green"
           },
           "at": [
-            70,
-            64
+            62,
+            66
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "fuel_cell",
+          "label": "FUEL CELL",
+          "in": "fuel_cell",
+          "led": {
+            "out": "led_fuel_cell",
+            "color": "green"
+          },
+          "at": [
+            86,
+            66
           ]
         }
       ]
     },
     {
-      "id": "propellant_stage",
-      "title": "PROPELLANT · STAGE",
+      "id": "propellant",
+      "title": "PROPELLANT",
       "size": [
         1,
         1
@@ -88,7 +102,7 @@
           "segments": 10,
           "at": [
             34,
-            29
+            40
           ]
         },
         {
@@ -99,7 +113,7 @@
           "segments": 10,
           "at": [
             70,
-            29
+            40
           ]
         },
         {
@@ -109,31 +123,8 @@
           "out": "bar_mono",
           "segments": 10,
           "at": [
-            30,
-            50
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_dv",
-          "label": "STAGE ΔV M/S",
-          "out": "disp_dv",
-          "digits": 5,
-          "at": [
-            68,
-            50
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_twr",
-          "label": "TWR",
-          "out": "disp_twr",
-          "digits": 4,
-          "color": "green",
-          "at": [
             50,
-            73
+            68
           ]
         }
       ]
@@ -275,8 +266,8 @@
             "color": "amber"
           },
           "at": [
-            28,
-            52
+            24,
+            42
           ]
         },
         {
@@ -287,8 +278,8 @@
           "in": "chute_deploy",
           "out": "lamp_chute",
           "at": [
-            52,
-            52
+            50,
+            42
           ]
         },
         {
@@ -302,14 +293,37 @@
           },
           "at": [
             76,
-            52
+            42
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_ablator",
+          "label": "ABLATOR",
+          "segments": 10,
+          "out": "bar_ablator",
+          "at": [
+            30,
+            80
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_outside",
+          "label": "OUTSIDE °C",
+          "digits": 5,
+          "out": "disp_outside",
+          "color": "green",
+          "at": [
+            72,
+            80
           ]
         }
       ]
     },
     {
-      "id": "time_warp",
-      "title": "TIME WARP",
+      "id": "time_warp_game",
+      "title": "TIME WARP · GAME",
       "size": [
         1,
         1
@@ -329,7 +343,7 @@
           "color": "green",
           "at": [
             40,
-            44
+            28
           ]
         },
         {
@@ -340,7 +354,7 @@
           "color": "amber",
           "at": [
             76,
-            44
+            28
           ]
         },
         {
@@ -350,7 +364,7 @@
           "in": "warp_down",
           "at": [
             14,
-            64
+            50
           ]
         },
         {
@@ -360,7 +374,7 @@
           "in": "warp_up",
           "at": [
             38,
-            64
+            50
           ]
         },
         {
@@ -370,7 +384,7 @@
           "in": "warp_to",
           "at": [
             62,
-            64
+            50
           ]
         },
         {
@@ -381,14 +395,48 @@
           "in": "warp_stop",
           "at": [
             86,
-            64
+            50
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "pause",
+          "label": "PAUSE",
+          "in": "pause",
+          "led": {
+            "out": "led_pause",
+            "color": "amber"
+          },
+          "at": [
+            22,
+            78
+          ]
+        },
+        {
+          "type": "button",
+          "id": "quicksave",
+          "label": "QUICK SAVE",
+          "in": "quicksave",
+          "at": [
+            52,
+            78
+          ]
+        },
+        {
+          "type": "button",
+          "id": "quickload",
+          "label": "QUICK LOAD",
+          "in": "quickload",
+          "at": [
+            78,
+            78
           ]
         }
       ]
     },
     {
-      "id": "game",
-      "title": "GAME",
+      "id": "lights",
+      "title": "LIGHTS",
       "size": [
         1,
         1
@@ -401,46 +449,36 @@
       "items": [
         {
           "type": "toggle",
-          "id": "pause",
-          "label": "PAUSE",
-          "in": "pause",
-          "led": {
-            "out": "led_pause",
-            "color": "amber"
-          },
+          "id": "cabin_light",
+          "label": "CABIN",
+          "in": "cabin_light",
           "at": [
-            28,
-            44
+            26,
+            52
           ]
         },
         {
-          "type": "guarded_toggle",
-          "id": "save_arm",
-          "label": "SAVE ARM",
-          "in": "save_arm",
-          "at": [
-            52,
-            44
-          ]
-        },
-        {
-          "type": "button",
-          "id": "quicksave",
-          "label": "QUICK SAVE",
-          "in": "quicksave",
-          "at": [
-            76,
-            44
-          ]
-        },
-        {
-          "type": "button",
-          "id": "quickload",
-          "label": "QUICK LOAD",
-          "in": "quickload",
+          "type": "toggle",
+          "id": "backlight",
+          "label": "BACKLIGHT",
+          "in": "backlight",
           "at": [
             50,
-            70
+            52
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "lights",
+          "label": "EXTERNAL",
+          "in": "lights",
+          "led": {
+            "out": "led_lights",
+            "color": "white"
+          },
+          "at": [
+            74,
+            52
           ]
         }
       ]

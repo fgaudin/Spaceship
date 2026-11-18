@@ -23,9 +23,10 @@ REQUESTS = {
 }
 
 
-def answer(control, telemetry, inputs):
-    """(uplink payload or None, status payload) for a request button."""
-    if not inputs.get('cb_main', 1):
+def answer(control, telemetry, inputs, powered=True):
+    """(uplink payload or None, status payload) for a request button. `powered`: cockpit/power, what the cockpit
+    logic says (no electric charge, or the breaker out)."""
+    if not powered:
         return None, {'text': '', 'ok': False}              # no power: the panel is dead
     moon = MOONS[int(inputs.get('fd_body') or 0) % len(MOONS)]
     result = REQUESTS[control](telemetry, moon)
@@ -35,11 +36,11 @@ def answer(control, telemetry, inputs):
 
 
 def main():
-    telemetry, inputs = {}, {}
+    telemetry, inputs, power = {}, {}, {'on': True}
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='flight-dynamics')
 
     def on_connect(client, userdata, flags, reason, properties=None):
-        client.subscribe([('tlm/#', 0), ('panel/solo/in/#', 1), ('panel/eng/in/cb_main', 1)])
+        client.subscribe([('tlm/#', 0), ('panel/solo/in/#', 1), ('cockpit/power', 1)])
         client.publish('fd/status', json.dumps({'text': 'READY', 'ok': True}), qos=1, retain=True)
         print('connected', flush=True)
 
@@ -51,11 +52,14 @@ def main():
         if message.topic.startswith('tlm/'):
             telemetry[message.topic] = payload
             return
+        if message.topic == 'cockpit/power':
+            power['on'] = bool(payload.get('on', True))
+            return
         control = message.topic.rsplit('/', 1)[1]
         pressed = bool(payload.get('v')) and not inputs.get(control)
         inputs[control] = payload.get('v')
         if control in REQUESTS and pressed:
-            uplink, status = answer(control, telemetry, inputs)
+            uplink, status = answer(control, telemetry, inputs, power['on'])
             if uplink:
                 client.publish('pad/uplink', json.dumps(uplink), qos=1)
             client.publish('fd/status', json.dumps(status), qos=1, retain=True)

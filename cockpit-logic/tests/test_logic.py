@@ -68,7 +68,7 @@ def test_lamp_test_lights_everything():
     fed(c)
     out = topics(c.handle(P + 'lamp_test', {'v': 1}, 1))
     assert out[O + 'cw_high_g'] == {'on': True, 'blink': False}
-    assert out[O + 'disp_a']['text'].startswith('8.8.')
+    assert out[O + 'disp_alt']['text'].startswith('8.8.')
     out = topics(c.handle(P + 'lamp_test', {'v': 0}, 2))
     assert out[O + 'cw_high_g'] == {'on': False, 'blink': False}
 
@@ -80,7 +80,7 @@ def test_main_breaker_kills_outputs_and_throttle():
     c.handle(P + 'throttle', {'v': 1.0}, 1)
     out = topics(c.handle(P + 'cb_main', {'v': 0}, 2))
     assert out['cmd/throttle'] == {'v': 0.0}
-    assert out[O + 'disp_a'] == {'text': '', 'blank': True, 'blink': False}
+    assert out[O + 'disp_alt'] == {'text': '', 'blank': True, 'blink': False}
     assert out[O + 'led_eng_arm'] == {'on': False, 'blink': False}
     # inputs are ignored while unpowered
     assert 'cmd/stage' not in topics(c.handle(P + 'stage_arm', {'v': 1}, 3) + c.handle(P + 'stage', {'v': 1}, 3.1))
@@ -115,7 +115,7 @@ def test_no_link_when_telemetry_stale():
     fed(c, 0)
     out = topics(c.tick(5.0))
     assert out[O + 'cw_no_link'] == {'on': True, 'blink': True}
-    assert out[O + 'disp_a'] == {'text': '-------', 'blank': False, 'blink': False}
+    assert out[O + 'disp_alt'] == {'text': '------', 'blank': False, 'blink': False}
 
 
 def test_sas_panel_wins_and_disagree_lamp():
@@ -136,18 +136,18 @@ def test_sas_panel_wins_and_disagree_lamp():
 def test_gear_game_wins_no_resend():
     c = Cockpit()
     fed(c)
-    c.handle(P + 'gear', {'v': 1}, 1)
+    c.handle('panel/lab/in/gear', {'v': 1}, 1)
     out = topics(fed(c, 3))
     assert 'cmd/gear' not in out
-    assert out.get(O + 'led_gear', c.published[O + 'led_gear']) == {'on': True, 'blink': True}
+    assert out.get('panel/lab/out/led_gear', c.published['panel/lab/out/led_gear']) == {'on': True, 'blink': True}
 
 
-def test_display_selector_and_formats():
+def test_ascent_displays_and_formats():
     c = Cockpit()
     fed(c)
-    assert c.published[O + 'disp_a']['text'] == '12.35'           # ALT in km
-    out = topics(c.handle(P + 'disp_sel', {'v': 3}, 1))
-    assert out[O + 'disp_a']['text'] == '323.0'                    # VEL
+    assert c.published[O + 'disp_alt']['text'] == '12.35'         # km
+    assert c.published[O + 'disp_srf']['text'] == '323.0'         # surface speed, m/s
+    assert c.published[O + 'disp_g']['text'] == '1.50'
     assert c.published[O + 'disp_met']['text'] == format_mission_time(65)
     assert fit_number(123456.78, 1, 7) == '123456.8'
     assert fit_number(-1.5, 1, 7) == '-1.5'
@@ -169,41 +169,28 @@ def test_reset_keeps_link_and_clears_latches():
     assert out.get(O + 'cw_no_link', c.published[O + 'cw_no_link']) == {'on': False, 'blink': False}
 
 
-# ---------- abort modes, engine extras, engine display, rendezvous, warp and game ----------
+# ---------- abort, engine extras, engine display, rendezvous, warp and game ----------
 R = 'panel/rdv/out/'
 S = 'panel/sys/out/'
 
 
-def abort(c, mode):
-    c.handle(P + 'abort_mode', {'v': mode}, 1)
+def abort(c):
     c.handle(P + 'abort_arm', {'v': 1}, 2)
     return topics(c.handle(P + 'abort', {'v': 1}, 3))
 
 
-def test_abort_modes():
+def test_abort_fires_the_abort_group_only():
     c = Cockpit(); fed(c)
     c.handle(P + 'eng_arm', {'v': 1}, 0.5); c.handle(P + 'throttle', {'v': 0.6}, 0.6)
-    out = abort(c, 0)                                    # PAD: cut (held while the lever is up), abort group
-    assert 'cmd/abort' in out and 'cmd/stage' not in out and c.throttle_cut_latched
-    c = Cockpit(); fed(c)
-    out = abort(c, 1)                                    # ASCENT: cut, stage, SAS and RCS on
-    assert 'cmd/stage' in out and 'cmd/abort' not in out and out['cmd/sas'] == {'on': True} and out['cmd/rcs'] == {'on': True}
-    c = Cockpit(); fed(c)
-    out = abort(c, 2)                                    # ORBIT: nothing thrown away
-    assert 'cmd/stage' not in out and 'cmd/abort' not in out and out['cmd/sas_mode'] == {'mode': 'stability'}
-    c = Cockpit(); fed(c)
-    c.handle(P + 'eng_arm', {'v': 1}, 0.5); c.handle(P + 'throttle', {'v': 0.6}, 0.6)
-    out = abort(c, 3)                                    # DESCENT: the throttle stays with the pilot
-    assert 'cmd/abort' in out and out['cmd/sas_mode'] == {'mode': 'radial'} and 'cmd/throttle' not in out and not c.throttle_cut_latched
+    assert 'cmd/abort' not in topics(c.handle(P + 'abort', {'v': 1}, 1))          # needs ABORT ARM
+    c.handle(P + 'abort', {'v': 0}, 1.5)
+    out = abort(c)
+    assert out['cmd/abort'] == {} and out[O + 'lamp_abort'] == {'on': True, 'blink': True}
+    # what the craft's builder wired to the abort group does the rest: nothing else is touched
+    assert not {'cmd/stage', 'cmd/throttle', 'cmd/sas', 'cmd/rcs'} & set(out) and not c.throttle_cut_latched
 
 
-def test_abort_forced_sas_is_not_fought_until_the_switch_moves():
-    c = Cockpit(); fed(c)
-    c.handle(P + 'sas', {'v': 0}, 0.5)
-    abort(c, 2)
-    out = topics(fed(c, 6, vessel={'sas': True, 'rcs': True}))        # the switch says off, the abort said on
-    assert 'cmd/sas' not in out and c.published[O + 'led_sas'] == {'on': True, 'blink': False}
-    assert topics(c.handle(P + 'sas', {'v': 1}, 7))['cmd/sas'] == {'on': True} and 'sas' not in c.forced_switches
+
 
 
 def test_cutoff_button_and_engine_settings():
@@ -283,7 +270,7 @@ def test_engines_next_to_ignite_show_white_before_ignition():
     assert c.published[O + 'mx_eng']['rows'][4] == '....w....'
 
 
-def test_rendezvous_panel():
+def test_rendezvous_and_docking_panels():
     c = Cockpit(); fed(c)
     assert c.published[R + 'txt_tgt']['text'] == 'NO TARGET'
     assert topics(c.handle('panel/rdv/in/tgt_next', {'v': 1}, 1))['cmd/target'] == {'step': 1}
@@ -291,23 +278,47 @@ def test_rendezvous_panel():
                             'ctrl_port': False}, 2)
     s = c.published
     assert s[R + 'txt_tgt']['text'] == 'ORBITER' and s[R + 'disp_range']['text'] == '1200.0' and s[R + 'disp_closing']['text'] == '+2.50'
-    assert s[R + 'disp_gate']['text'] == '3.00' and not s[R + 'lamp_overspeed']['on'] and not s[O + 'cw_closing']['on']
+    assert not s[R + 'led_km']['on'] and not s[O + 'cw_closing']['on']
     c.handle('tlm/target', {'set': True, 'name': 'Orbiter', 'range': 400.0, 'closing': 2.5, 'los_rate': 0.31, 'rel_v': 2.6,
                             'ctrl_port': False}, 3)
-    assert s[R + 'lamp_overspeed'] == {'on': True, 'blink': True} and s[O + 'cw_closing']['on']
+    assert s[O + 'cw_closing']['on']                                      # over the braking gate: the caution stays
+    c.handle('tlm/target', {'set': True, 'name': 'Orbiter', 'range': 250000.0, 'closing': 20.0, 'rel_v': 20.0,
+                            'ctrl_port': False}, 3.5)
+    assert s[R + 'led_km']['on'] and s[R + 'disp_range']['text'] == '250.0'
     port = {'axial': 4.0, 'x': 0.1, 'z': -0.2, 'v_axial': -0.1, 'vx': 0, 'vz': 0, 'angle': 3.0, 'from_port': True,
             'right': 0.1, 'up': -0.2, 'fwd': 4.0, 'v_right': -0.02, 'v_up': 0.0, 'yaw': 1.5, 'pitch': -2.5, 'roll': 12.0}
     c.handle('tlm/target', {'set': True, 'name': 'Orbiter', 'range': 4.0, 'closing': 0.1, 'rel_v': 0.1, 'ctrl_port': True,
                             'port': port}, 4)
     assert s[R + 'lamp_capture']['on'] and s[R + 'disp_up']['text'] == '-0.20' and s[R + 'disp_vright']['text'] == '-0.02'
     assert s[R + 'disp_yaw']['text'] == '+1.5' and s[R + 'disp_pitch']['text'] == '-2.5' and s[R + 'disp_roll']['text'] == '+12.0'
-    assert s[R + 'disp_vaxial']['text'] == '+0.10' and not s[R + 'lamp_aligned']['on']          # pitch is 2.5° off
+    assert s[R + 'disp_axial']['text'] == '4.00' and s[R + 'disp_vaxial']['text'] == '-0.10'    # range rate: closing
+    assert s[R + 'disp_yaw_rate']['text'] == '----'                       # one sample: no rate yet
     assert s[R + 'led_ctrl_port'] == {'on': True, 'blink': True}          # the game controls from the port, the switch is off
     c.handle('tlm/target', {'set': True, 'name': 'Orbiter', 'range': 4.0, 'closing': 0.5, 'rel_v': 0.5, 'ctrl_port': True,
                             'port': {**port, 'v_axial': -0.5}}, 5)
     assert not s[R + 'lamp_capture']['on']                                # too fast for the capture envelope
     assert 'cmd/control_from' not in topics(c.handle('panel/rdv/in/ctrl_port', {'v': 0}, 6))
     assert topics(c.handle('panel/rdv/in/ctrl_port', {'v': 1}, 7))['cmd/control_from'] == {'port': True}
+
+
+def test_docking_rates_follow_the_angles_over_game_time():
+    c = Cockpit(); fed(c)
+    port = {'axial': 20.0, 'x': 0, 'z': 0, 'v_axial': -0.2, 'vx': 0, 'vz': 0, 'angle': 3.0, 'from_port': True,
+            'right': 0.0, 'up': 0.0, 'fwd': 20.0, 'v_right': 0.0, 'v_up': 0.0, 'yaw': 4.0, 'pitch': -2.0, 'roll': 179.0}
+
+    def at(met, **angles):
+        c.handle('tlm/time', {'ut': 100 + met, 'met': met, 'warp': 1}, met)
+        c.handle('tlm/target', {'set': True, 'name': 'Orbiter', 'range': 20.0, 'closing': 0.2, 'rel_v': 0.2,
+                                'ctrl_port': True, 'port': {**port, **angles}}, met)
+
+    at(10.0)
+    at(10.5, yaw=3.0, pitch=-2.0, roll=-179.0)          # yaw closing at 2 °/s; roll crossing ±180° the short way
+    s = c.published
+    assert s[R + 'disp_yaw_rate']['text'] == '-2.0' and s[R + 'disp_pitch_rate']['text'] == '+0.0'
+    assert s[R + 'disp_roll_rate']['text'] == '+4.0'
+    c.handle('tlm/target', {'set': True, 'name': 'Orbiter', 'range': 20.0, 'closing': 0.2, 'rel_v': 0.2,
+                            'ctrl_port': True}, 11)       # port no longer targeted
+    assert s[R + 'disp_yaw_rate']['text'] == '----'
 
 
 def test_warp_to_event_pause_and_saves():
@@ -321,10 +332,8 @@ def test_warp_to_event_pause_and_saves():
     assert topics(c.handle('panel/sys/in/pause', {'v': 1}, 3))['cmd/pause'] == {'on': True}
     c.handle('tlm/time', {'ut': 100, 'met': 65, 'warp': 1, 'paused': True}, 3.1)
     assert c.published[S + 'led_pause']['on']
-    assert 'cmd/game' not in topics(c.handle('panel/sys/in/quickload', {'v': 1}, 4))        # needs SAVE ARM
-    c.handle('panel/sys/in/quickload', {'v': 0}, 4.1)
-    c.handle('panel/sys/in/save_arm', {'v': 1}, 5)
-    assert topics(c.handle('panel/sys/in/quickload', {'v': 1}, 6))['cmd/game'] == {'quickload': True}
+    assert topics(c.handle('panel/sys/in/quickload', {'v': 1}, 4))['cmd/game'] == {'quickload': True}   # no guard
+    assert topics(c.handle('panel/sys/in/quicksave', {'v': 1}, 5))['cmd/game'] == {'quicksave': True}
 
 
 def test_new_cautions():
@@ -382,14 +391,6 @@ def test_more_cautions():
     assert 'cw_chute' not in c.active_alarms()
     fed(c, 5, vessel={'comm': False})
     assert 'cw_comm' in c.active_alarms()
-    fed(c, 6, vessel={'situation': 'orbiting'})                 # still thrusting: the periapsis is on its way up
-    c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 90000.0, 'peri': 40000.0, 't_soi': None}, 6)
-    assert 'cw_peri' not in c.active_alarms()
-    fed(c, 6, vessel={'situation': 'orbiting', 'thrust': 0.0})
-    c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 90000.0, 'peri': 40000.0, 't_soi': None}, 6)
-    assert 'cw_peri' in c.active_alarms() and 'cw_soi' not in c.active_alarms()
-    c.handle('tlm/orbit', {'body': 'Mun', 'apo': 90000.0, 'peri': 40000.0, 't_soi': 90.0}, 7)
-    assert 'cw_peri' not in c.active_alarms() and 'cw_soi' in c.active_alarms()
 
 
 def test_burn_cautions_attitude_and_residual():
@@ -445,11 +446,12 @@ def test_throttle_is_sent_again_when_the_game_disagrees():
     assert 'cmd/throttle' not in topics(c.tick(6.5))
 
 
-def test_speed_reference_knob_acts_only_when_moved_and_lamps_show_the_game():
+def test_speed_reference_knob_acts_only_when_moved_and_its_led_shows_the_game():
     c = Cockpit(); fed(c, vessel={'speed_mode': 'surface'})
-    assert c.published[O + 'lamp_ref_surface']['on'] and not c.published[O + 'lamp_ref_orbit']['on']
     assert 'cmd/speed_mode' not in topics(c.handle(P + 'speed_ref', {'v': 0}, 1))      # first report: not a command
-    assert topics(c.handle(P + 'speed_ref', {'v': 2}, 2))['cmd/speed_mode'] == {'mode': 'target'}
+    assert c.published[O + 'led_speed_ref'] == {'on': True, 'blink': True}            # knob ORBIT, game SURF
+    assert topics(c.handle(P + 'speed_ref', {'v': 1}, 2))['cmd/speed_mode'] == {'mode': 'surface'}
+    assert c.published[O + 'led_speed_ref'] == {'on': True, 'blink': False}
 
 
 def test_twr_and_stage_delta_v_on_the_pad_come_from_the_engines_to_ignite():
@@ -463,12 +465,12 @@ def test_twr_and_stage_delta_v_on_the_pad_come_from_the_engines_to_ignite():
               'rated': 300000.0, 'isp_vac': 310.0, 'isp_sl': 285.0}
     c.handle('tlm/engines', {'engines': [engine], 'stage': 4, 'limit': 1.0, 'gimbal_locked': False}, 0)
     # TWR 300 kN / (20 t × 9.81) = 1.53; Δv 285 s × g0 × ln(20 / 10) = 1937 m/s at sea level
-    assert c.published['panel/sys/out/disp_twr']['text'] == '1.53'
-    assert c.published['panel/sys/out/disp_dv']['text'] == '1937'
+    assert c.published[O + 'disp_twr']['text'] == '1.53'
+    assert c.published[O + 'disp_dv']['text'] == '1937'
     # an engine lit but giving nothing is a flameout, not "before ignition": no figures
     c.handle('tlm/engines', {'engines': [{**engine, 'on': True, 'stage': 4}], 'stage': 4, 'limit': 1.0,
                              'gimbal_locked': False}, 1)
-    assert c.published['panel/sys/out/disp_twr']['text'] == '----'
+    assert c.published[O + 'disp_twr']['text'] == '----'
 
 
 def test_hand_controller_axes_become_rotate_and_translate_commands():
@@ -522,3 +524,42 @@ def test_a_small_throttle_left_in_the_game_is_cut():
     c.handle(P + 'throttle', {'v': 0.0}, 0)
     c.command('cmd/throttle', {'v': 0.0})
     assert topics(fed(c, 2, vessel={'throttle': 0.02}))['cmd/throttle'] == {'v': 0.0}
+
+
+# ---------- power, lights, fuel cell, recovery ----------
+def test_no_electric_charge_is_no_power():
+    c = Cockpit()
+    fed(c)
+    c.handle(P + 'eng_arm', {'v': 1}, 1)
+    c.handle(P + 'throttle', {'v': 1.0}, 1)
+    out = topics(fed(c, 2, resources={'stage': {}, 'total': {'ElectricCharge': {'amount': 0.0, 'max': 100}}}))
+    assert out['cmd/throttle'] == {'v': 0.0} and out['cockpit/power'] == {'on': False}
+    assert c.published[O + 'disp_alt']['blank'] and not c.published[O + 'led_eng_arm']['on']
+    assert 'cmd/stage' not in topics(c.handle(P + 'stage_arm', {'v': 1}, 3) + c.handle(P + 'stage', {'v': 1}, 3.1))
+    # a craft with no battery at all is not "out of charge"
+    c = Cockpit()
+    fed(c, resources={'stage': {}, 'total': {}})
+    assert c.powered() and c.published['cockpit/power'] == {'on': True}
+
+
+def test_lights_panel():
+    c = Cockpit(); fed(c)
+    assert c.published['cockpit/lighting'] == {'cabin': False, 'backlight': False}
+    assert topics(c.handle('panel/sys/in/backlight', {'v': 1}, 1))['cockpit/lighting'] == {'cabin': False, 'backlight': True}
+    c.handle('panel/sys/in/cabin_light', {'v': 1}, 2)
+    assert c.published['cockpit/lighting'] == {'cabin': True, 'backlight': True}
+    out = topics(c.handle('panel/sys/in/lights', {'v': 1}, 3))         # EXTERNAL: the craft's lights
+    assert out['cmd/lights'] == {'on': True} and out[S + 'led_lights'] == {'on': True, 'blink': True}
+    fed(c, 4, resources={'stage': {}, 'total': {'ElectricCharge': {'amount': 0.0, 'max': 100}}})
+    assert c.published['cockpit/lighting'] == {'cabin': False, 'backlight': False}       # no power, no light
+
+
+def test_fuel_cell_outside_temperature_and_ablator():
+    c = Cockpit(); fed(c, vessel={'fuel_cell': False})
+    out = topics(c.handle('panel/sys/in/fuel_cell', {'v': 1}, 1))
+    assert out['cmd/fuel_cell'] == {'on': True} and out[S + 'led_fuel_cell'] == {'on': True, 'blink': True}
+    fed(c, 2, vessel={'fuel_cell': True},
+        resources={'stage': {}, 'total': {'ElectricCharge': {'amount': 90, 'max': 100}, 'Ablator': {'amount': 150, 'max': 200}}})
+    c.handle('tlm/thermal', {'max': 0.3, 'outside': -42.4}, 2)
+    assert c.published[S + 'led_fuel_cell'] == {'on': True, 'blink': False}
+    assert c.published[S + 'disp_outside']['text'] == '-42' and c.published[S + 'bar_ablator'] == {'v': 0.75}

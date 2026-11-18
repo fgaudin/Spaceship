@@ -104,6 +104,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "orbit",
+      "title": "ORBIT",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        0
+      ],
+      "bus": "lab",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_apo",
+          "label": "APOAPSIS KM",
+          "digits": 7,
+          "out": "disp_apo",
+          "at": [
+            50,
+            30
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_peri",
+          "label": "PERIAPSIS KM",
+          "digits": 7,
+          "out": "disp_peri",
+          "at": [
+            50,
+            54
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_incl",
+          "label": "INCLINATION °",
+          "digits": 5,
+          "out": "disp_incl",
+          "color": "green",
+          "at": [
+            50,
+            78
+          ]
+        }
+      ]
     }
   ]
 }

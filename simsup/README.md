@@ -57,7 +57,7 @@ The crew's panels never see a failure as such; they see its consequences, throug
 | `battery_short`, `overheat` | — | mock only | KSP has no way through kRPC to drain a battery or heat a part. |
 | `false_alarm` | A caution or warning with no cause | cockpit | Parameter `alarm`: its id (`cw_low_fuel`) or its legend (`LOW FUEL`). |
 | `panel_dark` | A panel loses power | cockpit | Parameter `panel` (`sys`, `cmp`…): every output dark, every input ignored. |
-| `display_frozen` | A display freezes | cockpit | Parameter `output` (`eng/disp_a`): keeps the value shown at that moment. |
+| `display_frozen` | A display freezes | cockpit | Parameter `output` (`eng/disp_alt`): keeps the value shown at that moment. |
 | `switch_stuck` | A switch or button does nothing | cockpit | Parameter `control` (`sas`, `stage`…): its input is ignored. |
 
 ## Triggers

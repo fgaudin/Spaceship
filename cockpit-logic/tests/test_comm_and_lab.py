@@ -50,27 +50,34 @@ def test_cross_pointer_modes():
 
 
 # ---------- landing ----------
-def test_landing_figures_and_brake_lamp():
+def test_landing_hover_time_gear_and_orbit():
     c = Cockpit()
-    lander = {'situation': 'sub_orbital', 'mass': 4000.0, 'thrust_avail': 20000.0}
+    lander = {'situation': 'sub_orbital', 'mass': 4000.0, 'thrust_avail': 20000.0, 'isp': 300.0, 'gear': False}
+    propellant = {'stage': {'LiquidFuel': {'amount': 90.0, 'max': 90.0}, 'Oxidizer': {'amount': 110.0, 'max': 110.0}},
+                  'total': {}}
 
-    def over_the_mun(t, radar, **vessel):
-        fed(c, t, flight={'radar': radar, 'vs': -50.0, 'hs': 0.0, 'speed': 50.0, 'alt': radar + 600.0},
-            vessel={**lander, **vessel})
-        c.handle('tlm/orbit', {'body': 'Mun', 'apo': 10000.0, 'peri': -50000.0, 'i': 12.345}, t)
+    def over_the_mun(t, **vessel):
+        fed(c, t, flight={'radar': 5000.0, 'vs': -50.0, 'hs': 0.0, 'speed': 50.0, 'alt': 5600.0},
+            vessel={**lander, **vessel}, resources=propellant)
+        return c.handle('tlm/orbit', {'body': 'Mun', 'apo': 10000.0, 'peri': -50000.0, 'i': 12.345}, t)
 
-    over_the_mun(0, 5000.0)
-    # Mun gravity at 5.6 km: 1.541 m/s²; free fall from 5 km at 50 m/s takes 54 s; braking at 5 − 1.54 m/s² needs 361 m
-    assert c.published[LAB + 'disp_impact']['text'] == '54'
-    assert c.published[LAB + 'disp_brake_alt']['text'] == '361'
-    assert not c.published[LAB + 'lamp_brake']['on']
-    over_the_mun(1, 500.0)
-    assert c.published[LAB + 'lamp_brake'] == {'on': True, 'blink': False}
-    over_the_mun(2, 380.0)
-    assert c.published[LAB + 'lamp_brake'] == {'on': True, 'blink': True}
-    # in orbit the landing figures are blank
-    over_the_mun(3, 380.0, situation='orbiting')
-    assert c.published[LAB + 'disp_impact']['text'] == '----'
+    over_the_mun(0)
+    # 1000 kg of propellant: Δv = 300·g0·ln(4000/3000) = 846 m/s; Mun gravity at 5.6 km is 1.541 m/s², and hovering
+    # spends Δv at that rate: 549 s
+    assert c.published[LAB + 'disp_hover']['text'] == '549'
+    assert c.published[LAB + 'disp_radar']['text'] == '5000'
+    # ORBIT, on the lab bus: km above the surface, and the inclination
+    assert c.published[LAB + 'disp_apo']['text'] == '10.00' and c.published[LAB + 'disp_peri']['text'] == '-50.00'
+    assert c.published[LAB + 'disp_incl']['text'] == '12.35'
+    # an engine that cannot lift the lander: no hover time
+    over_the_mun(1, thrust_avail=5000.0)
+    assert c.published[LAB + 'disp_hover']['text'] == '----'
+    # GEAR is on the landing panel: the switch commands it, the LED blinks until the game agrees
+    assert c.published[LAB + 'led_gear'] == {'on': False, 'blink': False}
+    out = topics(c.handle(LAB_IN + 'gear', {'v': 1}, 2))
+    assert out['cmd/gear'] == {'on': True} and out[LAB + 'led_gear'] == {'on': True, 'blink': True}
+    over_the_mun(3, gear=True)
+    assert c.published[LAB + 'led_gear'] == {'on': True, 'blink': False}
 
 
 def test_navigation_figures():

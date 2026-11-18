@@ -80,6 +80,12 @@
       "extra": [],
       "note": "position legends sit on a circle around the knob; add the anti-rotation tab hole in 'extra' when the part is known"
     },
+    "knob": {
+      "part": "single-turn potentiometer, 7 mm bushing (24 mm body), knob about 15 mm",
+      "cut": 7.2, "knob": 15, "behind": 25, "legend_radius": 11.5, "scale": ["0", "50", "100"],
+      "extra": [],
+      "note": "a continuous knob (thrust limiter); add the anti-rotation tab hole in 'extra' when the part is known"
+    },
     "pot": {
       "part": "slide potentiometer, 30 mm travel (Bourns PTA30 style)",
       "travel": 30, "slot_width": 2.2, "cap": [10, 8], "behind": [9, 45],

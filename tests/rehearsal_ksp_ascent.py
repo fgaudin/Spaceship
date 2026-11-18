@@ -18,7 +18,8 @@ import paho.mqtt.client as mqtt
 SAVE = sys.argv[sys.argv.index('--save') + 1]
 KERBIN_MU, KERBIN_RADIUS_KM = 3.5316e12, 600.0
 TARGET_APOAPSIS_KM = 80.0
-DISP_A = {'ALT': 0, 'APO': 1, 'PERI': 2, 'VEL': 3, 'V/S': 4, 'MASS': 5}
+# where the pilot reads each figure: ASCENT (eng) for the altitude and the surface speed, ORBIT (lab bus) for the apsides
+DISPLAYS = {'ALT': ('eng', 'disp_alt'), 'VEL': ('eng', 'disp_srf'), 'APO': ('lab', 'disp_apo'), 'PERI': ('lab', 'disp_peri')}
 SAS_MODE = {'stability': 0, 'prograde': 1, 'maneuver': 9}
 EVENT_SOURCE = {'MAN': 0, 'TIG': 1, 'APO': 2}
 
@@ -93,11 +94,9 @@ def number(panel, name):
         return None
 
 
-def read_disp_a(source):
-    """Turn the DISP A selector and read the display, as the pilot would."""
-    pin('eng', 'disp_sel', DISP_A[source])
-    time.sleep(0.4)
-    return number('eng', 'disp_a')
+def read_display(figure):
+    """Read a figure on its own display, as the pilot would."""
+    return number(*DISPLAYS[figure])
 
 
 def clock_seconds(text):
@@ -127,14 +126,14 @@ def stage_on_flameout():
 # ---------- before launch ----------
 for panel, control, value in (('eng', 'cb_main', 1), ('eng', 'throttle', 0), ('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0),
                               ('eng', 'sas', 0), ('eng', 'rcs', 0), ('eng', 'sas_mode', 0), ('eng', 'abort_arm', 0),
-                              ('eng', 'disp_sel', DISP_A['VEL']), ('sys', 'evt_src', EVENT_SOURCE['MAN']),
+                              ('sys', 'evt_src', EVENT_SOURCE['MAN']),
                               ('cmp', 'burn_arm', 0), ('sys', 'evt_down', 0)):
     pin(panel, control, value)
 press('cmp', 'pad_clr')
-if not wait(lambda: seen['tlm/vessel']['name'] == vessel.name and number('eng', 'disp_a') is not None, 15):
+if not wait(lambda: seen['tlm/vessel']['name'] == vessel.name and read_display('ALT') is not None, 15):
     problem('no telemetry on the panels after loading the save')
 log(f"on the pad: stage {out('eng', 'disp_stage').get('text')}, engines to ignite {''.join(out('eng', 'mx_eng').get('rows', [])).count('w')}, "
-    f"TWR {out('sys', 'disp_twr').get('text')}, stage Δv {out('sys', 'disp_dv').get('text')}")
+    f"TWR {out('eng', 'disp_twr').get('text')}, stage Δv {out('eng', 'disp_dv').get('text')}")
 before_launch_alarms = list(seen.get('cw/state', {}).get('active', []))
 alarms_seen.clear()                 # what came on during the save load is not this flight's
 if before_launch_alarms:
@@ -143,7 +142,7 @@ if before_launch_alarms:
 # ---------- liftoff and pitch kick ----------
 pin('eng', 'sas', 1); pin('eng', 'eng_arm', 1); pin('eng', 'stage_arm', 1); pin('eng', 'throttle', 1.0)
 press('eng', 'stage')
-if not wait(lambda: (number('eng', 'disp_a') or 0) > 5, 15):
+if not wait(lambda: (read_display('VEL') or 0) > 5, 15):
     problem('no liftoff')
 log('LIFTOFF')
 wait(lambda: clock_seconds(out('eng', 'disp_met')['text']) >= 8, 30)
@@ -182,7 +181,7 @@ else:
     wait(lambda: seen['tlm/attitude']['pitch'] <= KICK_RELEASE_AT_PITCH, 20)
     stick('rot_pitch', 0.0); stick('rot_yaw', 0.0)
     log(f"pitch kick on the stick (pitch {pitch_part * scale:+.2f}, yaw {yaw_part * scale:+.2f}): pitch {seen['tlm/attitude']['pitch']:.0f}°, "
-        f"heading {seen['tlm/attitude']['heading']:.0f}°, speed {read_disp_a('VEL')} m/s")
+        f"heading {seen['tlm/attitude']['heading']:.0f}°, speed {read_display('VEL')} m/s")
 import threading
 
 
@@ -207,24 +206,22 @@ if not wait(lambda: seen['tlm/vessel']['sas'] and seen['tlm/vessel']['sas_mode']
 log('gravity turn: SAS MODE PRO')
 
 # ---------- ascent: stage on FLAMEOUT, cut off on the apoapsis ----------
-pin('eng', 'disp_sel', DISP_A['APO'])
 deadline = time.time() + 240
 while time.time() < deadline:
     stage_on_flameout()
-    apoapsis = number('eng', 'disp_a')
+    apoapsis = read_display('APO')
     if apoapsis is not None and apoapsis >= TARGET_APOAPSIS_KM:
         break
     time.sleep(0.05)
 else:
     problem('apoapsis never reached 80 km')
 press('eng', 'eng_cutoff')
-log(f"CUTOFF at apoapsis {number('eng', 'disp_a')} km, altitude {read_disp_a('ALT')} km, speed {read_disp_a('VEL')} m/s")
+log(f"CUTOFF at apoapsis {read_display('APO')} km, altitude {read_display('ALT')} km, speed {read_display('VEL')} m/s")
 pin('eng', 'throttle', 0)
-pin('eng', 'disp_sel', DISP_A['ALT'])
 
 # ---------- coast out of the atmosphere ----------
-wait(lambda: (number('eng', 'disp_a') or 0) >= 70.0, 180)
-apoapsis, periapsis = read_disp_a('APO'), read_disp_a('PERI')
+wait(lambda: (read_display('ALT') or 0) >= 70.0, 180)
+apoapsis, periapsis = read_display('APO'), read_display('PERI')
 log(f'out of the atmosphere: apoapsis {apoapsis} km, periapsis {periapsis} km')
 
 # ---------- the circularisation PAD, worked out as a crew would ----------
@@ -268,14 +265,14 @@ log(f"cutoff by the computer: Δv to go {out('cmp', 'disp_vg').get('text')} m/s"
 time.sleep(2)
 
 # ---------- the orbit ----------
-apoapsis, periapsis = read_disp_a('APO'), read_disp_a('PERI')
+apoapsis, periapsis = read_display('APO'), read_display('PERI')
 orbit = vessel.orbit
 log(f'PARKING ORBIT on the panel: apoapsis {apoapsis} km, periapsis {periapsis} km; '
     f'in KSP: {orbit.apoapsis_altitude / 1000:.2f} / {orbit.periapsis_altitude / 1000:.2f} km, e {orbit.eccentricity:.4f}')
 if periapsis is None or periapsis < 70:
     problem('not in orbit: periapsis under 70 km')
 pin('eng', 'eng_arm', 0); pin('eng', 'stage_arm', 0); pin('eng', 'sas_mode', SAS_MODE['stability'])
-pin('eng', 'disp_sel', DISP_A['ALT']); pin('sys', 'evt_src', EVENT_SOURCE['MAN'])
+pin('sys', 'evt_src', EVENT_SOURCE['MAN'])
 press('cmp', 'pad_clr')
 
 print('\nALARMS that came on (legend: mission time):')

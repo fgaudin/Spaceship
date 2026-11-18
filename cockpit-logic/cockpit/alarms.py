@@ -28,8 +28,6 @@ ALARMS = {
     'cw_sink': Alarm('SINK RATE', WARNING),
     'cw_gear': Alarm('GEAR UP', WARNING),
     'cw_chute': Alarm('CHUTE', CAUTION),
-    'cw_peri': Alarm('PERI LOW', CAUTION),
-    'cw_soi': Alarm('SOI CHANGE', CAUTION),
     'cw_throttle': Alarm('THROTTLE', CAUTION),
     'cw_flameout': Alarm('FLAMEOUT', CAUTION),
     'cw_eng_fail': Alarm('ENG FAIL', WARNING),
@@ -55,7 +53,6 @@ def active_alarms(cockpit):
     active = injected_false_alarms(cockpit)
     _vehicle_alarms(cockpit, active)
     _descent_alarms(cockpit, active)
-    _orbit_alarms(cockpit, active)
     _engine_alarms(cockpit, active)
     _burn_alarms(cockpit, active)
     _rendezvous_alarms(cockpit, active)
@@ -104,9 +101,8 @@ def _vehicle_alarms(cockpit, active):
         active.add('cw_overheat')
     if vessel.get('comm') is False:
         active.add('cw_comm')
-    # SAS switch against the game for a while (not while an abort holds SAS on against the switch)
-    sas_disagrees = ('sas' in vessel and 'sas' in cockpit.inputs and 'sas' not in cockpit.forced_switches
-                     and bool(vessel['sas']) != cockpit.switch_wanted('sas'))
+    # SAS switch against the game for a while
+    sas_disagrees = 'sas' in vessel and 'sas' in cockpit.inputs and bool(vessel['sas']) != cockpit.switch_wanted('sas')
     if cockpit.has_lasted('sas_disagree', sas_disagrees, S.SAS_DISAGREE_AFTER_S):
         active.add('cw_sas_dis')
 
@@ -129,20 +125,6 @@ def _descent_alarms(cockpit, active):
     low_enough = altitude is not None and altitude < S.CHUTE_BELOW_ALTITUDE_M
     if situation == 'flying' and low_enough and vessel.get('chute') == 'stowed' and not cockpit.inputs.get('chute_arm'):
         active.add('cw_chute')
-
-
-def _orbit_alarms(cockpit, active):
-    orbit = cockpit.orbit
-    safe_periapsis = S.SAFE_PERIAPSIS_M.get(orbit.get('body'))
-    periapsis = orbit.get('peri')
-    # Not while thrusting: at the end of an orbit insertion the periapsis is still on its way up.
-    coasting = not cockpit.vessel.get('thrust')
-    if cockpit.vessel.get('situation') == 'orbiting' and coasting and safe_periapsis is not None \
-            and periapsis is not None and periapsis < safe_periapsis:
-        active.add('cw_peri')
-    time_to_soi_change = orbit.get('t_soi')
-    if time_to_soi_change is not None and 0 < time_to_soi_change < S.SOI_CHANGE_WITHIN_S:
-        active.add('cw_soi')
 
 
 def _engine_alarms(cockpit, active):

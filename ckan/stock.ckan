@@ -1,38 +1,40 @@
 {
     "spec_version": "v1.6",
-    "identifier": "capsule-stock",
-    "name": "Capsule simulator: stock KSP",
-    "abstract": "The mods the capsule simulator uses on stock KSP 1.12.5: kRPC (the cockpit link), cameras (HullcamVDS, Kerbcast, JustReadTheInstructions), and Kerbal Engineer and MechJeb for checking.",
-    "author": "capsule simulator",
-    "version": "2026.11.15.07.50.03",
+    "identifier": "installed-Kerbal-Space-Program",
+    "name": "installed-Kerbal Space Program",
+    "abstract": "A list of modules installed on the Kerbal Space Program KSP instance",
+    "author": "francois",
+    "version": "2026.11.17.09.05.18",
     "ksp_version_min": "1.8",
     "ksp_version_max": "1.12",
     "license": "unknown",
     "depends": [
         {
             "name": "HullcamVDSContinued",
-            "version": "0.2.2.5"
+            "version": "0.2.2.5",
+            "suppress_recommendations": true
         },
         {
             "name": "JustReadTheInstructions",
-            "version": "v3.3.0"
+            "version": "v3.3.0",
+            "suppress_recommendations": true
         },
         {
             "name": "KerbalEngineerRedux",
-            "version": "1.1.9.5"
-        },
-        {
-            "name": "Kerbcast",
-            "version": "1.12.1"
+            "version": "1.1.9.5",
+            "suppress_recommendations": true
         },
         {
             "name": "kRPC",
-            "version": "v0.7.0"
+            "version": "v0.7.0",
+            "suppress_recommendations": true
         },
         {
             "name": "MechJeb2",
-            "version": "2.15.4.0"
+            "version": "2.15.4.0",
+            "suppress_recommendations": true
         }
     ],
+    "release_date": "2026-11-17T21:05:18.417629Z",
     "kind": "metapackage"
 }

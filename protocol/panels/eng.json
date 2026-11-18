@@ -127,14 +127,14 @@
               "color": "amber"
             },
             {
-              "out": "cw_peri",
-              "label": "PERI LOW",
-              "color": "amber"
+              "out": "lamp_05g",
+              "label": "0.05 G",
+              "color": "green"
             },
             {
-              "out": "cw_soi",
-              "label": "SOI CHANGE",
-              "color": "amber"
+              "out": "lamp_contact",
+              "label": "CONTACT",
+              "color": "blue"
             },
             {
               "out": "cw_chute",
@@ -153,34 +153,12 @@
           ]
         },
         {
-          "type": "annunciator",
-          "id": "events",
-          "cols": 2,
-          "cells": [
-            {
-              "out": "lamp_05g",
-              "label": "0.05 G",
-              "color": "green"
-            },
-            {
-              "out": "lamp_contact",
-              "label": "CONTACT",
-              "color": "blue"
-            }
-          ],
-          "label": "FLIGHT EVENTS",
-          "at": [
-            76,
-            74
-          ]
-        },
-        {
           "type": "button",
           "id": "lamp_test",
           "label": "LAMP TEST",
           "in": "lamp_test",
           "at": [
-            114,
+            40,
             74
           ]
         },
@@ -190,15 +168,15 @@
           "out": "buzzer",
           "label": "TONE",
           "at": [
-            137,
+            63,
             74
           ]
         }
       ]
     },
     {
-      "id": "displays",
-      "title": "DISPLAYS",
+      "id": "ascent",
+      "title": "ASCENT",
       "size": [
         1,
         1
@@ -211,31 +189,36 @@
       "items": [
         {
           "type": "seg7",
-          "id": "disp_a",
-          "label": "DISP A",
-          "digits": 7,
-          "out": "disp_a",
+          "id": "disp_alt",
+          "label": "ALT KM",
+          "digits": 6,
+          "out": "disp_alt",
           "at": [
-            34,
+            32,
             31
           ]
         },
         {
-          "type": "rotary",
-          "id": "disp_sel",
-          "label": "DISP A SEL",
-          "in": "disp_sel",
-          "positions": [
-            "ALT",
-            "APO",
-            "PERI",
-            "VEL",
-            "V/S",
-            "MASS"
-          ],
+          "type": "seg7",
+          "id": "disp_srf",
+          "label": "SURF SPEED M/S",
+          "digits": 5,
+          "out": "disp_srf",
           "at": [
-            79,
+            74,
             31
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_g",
+          "label": "G",
+          "digits": 4,
+          "out": "disp_g",
+          "color": "green",
+          "at": [
+            24,
+            58
           ]
         },
         {
@@ -246,19 +229,8 @@
           "out": "disp_met",
           "color": "green",
           "at": [
-            32,
-            61
-          ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_fuel",
-          "label": "STAGE FUEL",
-          "segments": 10,
-          "out": "bar_fuel",
-          "at": [
-            77,
-            61
+            66,
+            58
           ]
         },
         {
@@ -357,14 +329,14 @@
           ]
         },
         {
-          "type": "pot",
+          "type": "knob",
           "id": "thrust_lim",
           "label": "THRUST LIMIT",
           "in": "thrust_lim",
           "default": 1,
           "at": [
             173,
-            35
+            37
           ]
         },
         {
@@ -377,8 +349,42 @@
             "color": "amber"
           },
           "at": [
-            100,
+            170,
             78
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_fuel",
+          "label": "STAGE FUEL",
+          "segments": 10,
+          "out": "bar_fuel",
+          "at": [
+            40,
+            80
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_dv",
+          "label": "STAGE ΔV M/S",
+          "digits": 5,
+          "out": "disp_dv",
+          "at": [
+            86,
+            80
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_twr",
+          "label": "TWR",
+          "digits": 4,
+          "out": "disp_twr",
+          "color": "green",
+          "at": [
+            130,
+            80
           ]
         }
       ]
@@ -421,29 +427,13 @@
           ]
         },
         {
-          "type": "rotary",
-          "id": "abort_mode",
-          "label": "ABORT MODE",
-          "in": "abort_mode",
-          "positions": [
-            "PAD",
-            "ASCENT",
-            "ORBIT",
-            "DESCENT"
-          ],
-          "at": [
-            26,
-            78
-          ]
-        },
-        {
           "type": "guarded_toggle",
           "id": "abort_arm",
           "label": "ABORT ARM",
           "in": "abort_arm",
           "color": "red",
           "at": [
-            56,
+            36,
             78
           ]
         },
@@ -455,15 +445,15 @@
           "in": "abort",
           "out": "lamp_abort",
           "at": [
-            80,
+            70,
             78
           ]
         }
       ]
     },
     {
-      "id": "attitude_systems",
-      "title": "ATTITUDE · SYSTEMS",
+      "id": "attitude",
+      "title": "ATTITUDE",
       "size": [
         2,
         1
@@ -484,8 +474,8 @@
             "color": "green"
           },
           "at": [
-            30,
-            35
+            25,
+            55
           ]
         },
         {
@@ -506,8 +496,8 @@
             "MNVR"
           ],
           "at": [
-            59,
-            35
+            62,
+            55
           ]
         },
         {
@@ -521,36 +511,13 @@
             "TGT"
           ],
           "at": [
-            95,
-            35
-          ]
-        },
-        {
-          "type": "annunciator",
-          "id": "speed_ref_box",
-          "label": "NAVBALL",
-          "cols": 3,
-          "cells": [
-            {
-              "out": "lamp_ref_orbit",
-              "label": "ORBIT",
-              "color": "green"
-            },
-            {
-              "out": "lamp_ref_surface",
-              "label": "SURF",
-              "color": "green"
-            },
-            {
-              "out": "lamp_ref_target",
-              "label": "TGT",
-              "color": "green"
-            }
+            105,
+            55
           ],
-          "at": [
-            150,
-            35
-          ]
+          "led": {
+            "out": "led_speed_ref",
+            "color": "green"
+          }
         },
         {
           "type": "toggle",
@@ -562,8 +529,8 @@
             "color": "green"
           },
           "at": [
-            51,
-            71
+            145,
+            55
           ]
         },
         {
@@ -576,47 +543,8 @@
             "color": "amber"
           },
           "at": [
-            75,
-            71
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "gear",
-          "label": "GEAR",
-          "in": "gear",
-          "led": {
-            "out": "led_gear",
-            "color": "green"
-          },
-          "at": [
-            99,
-            71
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "lights",
-          "label": "LIGHTS",
-          "in": "lights",
-          "led": {
-            "out": "led_lights",
-            "color": "white"
-          },
-          "at": [
-            122,
-            71
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "cb_main",
-          "label": "CB MAIN BUS",
-          "in": "cb_main",
-          "default": 1,
-          "at": [
-            147,
-            71
+            172,
+            55
           ]
         }
       ]

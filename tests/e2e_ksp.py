@@ -67,10 +67,10 @@ v = sc.active_vessel
 v.control.throttle = 0.0
 print(f'loaded {SAVE}: {v.name}, {v.situation.name}, {v.orbit.body.name}', flush=True)
 for p, c, val in (('eng', 'cb_main', 1), ('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0), ('eng', 'abort_arm', 0),
-                  ('eng', 'throttle', 0), ('eng', 'sas', 0), ('eng', 'rcs', 0), ('eng', 'lights', 0), ('eng', 'sas_mode', 0),
+                  ('eng', 'throttle', 0), ('eng', 'sas', 0), ('eng', 'rcs', 0), ('sys', 'lights', 0), ('eng', 'sas_mode', 0),
                   ('sys', 'solar', 0), ('sys', 'brakes', 0), ('sys', 'evt_src', 0), ('sys', 'chute_arm', 0),
-                  ('eng', 'abort_mode', 0), ('eng', 'thrust_lim', 1), ('eng', 'gimbal_lock', 0), ('cmp', 'burn_arm', 0),
-                  ('rdv', 'ctrl_port', 0), ('sys', 'pause', 0), ('sys', 'save_arm', 0)):
+                  ('eng', 'thrust_lim', 1), ('eng', 'gimbal_lock', 0), ('cmp', 'burn_arm', 0),
+                  ('rdv', 'ctrl_port', 0), ('sys', 'pause', 0)):
     inp(p, c, val)
 
 # ---------- link ----------
@@ -108,24 +108,22 @@ inp('eng', 'rcs', 1)
 check('RCS switch → KSP', wait(lambda: v.control.rcs))
 inp('eng', 'rcs', 0)
 check('RCS off', wait(lambda: not v.control.rcs))
-inp('eng', 'lights', 1)
+inp('sys', 'lights', 1)
 check('lights switch → KSP', wait(lambda: v.control.lights))
-inp('eng', 'lights', 0)
+inp('sys', 'lights', 0)
 inp('eng', 'throttle', 0.3)
 check('throttle refused without ENG ARM', wait(lambda: v.control.throttle == 0.0) and seen['tlm/vessel']['throttle'] == 0.0)
 inp('eng', 'eng_arm', 1)
 check('throttle with ENG ARM → KSP 0.3', wait(lambda: abs(v.control.throttle - 0.3) < 0.01), v.control.throttle)
 inp('eng', 'cb_main', 0)
 check('MAIN BUS off → throttle 0', wait(lambda: v.control.throttle == 0.0))
-check('MAIN BUS off → displays blank', wait(lambda: out('eng', 'disp_a').get('blank')))
+check('MAIN BUS off → displays blank', wait(lambda: out('eng', 'disp_alt').get('blank')))
 inp('eng', 'cb_main', 1)
 inp('eng', 'throttle', 0.0)
 inp('eng', 'eng_arm', 0)
 check('throttle back to 0', wait(lambda: v.control.throttle == 0.0))
-inp('eng', 'disp_sel', 1)
-apo_txt = out('eng', 'disp_a').get('text', '')
-check('display APO in km', wait(lambda: abs(float(out('eng', 'disp_a')['text']) - o.apoapsis_altitude / 1000) < 1), apo_txt)
-inp('eng', 'disp_sel', 0)
+apo_txt = out('lab', 'disp_apo').get('text', '')
+check('ORBIT shows APO in km', wait(lambda: abs(float(out('lab', 'disp_apo')['text']) - o.apoapsis_altitude / 1000) < 1), apo_txt)
 
 # ---------- SYS panel ----------
 has_solar = any(p.deployable for p in v.parts.solar_panels)
@@ -138,8 +136,8 @@ if has_solar:
 inp('sys', 'brakes', 1)
 check('BRAKES switch → KSP', wait(lambda: v.control.brakes))
 inp('sys', 'brakes', 0)
-check('stage Δv displayed', wait(lambda: out('sys', 'disp_dv').get('text', '-').replace('-', '') != ''), out('sys', 'disp_dv'))
-check('TWR displayed', wait(lambda: '-' not in out('sys', 'disp_twr').get('text', '-')), out('sys', 'disp_twr'))
+check('stage Δv displayed', wait(lambda: out('eng', 'disp_dv').get('text', '-').replace('-', '') != ''), out('eng', 'disp_dv'))
+check('TWR displayed', wait(lambda: '-' not in out('eng', 'disp_twr').get('text', '-')), out('eng', 'disp_twr'))
 check('EC displayed', wait(lambda: '-' not in out('sys', 'disp_ec').get('text', '-')), out('sys', 'disp_ec'))
 inp('sys', 'evt_src', 2)
 t_apo = o.time_to_apoapsis
@@ -279,16 +277,12 @@ if any(d.state.name == 'ready' for d in v.parts.docking_ports):
     inp('rdv', 'ctrl_port', 0)
     check('control back to the pod', wait(lambda: v.parts.controlling == home))
 
-# ---------- abort in ORBIT mode: stop, SAS and RCS on, nothing thrown away ----------
-n_parts = len(v.parts.all)
-inp('eng', 'abort_mode', 2); inp('eng', 'abort_arm', 1); press('eng', 'abort')
-check('ABORT (ORBIT): SAS and RCS on', wait(lambda: v.control.sas and v.control.rcs))
-time.sleep(2.5)
-check('held against the switches, abort group not fired, no part lost',
-      v.control.sas and v.control.rcs and not v.control.abort and len(v.parts.all) == n_parts)
-inp('eng', 'abort_arm', 0); inp('eng', 'abort_mode', 0)
-inp('eng', 'sas', 1); inp('eng', 'sas', 0); inp('eng', 'rcs', 1); inp('eng', 'rcs', 0)
-check('switches take SAS and RCS back', wait(lambda: not v.control.sas and not v.control.rcs))
+# ---------- abort: KSP's abort group, nothing else (what the craft's builder wired to it) ----------
+inp('eng', 'abort_arm', 1); press('eng', 'abort')
+check('ABORT fires the abort group', wait(lambda: v.control.abort))
+check('ABORT lamp blinks', wait(lambda: out('eng', 'lamp_abort') == {'on': True, 'blink': True}))
+inp('eng', 'abort_arm', 0)
+v.control.abort = False
 cli.publish('sim/reset', '{}', qos=1)                                  # clears the cockpit's abort latch
 
 # ---------- pause, warp to the event (quick save / load: mock only, it would overwrite the player's quicksave) ----------

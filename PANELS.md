@@ -20,6 +20,13 @@ Priority: **A** = cannot fly the mission without it, **B** = needed to fly it by
   overhead, main and low zones: [protocol/panels/README.md](protocol/panels/README.md). Below, "panel" in the
   numbered list means a function, not a faceplate.
 - **The DSKY is gone** (removed 2026-11-16; the sections below that mention it are the original plan). The burn computer (CMP: one display per PAD field, a numeric keypad, UPLINK ACCEPT) replaces it.
+- **Panel review** (2026-11-18, after flying them): no instruments that repeat others or need a selector. DISP A
+  gives way to ASCENT (altitude, surface speed, g) and ORBIT (apoapsis, periapsis, inclination) panels; PERI LOW,
+  SOI CHANGE, ABORT MODE (ABORT fires the craft's abort group), the NAVBALL lamps, CB MAIN BUS (power now follows the
+  electric charge), SAVE ARM, the rendezvous plate (GATE, OVERSPEED, LOS RATE), ALIGNED and the landing predictions
+  (TO GROUND, BRAKE HEIGHT, BRAKE) are gone. New: HOVER TIME, the docking rates, fuel cells, ablator, outside
+  temperature, a LIGHTS panel (cabin, backlight, external). The current list is the README's; the sections below
+  are the original plan.
 
 Built as virtual panels so far: 4 to 8 and 13 to 16 (ENG, SYS), 1 as the burn computer (CMP), the I/O part of 12 (RDV),
 2 and 9 to 12 on glass (FDAI, MFD). The glass versions of 9 to 12 are candidates to drop once the I/O panels are flown.

@@ -63,10 +63,11 @@ class Cockpit:
         self.condition_started = {}             # condition name → when it became true (see has_lasted)
         self.abort_fired = False
         self.throttle_cut_latched = False       # a cutoff holds the throttle at 0 until the lever is back at idle
-        self.forced_switches = {}               # sas / rcs states an abort imposed, until the pilot moves the switch
         self.sas_mode_retries = 0               # times the SAS mode was sent again since the game last agreed
         self.charge_rate = 0.0                  # EC/s, smoothed
         self.previous_charge_sample = None      # (mission time, amount)
+        self.docking_rates = rendezvous_panel.DockingRates()   # yaw, pitch and roll rates against the port
+        self.was_powered = True
         self.burn_computer = BurnComputer()
         self.node_mirror = NodeMirror()
         self.event_timer = EventTimer()
@@ -103,8 +104,12 @@ class Cockpit:
         return self.telemetry.get('tlm/target', {})
 
     def powered(self):
-        """CB MAIN BUS: off makes every lamp and display dark and the inputs dead."""
-        return bool(self.inputs.get('cb_main', 1))
+        """The cockpit has power while the craft has electric charge (and the CB MAIN BUS breaker, when the console
+        has one, is in): without it every lamp and display is dark and the inputs are dead. A craft with no battery
+        at all, or telemetry not in yet, counts as powered."""
+        charge = self.resources.get('total', {}).get('ElectricCharge')
+        out_of_charge = bool(charge) and (charge.get('max') or 0) > 0 and (charge.get('amount') or 0) < S.NO_CHARGE_BELOW
+        return bool(self.inputs.get('cb_main', 1)) and not out_of_charge
 
     def telemetry_is_fresh(self):
         return self.now - self.last_telemetry_time <= S.TELEMETRY_STALE_AFTER_S
@@ -117,11 +122,11 @@ class Cockpit:
         return positions[int(self.inputs.get(rotary) or 0) % len(positions)]
 
     def switch_wanted(self, switch):
-        """What the cockpit wants a switch's system to be: the switch, unless an abort forced it. SAS lets go while
-        the rotation stick is off centre, as KSP does when the pilot steers with the keyboard."""
+        """What the cockpit wants a switch's system to be: the switch. SAS lets go while the rotation stick is off
+        centre, as KSP does when the pilot steers with the keyboard."""
         if switch == 'sas' and hand_controller.steering(self):
             return False
-        return self.forced_switches.get(switch, self.is_on(switch))
+        return self.is_on(switch)
 
     def has_lasted(self, condition_name, is_true, seconds):
         """True once `is_true` has held for `seconds` without interruption."""
@@ -193,7 +198,15 @@ class Cockpit:
             self.cameras = payload.get('cameras') or []
         elif topic == 'cam/status':
             self.camera_monitor = payload
-        return commands + self.render()
+        return commands + self._on_power_change() + self.render()
+
+    def _on_power_change(self):
+        """Losing power (breaker out or no charge left) must still stop the engine and release the sticks."""
+        powered, was_powered = self.powered(), self.was_powered
+        self.was_powered = powered
+        if was_powered and not powered:
+            return self.command('cmd/throttle', {'v': 0.0}) + hand_controller.release(self)
+        return []
 
     def _on_panel_input(self, panel, control, value):
         # Keypads send each key press on one input; the value is the key.
@@ -208,16 +221,12 @@ class Cockpit:
         if control in ('master_alarm', 'master_caution') and change.pressed:
             self._acknowledge(warnings=control == 'master_alarm')
         if not self.powered():
-            # Switching the main bus off must still stop the engine and release the sticks.
-            if control != 'cb_main':
-                return []
-            return self.command('cmd/throttle', {'v': 0.0}) + hand_controller.release(self)
+            return []                           # no power: the inputs are dead (see _on_power_change)
         for panel_module in PANELS_WITH_INPUTS:
             commands = panel_module.handle_input(self, change)
             if commands is not None:
                 return commands
         if control in S.TOGGLE_COMMANDS and value is not None:
-            self.forced_switches.pop(control, None)         # the pilot takes the switch back after an abort
             return self.command(S.TOGGLE_COMMANDS[control], {'on': change.on})
         return []
 
@@ -235,6 +244,8 @@ class Cockpit:
             self.node_mirror.node_to_pad(self, payload)
         elif topic == 'tlm/comm':
             comm_panel.track_link(self)
+        elif topic == 'tlm/target':
+            self.docking_rates.track(payload.get('port'), self.clock.get('met'))
         return []
 
     def _count_burn(self):
@@ -250,7 +261,7 @@ class Cockpit:
     def tick(self, now):
         """Periodic work: mirror the PAD to the game, and re-command "panel wins" switches the game disagrees with."""
         self.now = now
-        commands = []
+        commands = self._on_power_change()
         if self.powered() and self.telemetry_is_fresh():
             commands += self.node_mirror.pad_to_node(self)
             for switch in S.PANEL_WINS:
@@ -291,7 +302,6 @@ class Cockpit:
         kept; what the cockpit latched or remembered is cleared."""
         self.abort_fired = False
         self.throttle_cut_latched = False
-        self.forced_switches.clear()
         self.acknowledged_alarms.clear()
         self.condition_started.clear()
         self.last_commands.clear()
@@ -301,6 +311,7 @@ class Cockpit:
         self.event_timer = EventTimer()
         self.engine_monitor = EngineMonitor()
         self.link_watch = comm_panel.LinkWatch()
+        self.docking_rates = rendezvous_panel.DockingRates()
         return self.render()
 
     # ---------- panel outputs ----------
@@ -321,6 +332,10 @@ class Cockpit:
         wanted['cam/select'] = lab_panel.camera_selection(self)
         wanted['cmp/pad'] = self._pad_summary()
         wanted['cw/state'] = self._alarm_summary(active, unacknowledged)
+        powered = self.powered()
+        wanted['cockpit/power'] = {'on': powered}
+        wanted['cockpit/lighting'] = {'cabin': powered and self.is_on('cabin_light'),
+                                      'backlight': powered and self.is_on('backlight')}
 
         self.injected_failures.apply_to_outputs(wanted)
         changed = []

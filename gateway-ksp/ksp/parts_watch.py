@@ -2,7 +2,8 @@
 and docking ports. Rebuilt after every staging, because parts leave and kRPC streams on them go stale."""
 from .streams import FAST_HZ, SLOW_HZ, StreamGroup, read_or
 
-TOTAL_RESOURCES = ('ElectricCharge', 'LiquidFuel', 'Oxidizer', 'MonoPropellant')
+TOTAL_RESOURCES = ('ElectricCharge', 'LiquidFuel', 'Oxidizer', 'MonoPropellant', 'Ablator')
+FUEL_CELL = 'fuel cell'          # in the name of the resource converter of the stock fuel cells
 STAGE_PROPELLANTS = ('LiquidFuel', 'Oxidizer', 'SolidFuel', 'MonoPropellant')
 PARACHUTE_OUT_STATES = {'semi_deployed', 'deployed'}
 
@@ -50,6 +51,7 @@ class PartsWatch:
         self.solar_deployed = [streams.attribute(panel, 'deployed', SLOW_HZ) for panel in self.solar_panels]
         self.antennas = [antenna for antenna in parts.antennas if antenna.deployable]
         self.antennas_deployed = [streams.attribute(antenna, 'deployed', SLOW_HZ) for antenna in self.antennas]
+        self._watch_fuel_cells(parts)
         self.parachutes = list(parts.parachutes)
         self.parachute_states = [streams.attribute(parachute, 'state', SLOW_HZ) for parachute in self.parachutes]
         self.engines = [WatchedEngine(engine, streams, vessel.reference_frame) for engine in parts.engines]
@@ -170,6 +172,20 @@ class PartsWatch:
         if 'armed' in states:
             return 'armed'
         return 'cut' if states == {'cut'} else 'stowed'
+
+    # ---------- fuel cells ----------
+    def _watch_fuel_cells(self, parts):
+        """The resource converters that are fuel cells, as (converter, index), and whether each is running."""
+        try:
+            self.fuel_cells = [(converter, index) for converter in parts.resource_converters
+                               for index in range(converter.count) if FUEL_CELL in converter.name(index).lower()]
+        except Exception:           # a modded converter kRPC cannot read: no fuel cells rather than no telemetry
+            self.fuel_cells = []
+        self.fuel_cells_running = [self.streams.call(SLOW_HZ, converter.active, index) for converter, index in self.fuel_cells]
+
+    def fuel_cell_state(self):
+        """True when a fuel cell runs, False, or None when the vessel has none."""
+        return any(read_or(False, running) for running in self.fuel_cells_running) if self.fuel_cells_running else None
 
     def has_landing_gear(self):
         return bool(self.ground_contacts)

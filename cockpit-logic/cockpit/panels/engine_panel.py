@@ -1,17 +1,19 @@
-"""ENG panel: caution and warning, main displays, engine and staging, engine status matrix, attitude switches, abort."""
+"""ENG module: caution and warning, ascent displays, engine and staging, engine status matrix and abort, attitude."""
 from .. import settings as S
 from ..alarms import ALARMS, stage_fuel_fraction
 from ..display_format import fit_number, format_mission_time
 from ..engines import IDLE, OFF, THRUSTING
 from ..messages import PanelOutputs, switch_lamp
+from ..performance import stage_delta_v, thrust_to_weight
 
-SWITCHES_WITH_LAMP = ('sas', 'rcs', 'gear', 'lights')
+SWITCHES_WITH_LAMP = ('sas', 'rcs')
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
-         'lamp_contact', 'lamp_05g', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP),
-         *(f'lamp_ref_{mode}' for mode in S.SPEED_MODES), 'led_rcs_fine', *ALARMS]
-DISPLAYS = ['disp_a', 'disp_met', 'disp_stage', 'disp_eng_on']
+         'lamp_contact', 'lamp_05g', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
+         'led_rcs_fine', *ALARMS]
+# display → (digits, the dashes shown without telemetry)
+DISPLAYS = {'disp_alt': 6, 'disp_srf': 5, 'disp_g': 4, 'disp_met': 7, 'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5,
+            'disp_twr': 4}
 BARS = ['bar_fuel', 'bar_thrust']
-MAIN_DISPLAY_DIGITS = 7
 
 
 # ---------- inputs ----------
@@ -33,7 +35,10 @@ def handle_input(cockpit, change):
     if control == 'stage':
         return cockpit.command('cmd/stage', {}) if change.pressed and cockpit.is_on('stage_arm') else []
     if control == 'abort':
-        return run_abort(cockpit) if change.pressed and cockpit.is_on('abort_arm') else []
+        if not (change.pressed and cockpit.is_on('abort_arm')):
+            return []
+        cockpit.abort_fired = True
+        return cockpit.command('cmd/abort', {})     # KSP's abort group: what the craft's builder wired to it
     if control == 'speed_ref':
         # Only when moved: KSP changes the reference by itself (to surface low down, to target near one).
         if not change.moved:
@@ -45,27 +50,6 @@ def handle_input(cockpit, change):
         cockpit.sas_mode_retries = 0
         return cockpit.command('cmd/sas_mode', {'mode': S.SAS_MODES[int(change.value) % len(S.SAS_MODES)]})
     return None
-
-
-def run_abort(cockpit):
-    """Run the sequence of the selected abort mode (settings.ABORT_SEQUENCES)."""
-    cockpit.abort_fired = True
-    commands = []
-    for step in S.ABORT_SEQUENCES[cockpit.selected('abort_mode', S.ABORT_MODES)]:
-        if step == 'cut_throttle':
-            commands += cockpit.cut_throttle()
-        elif step == 'abort_group':
-            commands += cockpit.command('cmd/abort', {})
-        elif step == 'stage':
-            commands += cockpit.command('cmd/stage', {})
-        elif step in ('sas_hold', 'sas_radial_out'):
-            cockpit.forced_switches['sas'] = True
-            commands += cockpit.command('cmd/sas', {'on': True})
-            commands += cockpit.command('cmd/sas_mode', {'mode': 'radial' if step == 'sas_radial_out' else 'stability'})
-        elif step == 'rcs_on':
-            cockpit.forced_switches['rcs'] = True
-            commands += cockpit.command('cmd/rcs', {'on': True})
-    return commands
 
 
 # ---------- outputs ----------
@@ -109,9 +93,11 @@ def _render_lamps(cockpit, outputs):
     for switch in SWITCHES_WITH_LAMP:
         outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.switch_wanted(switch)))
     outputs.lamp('led_rcs_fine', cockpit.is_on('rcs_fine'))
-    # The game's speed reference, which the knob may not match: KSP changes it by itself.
-    for mode in S.SPEED_MODES:
-        outputs.lamp(f'lamp_ref_{mode}', fresh and vessel.get('speed_mode') == mode)
+    # SPEED REF's LED: lit when the game reports its reference, blinking when that is not the knob's (KSP changes it
+    # by itself: to surface low down, to target near one).
+    game_mode = vessel.get('speed_mode') if fresh else None
+    knob_mode = cockpit.selected('speed_ref', S.SPEED_MODES)
+    outputs.lamp('led_speed_ref', game_mode is not None, blink=game_mode is not None and game_mode != knob_mode)
 
     # event lights
     landed = bool(vessel.get('contact')) and vessel.get('situation') != 'pre_launch'    # the pad is not a landing
@@ -122,17 +108,20 @@ def _render_lamps(cockpit, outputs):
 
 
 def _render_displays(cockpit, outputs):
-    vessel = cockpit.vessel
+    vessel, flight = cockpit.vessel, cockpit.flight
     if not cockpit.telemetry_is_fresh():
-        outputs.text('disp_a', '-' * MAIN_DISPLAY_DIGITS)
-        outputs.text('disp_met', '--.--.--')
-        outputs.text('disp_stage', '--')
-        outputs.text('disp_eng_on', '--')
+        for display, digits in DISPLAYS.items():
+            outputs.text(display, '--.--.--' if display == 'disp_met' else '-' * digits)
         outputs.bar('bar_fuel', 0.0)
         outputs.bar('bar_thrust', 0.0)
         outputs.raw('mx_eng', {'rows': [OFF * S.ENGINE_GRID_SIZE] * S.ENGINE_GRID_SIZE})
         return
-    outputs.text('disp_a', main_display_text(cockpit))
+    altitude = flight.get('alt')
+    outputs.text('disp_alt', fit_number(altitude / 1000 if altitude is not None else None, 2, DISPLAYS['disp_alt']))
+    outputs.text('disp_srf', fit_number(flight.get('speed'), 1, DISPLAYS['disp_srf']))
+    outputs.text('disp_g', fit_number(flight.get('g'), 2, DISPLAYS['disp_g']))
+    outputs.text('disp_dv', fit_number(stage_delta_v(cockpit), 0, DISPLAYS['disp_dv']))
+    outputs.text('disp_twr', fit_number(thrust_to_weight(cockpit), 2, DISPLAYS['disp_twr']))
     mission_time = cockpit.clock.get('met')
     outputs.text('disp_met', format_mission_time(mission_time) if mission_time is not None else '--.--.--')
     stage = vessel.get('stage')
@@ -146,19 +135,3 @@ def _render_displays(cockpit, outputs):
     engines_reported = 'tlm/engines' in cockpit.telemetry
     outputs.text('disp_eng_on', f'{survey.count(THRUSTING):2d}' if engines_reported else '--')
 
-
-def main_display_text(cockpit):
-    """DISP A: the quantity its selector points at. Altitudes in km, mass in t, speeds in m/s."""
-    source = cockpit.selected('disp_sel', S.MAIN_DISPLAY_SOURCES)
-    flight, orbit, vessel = cockpit.flight, cockpit.orbit, cockpit.vessel
-    value, scale, decimals = {
-        'ALT': (flight.get('alt'), 1000.0, 2),
-        'APO': (orbit.get('apo'), 1000.0, 2),
-        'PERI': (orbit.get('peri'), 1000.0, 2),
-        'VEL': (flight.get('speed'), 1.0, 1),
-        'V/S': (flight.get('vs'), 1.0, 1),
-        'MASS': (vessel.get('mass'), 1000.0, 3),
-    }[source]
-    if value is None:
-        return '-' * MAIN_DISPLAY_DIGITS
-    return fit_number(value / scale, decimals, MAIN_DISPLAY_DIGITS)

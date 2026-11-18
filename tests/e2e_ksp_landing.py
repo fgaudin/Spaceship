@@ -3,8 +3,9 @@
     .venv/bin/python tests/e2e_ksp_landing.py --save <a save with a lander in low Mun orbit>
 
 Loads the save. Checks the cross-pointer's signs (NODE and RETRO: turn the nose and watch the dot move the other
-way), then brakes out of orbit, falls, and starts the final braking when the BRAKE lamp blinks: the test measures
-how far the prediction was from the height really used, and how good the "to ground" time was. It then lands.
+way), then brakes out of orbit, falls, and starts the final braking at 1.3 times the height needed to stop at full
+thrust (worked out by the test). It then lands, checking that HOVER TIME drains at about a second per second near
+the hover.
 
 Everything is commanded through panel inputs, except what no panel can do yet: the navball's speed reference
 (orbit / surface) and the raw yaw and pitch inputs used to disturb the attitude.
@@ -95,7 +96,7 @@ def check_fly_to_signs(mode):
 
 # ---------- setup ----------
 for panel, control, value in (('eng', 'cb_main', 1), ('eng', 'throttle', 0), ('eng', 'eng_arm', 0), ('eng', 'rcs', 0),
-                              ('eng', 'gear', 0), ('eng', 'sas', 0), ('eng', 'sas_mode', 0), ('lab', 'xp_mode', 0)):
+                              ('lab', 'gear', 0), ('eng', 'sas', 0), ('eng', 'sas_mode', 0), ('lab', 'xp_mode', 0)):
     pin(panel, control, value)
 pin('eng', 'sas', 1)
 check('telemetry from the lander', wait(lambda: seen['tlm/vessel']['name'] == vessel.name and 'v_right' in flight(), 15))
@@ -120,7 +121,7 @@ check('RETRO: SAS on surface retrograde → dot centred, NULL lit', retro_ok, po
 check_fly_to_signs('RETRO')
 pin('eng', 'sas_mode', SAS_MODE['retrograde'])
 aligned = wait(lambda: lab('lamp_xp_null').get('on'), 60)
-check('before the burn, in orbit: no landing figures', number('lab', 'disp_impact') is None)
+check('HOVER TIME shown', number('lab', 'disp_hover') is not None, lab('disp_hover'))
 if not aligned:
     # Burning off retrograde swings the velocity, SAS chases the moving marker and the speed never drops: the tank
     # empties and the lander falls. A crew would not light the engine; neither does the test.
@@ -150,19 +151,10 @@ pin('eng', 'throttle', 0)
 check('braking burn: speed over the ground under 30 m/s', flight()['speed'] < 30, (flight(), pointer()))
 note(f"after the braking burn: radar {flight()['radar']:.0f} m, V/S {flight()['vs']:.1f} m/s, H/S {flight()['hs']:.1f} m/s")
 
-# ---------- free fall: the time to the ground ----------
-check('falling: landing figures shown', wait(lambda: number('lab', 'disp_impact') is not None
-                                             and number('lab', 'disp_brake_alt') is not None, 20), seen.get('tlm/vessel'))
-pin('eng', 'gear', 1)
+# ---------- free fall ----------
+pin('lab', 'gear', 1)
+check('GEAR (landing panel) → KSP, LED steady', wait(lambda: seen['tlm/vessel'].get('gear') and lab('led_gear') == {'on': True, 'blink': False}, 10))
 wait(lambda: flight()['vs'] < -15, 60)
-time_1, predicted_1, radar_1 = seen['tlm/time']['ut'], number('lab', 'disp_impact'), flight()['radar']
-wait(lambda: seen['tlm/time']['ut'] >= time_1 + 8, 30)
-time_2, predicted_2, radar_2 = seen['tlm/time']['ut'], number('lab', 'disp_impact'), flight()['radar']
-elapsed, counted_down = time_2 - time_1, predicted_1 - predicted_2
-# the ground is not flat: allow for the change of terrain height under the lander
-check('TO GROUND counts down with the clock (within 2 s over 8 s)', abs(counted_down - elapsed) <= 2.0,
-      (predicted_1, predicted_2, elapsed))
-note(f'TO GROUND {predicted_1:.0f} s at {radar_1:.0f} m, {predicted_2:.0f} s at {radar_2:.0f} m, {elapsed:.1f} s apart')
 
 pin('lab', 'xp_mode', XP_MODE['DRIFT'])
 time.sleep(1.0)
@@ -170,27 +162,27 @@ drift_right, drift_up = pointer()
 check('DRIFT: SAS on retrograde → hardly any speed across the axis', abs(drift_right) < 5 and abs(drift_up) < 5,
       (drift_right, drift_up, flight()['speed']))
 
-# ---------- the BRAKE lamp ----------
-check('BRAKE lamp dark high up', not lab('lamp_brake').get('on'), (flight()['radar'], number('lab', 'disp_brake_alt')))
-check('BRAKE lamp comes on steady', wait(lambda: lab('lamp_brake').get('on'), 180), flight())
-ratio_on = flight()['radar'] / number('lab', 'disp_brake_alt')
-check('... at about 1.6 times the braking height', 1.45 <= ratio_on <= 1.7, ratio_on)
-check('BRAKE lamp blinks', wait(lambda: lab('lamp_brake').get('blink'), 60), flight())
-radar_at_blink, predicted_height, speed_at_blink = flight()['radar'], number('lab', 'disp_brake_alt'), flight()['speed']
+# ---------- the final braking: from 1.3 times the height needed to stop at full thrust ----------
+def braking_height():
+    now, craft = flight(), seen['tlm/vessel']
+    gravity = 6.5138398e10 / (200000.0 + now['alt']) ** 2
+    deceleration = craft['thrust_avail'] / craft['mass'] - gravity
+    return now['speed'] ** 2 / (2 * deceleration) if deceleration > 0 else float('inf')
+
+
+check('falling to the braking height', wait(lambda: flight()['radar'] <= 1.3 * braking_height(), 240), flight())
+radar_at_start, speed_at_start = flight()['radar'], flight()['speed']
 pin('eng', 'throttle', 1.0)
-check('full thrust from the blink stops the fall', wait(lambda: flight()['speed'] < 6 or flight()['radar'] < 3, 60), flight())
+check('full thrust stops the fall', wait(lambda: flight()['speed'] < 6 or flight()['radar'] < 3, 60), flight())
 pin('eng', 'throttle', 0.15)
 radar_stopped = flight()['radar']
-height_used = radar_at_blink - radar_stopped
-note(f'blink at {radar_at_blink:.0f} m and {speed_at_blink:.0f} m/s; predicted braking height {predicted_height:.0f} m; '
-     f'used {height_used:.0f} m; nearly stopped at {radar_stopped:.0f} m')
+note(f'braking from {radar_at_start:.0f} m and {speed_at_start:.0f} m/s; nearly stopped at {radar_stopped:.0f} m')
 check('stopped above the ground', radar_stopped > 5 and seen['tlm/vessel']['situation'] != 'landed', radar_stopped)
-check('the braking height was predicted within 15 %', abs(height_used - predicted_height) <= 0.15 * predicted_height,
-      (height_used, predicted_height))
 
 # ---------- final descent and touchdown ----------
 hover_throttle = None
 touchdown_speed = None
+hover_start = (seen['tlm/time']['ut'], number('lab', 'disp_hover'))
 deadline = time.time() + 240
 while time.time() < deadline:
     now, craft = flight(), seen['tlm/vessel']
@@ -203,14 +195,19 @@ while time.time() < deadline:
     throttle = hover_throttle + 0.08 * (wanted_vertical_speed - now['vs'])
     cli.publish('panel/eng/in/throttle', json.dumps({'v': round(max(0.0, min(1.0, throttle)), 3)}), qos=1, retain=True)
     time.sleep(0.1)
+hover_end = (seen['tlm/time']['ut'], number('lab', 'disp_hover'))
 pin('eng', 'throttle', 0); pin('eng', 'eng_arm', 0)
 pin('eng', 'sas_mode', SAS_MODE['stability'])
+if None not in (hover_start[1], hover_end[1]) and hover_end[0] - hover_start[0] > 10:
+    spent, elapsed = hover_start[1] - hover_end[1], hover_end[0] - hover_start[0]
+    note(f'HOVER TIME {hover_start[1]:.0f} s → {hover_end[1]:.0f} s over {elapsed:.0f} s of descent near the hover')
+    check('HOVER TIME drains at about a second per second near the hover', 0.7 * elapsed <= spent <= 1.5 * elapsed,
+          (spent, elapsed))
 check('touchdown: contact', wait(lambda: seen['tlm/vessel'].get('contact'), 5), seen.get('tlm/vessel'))
 check('touchdown slower than 4 m/s', touchdown_speed is not None and touchdown_speed > -4, touchdown_speed)
 time.sleep(6)
 check('landed and upright', seen['tlm/vessel']['situation'] == 'landed' and seen['tlm/attitude']['pitch'] > 65,       # Mun slopes reach 15° and more
       (seen['tlm/vessel']['situation'], seen['tlm/attitude']['pitch']))
-check('after landing: no landing figures, BRAKE dark', number('lab', 'disp_impact') is None and not lab('lamp_brake').get('on'))
 pin('lab', 'xp_mode', 0)
 print('all passed' if not fails else f'{len(fails)} FAILED')
 sys.exit(1 if fails else 0)

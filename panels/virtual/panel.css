@@ -78,6 +78,14 @@ body.show-grid .module .plate { background-image: linear-gradient(#ffb00026 1px,
   white-space: nowrap; }
 .ctl .sub { font-size: .58rem; letter-spacing: .12em; color: var(--legend-dim); }
 
+/* LIGHTS panel (cockpit/lighting): only once the cockpit has said something, so the page looks the same without it.
+   Cabin light off: darker plates. Backlight on: the legends glow. */
+body.lighting-known:not(.cabin-light) { --plate: #1d2024; --plate-hi: #24282c; --plate-lo: #15181b; --legend: #a9a59b; --legend-dim: #6f7479; }
+body.lighting-known.backlight .ctl .lbl, body.lighting-known.backlight .plate-title,
+body.lighting-known.backlight .rotary-wrap .tick, body.lighting-known.backlight .knob-wrap .tick,
+body.lighting-known.backlight .toggle .pos {
+  color: #fff3d6; text-shadow: 0 0 4px #ffd98a99, 0 0 1px #ffd98a; }
+
 /* toggle (bat handle) */
 .toggle { width: 2.6rem; height: 4.2rem; position: relative; cursor: pointer; border: 0; background: transparent; padding: 0; }
 .toggle .nut { position: absolute; left: 50%; top: 50%; width: 1.9rem; height: 1.9rem; transform: translate(-50%, -50%);
@@ -154,6 +162,12 @@ body.show-grid .module .plate { background-image: linear-gradient(#ffb00026 1px,
   background: var(--white); border-radius: .2rem; transform-origin: 50% 100%; box-shadow: 0 0 3px #000; transition: transform .12s; }
 .rotary-wrap .tick { position: absolute; white-space: nowrap; font-size: .5rem; letter-spacing: .06em; color: var(--legend-dim); transform: translate(-50%, -50%); }
 .rotary-wrap .tick.sel { color: var(--legend); text-shadow: 0 0 6px #fff8; }
+
+/* knob (thrust limiter): a smaller rotary, 0 to 100 % */
+.knob-wrap { position: relative; width: 5.6rem; height: 5rem; }
+.knob-wrap .rotary { top: 54%; width: 2.6rem; height: 2.6rem; touch-action: none; cursor: ns-resize; }
+.knob-wrap .rotary .ptr { height: 1.2rem; margin-top: -1.2rem; transition: none; }
+.knob-wrap .tick { position: absolute; font-size: .5rem; color: var(--legend-dim); transform: translate(-50%, -50%); }
 
 /* pot (throttle lever) */
 .pot { -webkit-appearance: none; appearance: none; writing-mode: vertical-lr; direction: rtl; width: 2.4rem; height: 8.5rem; background: transparent; cursor: ns-resize; }

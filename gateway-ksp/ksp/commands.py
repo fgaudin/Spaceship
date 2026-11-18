@@ -30,7 +30,7 @@ class CommandHandler:
         self.handlers = {
             'cmd/sas': self.sas,
             'cmd/throttle': self.throttle, 'cmd/stage': self.stage, 'cmd/abort': self.abort,
-            'cmd/solar': self.solar_panels, 'cmd/chute': self.parachutes, 'cmd/sas_mode': self.sas_mode,
+            'cmd/solar': self.solar_panels, 'cmd/fuel_cell': self.fuel_cells, 'cmd/chute': self.parachutes, 'cmd/sas_mode': self.sas_mode,
             'cmd/antenna': self.antennas, 'cmd/action_group': self.action_group, 'cmd/speed_mode': self.speed_mode,
             'cmd/thrust_limit': self.thrust_limit, 'cmd/gimbal': self.gimbal_lock,
             'cmd/target': lambda request: select_target(self.link, request),
@@ -146,6 +146,14 @@ class CommandHandler:
     def solar_panels(self, request):
         for panel in self.link.parts.solar_panels:
             panel.deployed = bool(request.get('on'))
+
+    def fuel_cells(self, request):
+        """Start or stop every fuel cell (stock: the Fuel Cell and Fuel Cell Array resource converters)."""
+        for converter, index in self.link.parts.fuel_cells:
+            if request.get('on'):
+                converter.start(index)
+            else:
+                converter.stop(index)
 
     def antennas(self, request):
         for antenna in self.link.parts.antennas:

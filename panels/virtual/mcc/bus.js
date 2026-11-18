@@ -9,7 +9,7 @@
 import { connectBus, parse } from '../bus.js';
 
 const SUBSCRIPTIONS = ['tlm/#', 'cw/state', 'cmp/pad', 'gateway/status', 'cockpit/status', 'panel/+/status',
-  'panel/cmp/out/lamp_uplink', 'panel/eng/in/abort_mode', 'panel/+/in/#', 'mcc/#'];
+  'panel/cmp/out/lamp_uplink', 'panel/+/in/#', 'mcc/#'];
 
 export const store = {};                // topic → last payload
 export const receivedAt = {};           // topic → Date.now() of the last message

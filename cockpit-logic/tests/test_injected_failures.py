@@ -28,13 +28,13 @@ def test_dark_panel_shows_nothing_and_ignores_its_inputs():
 
 def test_frozen_display_keeps_its_value():
     c = Cockpit(); fed(c, flight={'alt': 12345.6})
-    shown = c.published[O + 'disp_a']
-    c.handle('sim/failures/display_frozen', {'on': True, 'output': 'eng/disp_a'}, 0)
+    shown = c.published[O + 'disp_alt']
+    c.handle('sim/failures/display_frozen', {'on': True, 'output': 'eng/disp_alt'}, 0)
     fed(c, 1, flight={'alt': 20000.0})
-    assert c.published[O + 'disp_a'] == shown
+    assert c.published[O + 'disp_alt'] == shown
     c.handle('sim/failures/display_frozen', {'on': False}, 2)
     fed(c, 3, flight={'alt': 20000.0})
-    assert c.published[O + 'disp_a'] != shown
+    assert c.published[O + 'disp_alt'] != shown
 
 
 def test_stuck_switch_does_nothing():

@@ -46,7 +46,7 @@ instructor (SimSup, a separate page) knows what was injected.
 |---|---|---|
 | FLIGHT | Flight director | Mission phase, vessel, MET, link, telemetry and cockpit health; the crew's alarms; the go/no-go poll board (open, close, each console's answer); the loop. |
 | FIDO | Flight dynamics | Orbit elements and a drawing; time to apsides and to the next SOI change; the target (range, closing speed, line-of-sight rate); latitude, longitude, altitude. |
-| RETRO | Retrofire | Periapsis against Kerbin's entry corridor (25–45 km), the Δv at apoapsis to bring it to 35 km, load, dynamic pressure, heat; the abort mode that fits the moment against the one selected on the crew's ABORT MODE knob. |
+| RETRO | Retrofire | Periapsis against Kerbin's entry corridor (25–45 km), the Δv at apoapsis to bring it to 35 km, load, dynamic pressure, heat. |
 | GUIDO | Guidance | The burn computer's PAD and state, time to TIG, burn time at full thrust, a read-up waiting for the crew; how far the nose is from the burn direction; attitude, SAS mode, navball reference. |
 | BOOSTER | Propulsion | Stage, throttle, thrust, TWR, specific impulse, limiter, gimbals, stage propellant; every engine with its state (burning, lit, weak, flameout, off). |
 | EECOM | Electrical, thermal, comms | Charge, its trend and how long it lasts, solar panels, lights; the hottest part; monopropellant, fuel, oxidizer; the radio link (signal, first relay, hops, antennas). |

@@ -147,10 +147,10 @@
         },
         {
           "type": "seg7",
-          "id": "disp_impact",
-          "label": "TO GROUND S",
+          "id": "disp_hover",
+          "label": "HOVER TIME S",
           "digits": 4,
-          "out": "disp_impact",
+          "out": "disp_hover",
           "color": "green",
           "at": [
             70,
@@ -158,31 +158,17 @@
           ]
         },
         {
-          "type": "seg7",
-          "id": "disp_brake_alt",
-          "label": "BRAKE HEIGHT M",
-          "digits": 6,
-          "out": "disp_brake_alt",
-          "color": "green",
+          "type": "toggle",
+          "id": "gear",
+          "label": "GEAR",
+          "in": "gear",
+          "led": {
+            "out": "led_gear",
+            "color": "green"
+          },
           "at": [
-            36,
-            75
-          ]
-        },
-        {
-          "type": "annunciator",
-          "id": "brake_box",
-          "cols": 1,
-          "cells": [
-            {
-              "out": "lamp_brake",
-              "label": "BRAKE",
-              "color": "amber"
-            }
-          ],
-          "at": [
-            73,
-            75
+            50,
+            79
           ]
         }
       ]
@@ -229,20 +215,8 @@
           "digits": 6,
           "out": "disp_lon",
           "at": [
-            30,
-            64
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_incl",
-          "label": "INCLINATION °",
-          "digits": 5,
-          "out": "disp_incl",
-          "color": "green",
-          "at": [
-            73,
-            64
+            50,
+            66
           ]
         }
       ]

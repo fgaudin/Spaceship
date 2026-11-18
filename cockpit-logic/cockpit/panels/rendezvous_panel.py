@@ -1,19 +1,19 @@
-"""RDV panel: target selection, rendezvous figures against the braking gate, docking alignment, undocking.
+"""RDV module: TARGET (selection); ROTATION (yaw, pitch, roll to face the port, and their rates); TRANSLATION (the
+port's offsets and the distance along its axis, and their rates); DOCKING (range and closing speed to the target
+vessel, capture, docked, undocking).
 
-The docking figures are in the pilot's own axes (tlm/target "port": right, up, yaw, pitch, roll), in the order the
-manoeuvre is flown: turn to face the port, translate onto its axis, close.
+The docking figures are in the pilot's own axes (tlm/target "port": right, up, yaw, pitch, roll).
 """
 import math
 
 from .. import settings as S
-from ..alarms import braking_gate
 from ..display_format import fit_number
 from ..messages import PanelOutputs, switch_lamp
 
-LAMPS = ['led_tgt', 'led_port', 'led_km', 'lamp_overspeed', 'lamp_capture', 'lamp_aligned', 'led_ctrl_port',
-         'lamp_docked', 'led_undock_arm']
-DISPLAYS = ['disp_range', 'disp_closing', 'disp_gate', 'disp_los', 'disp_roll', 'disp_yaw', 'disp_pitch',
-            'disp_right', 'disp_up', 'disp_vright', 'disp_vup', 'disp_axial', 'disp_vaxial']
+LAMPS = ['led_tgt', 'led_port', 'led_km', 'lamp_capture', 'led_ctrl_port', 'lamp_docked', 'led_undock_arm']
+DISPLAYS = ['disp_range', 'disp_closing', 'disp_roll', 'disp_yaw', 'disp_pitch', 'disp_yaw_rate', 'disp_pitch_rate',
+            'disp_roll_rate', 'disp_right', 'disp_up', 'disp_vright', 'disp_vup', 'disp_axial', 'disp_vaxial']
+ANGLES = ('yaw', 'pitch', 'roll')
 TARGET_NAME_CHARACTERS = 12
 
 # Docking displays fed straight from a field of the port telemetry: display → (field, decimals, digits).
@@ -22,6 +22,29 @@ SIGNED_PORT_DISPLAYS = {
     'disp_right': ('right', 2, 5), 'disp_up': ('up', 2, 5),
     'disp_vright': ('v_right', 2, 4), 'disp_vup': ('v_up', 2, 4),
 }
+
+
+class DockingRates:
+    """How fast yaw, pitch and roll to the port change (°/s): the displayed angles differentiated over game time and
+    smoothed, so the rates agree with the angles by construction (a rate towards zero has the opposite sign)."""
+
+    def __init__(self):
+        self.rates = {}             # angle name → °/s
+        self.previous = None        # (mission time, {angle name: degrees})
+
+    def track(self, port, mission_time):
+        angles = {name: port[name] for name in ANGLES if port and port.get(name) is not None}
+        if len(angles) < len(ANGLES) or mission_time is None:
+            self.rates, self.previous = {}, None        # no port targeted: start again when one is
+            return
+        if self.previous and mission_time > self.previous[0]:
+            elapsed = mission_time - self.previous[0]
+            for name, angle in angles.items():
+                change = (angle - self.previous[1][name] + 180) % 360 - 180     # across ±180° the short way
+                rate = change / elapsed
+                old = self.rates.get(name)
+                self.rates[name] = rate if old is None else old + (rate - old) * S.DOCKING_RATE_SMOOTHING
+        self.previous = (mission_time, angles)
 
 
 # ---------- inputs ----------
@@ -52,19 +75,17 @@ def render(cockpit, wanted):
         outputs.text('txt_tgt', '*' * TARGET_NAME_CHARACTERS)
         return
     target = cockpit.target if cockpit.telemetry_is_fresh() else {}
-    _render_target_and_rendezvous(cockpit, outputs, target)
-    _render_docking(outputs, target.get('port'))
+    _render_target_and_range(outputs, target)
+    _render_docking(outputs, target.get('port'), cockpit.docking_rates.rates if target else {})
     outputs.lamp('lamp_docked', target.get('docked'))
     outputs.lamp('led_undock_arm', cockpit.is_on('undock_arm'))
     outputs.lamp('led_ctrl_port', *switch_lamp(target.get('ctrl_port'), cockpit.is_on('ctrl_port')))
 
 
-def _render_target_and_rendezvous(cockpit, outputs, target):
+def _render_target_and_range(outputs, target):
     has_target = bool(target.get('set'))
     target_range = target.get('range') if has_target else None
     closing_speed = target.get('closing') if has_target else None
-    line_of_sight_rate = target.get('los_rate') if has_target else None
-    gate_speed = braking_gate(target_range) if target_range is not None else None
     range_in_km = target_range is not None and target_range >= S.RANGE_IN_KM_FROM_M
 
     name = (target.get('name') or '').upper()[:TARGET_NAME_CHARACTERS]
@@ -75,23 +96,21 @@ def _render_target_and_rendezvous(cockpit, outputs, target):
     shown_range = None if target_range is None else target_range / 1000 if range_in_km else target_range
     outputs.text('disp_range', fit_number(shown_range, 1, 6))
     outputs.text('disp_closing', fit_number(closing_speed, 2, 5, signed=True))
-    outputs.text('disp_gate', fit_number(gate_speed, 2, 5))
-    outputs.text('disp_los', fit_number(line_of_sight_rate, 2, 4))
-    over_the_gate = gate_speed is not None and closing_speed is not None and closing_speed > gate_speed
-    outputs.lamp('lamp_overspeed', over_the_gate, blink=True)
 
 
-def _render_docking(outputs, port):
-    """`port`: the "port" block of tlm/target, present when a docking port is targeted."""
+def _render_docking(outputs, port, rates):
+    """`port`: the "port" block of tlm/target, present when a docking port is targeted; `rates`: DockingRates.rates."""
     own_axes = port if port and 'right' in port else None
     for display, (field, decimals, digits) in SIGNED_PORT_DISPLAYS.items():
         outputs.text(display, fit_number(own_axes[field] if own_axes else None, decimals, digits, signed=True))
+    for name in ANGLES:
+        outputs.text(f'disp_{name}_rate', fit_number(rates.get(name) if own_axes else None, 1, 4, signed=True))
     outputs.text('disp_axial', fit_number(port['axial'] if port else None, 2, 5))
-    approach_speed = -port['v_axial'] if port else None         # v_axial is along the port's outward axis
-    outputs.text('disp_vaxial', fit_number(approach_speed, 2, 4, signed=True))
+    # RANGE and its RATE along the port's outward axis: the rate is how fast the range changes, negative while closing,
+    # like the lateral and vertical rates above it
+    outputs.text('disp_vaxial', fit_number(port['v_axial'] if port else None, 2, 4, signed=True))
+    approach_speed = -port['v_axial'] if port else None
 
-    aligned = bool(own_axes) and max(abs(own_axes['yaw']), abs(own_axes['pitch'])) <= S.ALIGNED_WITHIN_DEG
-    outputs.lamp('lamp_aligned', aligned)
     outputs.lamp('lamp_capture', bool(port) and _inside_capture_envelope(port, own_axes, approach_speed))
 
 

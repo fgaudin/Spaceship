@@ -1,20 +1,18 @@
 /* RETRO, retrofire officer: the way home. Periapsis against the entry corridor, the Δv to deorbit from apoapsis,
-   entry loads, and which abort mode fits the moment against the one the crew has selected. */
+   entry loads. */
 import { box, figures, fixed, km } from '../ui.js';
-import { orbit, flight, vessel, store } from '../bus.js';
+import { orbit, flight, store } from '../bus.js';
 import { bodyOf } from '../bodies.js';
 
 // Kerbin entry corridor for a capsule (vacuum periapsis): shallower skips or overheats less but lands long.
 const CORRIDOR_LOW_M = 25000, CORRIDOR_HIGH_M = 45000;
 const DEORBIT_TARGET_PERIAPSIS_M = 35000;
-const ABORT_MODES = ['PAD', 'ASCENT', 'ORBIT', 'DESCENT'];
 
-let setEntry, setAbort;
+let setEntry;
 
 export function mount(root) {
   setEntry = figures(box(root, 'ENTRY', { at: [0, 0] }), [['peri', 'Periapsis'], ['corridor', 'Corridor'], ['deorbit', 'Deorbit Δv at apoapsis'],
     ['g', 'Load'], ['q', 'Dynamic pressure'], ['heat', 'Hottest part']]);
-  setAbort = figures(box(root, 'ABORT MODE', { at: [1, 0] }), [['advised', 'Fits now'], ['selected', 'Crew selected'], ['match', 'Check']]);
 }
 
 /* Δv (m/s) at apoapsis, retrograde, to bring the periapsis down to the target. */
@@ -25,14 +23,6 @@ function deorbitDeltaV(o, body) {
   const now = speed(apoapsisRadius, body.radius + (o.apo + o.peri) / 2);
   const after = speed(apoapsisRadius, body.radius + (o.apo + DEORBIT_TARGET_PERIAPSIS_M) / 2);
   return now - after;
-}
-
-export function advisedAbortMode() {
-  const craft = vessel(), height = flight().alt || 0, body = orbit().body;
-  if (craft.situation === 'pre_launch') return 'PAD';
-  if (body && body !== 'Kerbin') return 'DESCENT';
-  if (craft.situation === 'orbiting' || height > 70000) return 'ORBIT';
-  return 'ASCENT';
 }
 
 export function update() {
@@ -48,11 +38,4 @@ export function update() {
   setEntry('q', fixed(f.q == null ? null : f.q / 1000, 1, 'kPa'));
   const heat = store['tlm/thermal']?.max;
   setEntry('heat', heat == null ? '—' : `${Math.round(heat * 100)} % of limit`, heat > 0.8 ? 'bad' : heat > 0.6 ? 'warn' : '');
-
-  const advised = advisedAbortMode();
-  const knob = store['panel/eng/in/abort_mode']?.v;
-  const selected = knob == null ? null : ABORT_MODES[Number(knob) % ABORT_MODES.length];
-  setAbort('advised', advised, 'strong');
-  setAbort('selected', selected || '—');
-  setAbort('match', selected === advised ? 'agrees' : selected ? `call the crew: ${advised}` : '—', selected === advised ? 'good' : 'warn');
 }

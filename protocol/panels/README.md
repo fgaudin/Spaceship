@@ -35,7 +35,7 @@ does not notice. A module's heartbeat is `panel/<module>/status`.
 | panel `at` | where the panel sits on the module, in U from the module's top-left corner (`[column, row]`) |
 | panel `bus` | the topic namespace of its controls |
 | item `at` | the centre of the control block (indicator LED, component and legend), in mm from the faceplate's top-left corner. The panel title takes the top 12 mm. |
-| item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot`, `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`) |
+| item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot` (a lever), `knob` (a continuous knob, 0 to 1 over 270°), `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`). `toggle`, `guarded_toggle` and `rotary` take an indicator LED above them: `"led": {"out", "color"}` |
 
 Not there yet: a `pin` per control, for when the boards are designed.
 

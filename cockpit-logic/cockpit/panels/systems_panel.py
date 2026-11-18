@@ -1,14 +1,16 @@
-"""SYS panel: electrical, propellant and stage figures, event timer, recovery, time warp, game."""
-import math
+"""SYS module: electrical, propellant, event timer, recovery, time warp and game, lights."""
 
 from .. import settings as S
 from ..alarms import fraction_left
 from ..display_format import fit_number, format_event_time
 from ..messages import PanelOutputs, switch_lamp
 
-LAMPS = ['led_solar', 'led_brakes', 'lamp_chute', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause']
-DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_dv', 'disp_twr', 'disp_evt', 'disp_warp']
-BARS = ['bar_ec', 'bar_lf', 'bar_ox', 'bar_mono']
+SWITCHES_WITH_LAMP = ('solar', 'brakes', 'fuel_cell', 'lights')
+LAMPS = ['lamp_chute', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
+         *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP)]
+DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside']
+BARS = ['bar_ec', 'bar_lf', 'bar_ox', 'bar_mono', 'bar_ablator']
+LOCAL_SWITCHES = ('cabin_light', 'backlight')     # the cockpit's own lights: cockpit/lighting, nothing for the game
 EVENT_TIMER_BUTTONS = ('evt_start', 'evt_stop', 'evt_reset', 'evt_min', 'evt_sec')
 CHARGE_RATE_SMOOTHING = 0.3         # weight of the newest sample in the EC/s display
 
@@ -32,7 +34,9 @@ def handle_input(cockpit, change):
     if control == 'pause':
         return cockpit.command('cmd/pause', {'on': change.on}) if change.moved else []
     if control in ('quicksave', 'quickload'):
-        return cockpit.command('cmd/game', {control: True}) if change.pressed and cockpit.is_on('save_arm') else []
+        return cockpit.command('cmd/game', {control: True}) if change.pressed else []
+    if control in LOCAL_SWITCHES:
+        return []
     return None
 
 
@@ -107,8 +111,11 @@ def render(cockpit, wanted):
     outputs.lamp('led_pause', clock.get('paused'))
     outputs.lamp('led_chute_armed', cockpit.is_on('chute_arm'))
     outputs.lamp('lamp_chute', vessel.get('chute') == 'deployed')
-    for switch in ('solar', 'brakes'):
-        outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.is_on(switch)))
+    for switch in SWITCHES_WITH_LAMP:
+        outputs.lamp(f'led_{switch}', *switch_lamp(vessel.get(switch), cockpit.switch_wanted(switch)))
+    outside = cockpit.telemetry.get('tlm/thermal', {}).get('outside') if fresh else None
+    outputs.text('disp_outside', fit_number(outside, 0, 5, signed=True))
+    outputs.bar('bar_ablator', fraction_left(cockpit.resources.get('total', {}), 'Ablator') if fresh else 0.0)
 
 
 def _render_electrical_and_propellant(cockpit, outputs, fresh):
@@ -121,32 +128,6 @@ def _render_electrical_and_propellant(cockpit, outputs, fresh):
     outputs.bar('bar_mono', fraction_left(totals, 'MonoPropellant') if fresh else 0.0)
     outputs.text('disp_ec', fit_number(charge['amount'], 1, 5) if charge and fresh else '-----')
     outputs.text('disp_ec_rate', fit_number(cockpit.charge_rate, 2, 5, signed=True) if charge and fresh else '-----')
-    outputs.text('disp_dv', fit_number(stage_delta_v(cockpit), 0, 5) if fresh else '-----')
-    outputs.text('disp_twr', fit_number(thrust_to_weight(cockpit), 2, 4) if fresh else '----')
-
-
-def stage_delta_v(cockpit):
-    """Δv left in the current stage, or before ignition in the next one: the rocket equation on its propellant
-    (course TM-4). None when unknown."""
-    stage = cockpit.resources.get('stage', {})
-    units = sum(stage.get(name, {}).get('amount', 0.0) for name in ('LiquidFuel', 'Oxidizer', 'SolidFuel'))
-    propellant_mass = S.PROPELLANT_KG_PER_UNIT * units
-    mass, specific_impulse = cockpit.vessel.get('mass'), cockpit.propulsion()[1]
-    if not (mass and specific_impulse) or mass <= propellant_mass:
-        return None
-    return specific_impulse * S.STANDARD_GRAVITY * math.log(mass / (mass - propellant_mass))
-
-
-def thrust_to_weight(cockpit):
-    """Available thrust over weight in the local gravity. None when the body or the altitude is unknown."""
-    body = S.BODIES.get(cockpit.orbit.get('body'))
-    mass, altitude = cockpit.vessel.get('mass'), cockpit.flight.get('alt')
-    if not (body and mass) or altitude is None:
-        return None
-    gravitational_parameter, radius = body
-    local_gravity = gravitational_parameter / (radius + altitude) ** 2
-    thrust = cockpit.propulsion()[0]
-    return thrust / (mass * local_gravity) if thrust is not None else None
 
 
 def _render_event_timer(cockpit, outputs, fresh):

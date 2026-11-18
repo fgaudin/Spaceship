@@ -39,18 +39,18 @@ def check(name, cond):
 
 
 cli.publish('sim/reset', '{}', qos=1)
-for c, v in (('cb_main', 1), ('eng_arm', 0), ('stage_arm', 0), ('abort_arm', 0), ('throttle', 0), ('sas', 0), ('disp_sel', 0)):
+for c, v in (('cb_main', 1), ('eng_arm', 0), ('stage_arm', 0), ('abort_arm', 0), ('throttle', 0), ('sas', 0)):
     inp(c, v)
 wait(lambda: seen.get('tlm/vessel', {}).get('situation') == 'pre_launch', what='reset')
 check('telemetry flowing', 'tlm/flight' in seen and 'tlm/vessel' in seen)
 check('gateway status mock', seen.get('gateway/status', {}).get('plant') == 'mock')
-check('TWR and stage Δv on the pad, before ignition', wait(lambda: '-' not in (seen.get('panel/sys/out/disp_twr') or {}).get('text', '-')
-                                                            and float(seen['panel/sys/out/disp_twr']['text']) > 1, what='pad TWR') and
-      '-' not in seen['panel/sys/out/disp_dv']['text'])
+check('TWR and stage Δv on the pad, before ignition', wait(lambda: '-' not in (out('disp_twr') or {}).get('text', '-')
+                                                            and float(out('disp_twr')['text']) > 1, what='pad TWR') and
+      '-' not in out('disp_dv')['text'])
 
 inp('lamp_test', 1, retain=False)
 check('lamp test: high g lit', out('cw_high_g') == {'on': True, 'blink': False})
-check('lamp test: displays all eights', out('disp_a', ) and out('disp_a')['text'].startswith('8.8.'))
+check('lamp test: displays all eights', out('disp_alt') and out('disp_alt')['text'].startswith('8.8.'))
 inp('lamp_test', 0, retain=False)
 check('lamp test released', out('cw_high_g') == {'on': False, 'blink': False})
 
@@ -70,10 +70,9 @@ wait(lambda: seen.get('tlm/flight', {}).get('alt', 0) > 200, what='liftoff')
 check('liftoff', True)
 wait(lambda: out('disp_met') and out('disp_met')['text'] not in ('00.00.00', '--.--.--'), what='MET running')
 check('MET running', True)
-check('DISP A shows altitude in km', float(out('disp_a')['text']) > 0.1)
-inp('disp_sel', 3)
+check('ASCENT shows the altitude in km', float(out('disp_alt')['text']) > 0.1)
 time.sleep(0.6)
-check('DISP A shows velocity', float(out('disp_a')['text']) > 20)
+check('ASCENT shows the surface speed', float(out('disp_srf')['text']) > 20)
 
 inp('sas', 1)
 wait(lambda: seen.get('tlm/vessel', {}).get('sas') is True, what='sas on')
@@ -98,12 +97,12 @@ wait(lambda: not (out('cw_no_link') or {}).get('on'), timeout=6, what='link back
 check('NO LINK clears', True)
 
 inp('cb_main', 0)
-check('main bus off: displays blank', out('disp_a') == {'text': '', 'blank': True, 'blink': False})
+check('main bus off: displays blank', out('disp_alt') == {'text': '', 'blank': True, 'blink': False})
 wait(lambda: seen.get('tlm/vessel', {}).get('throttle') == 0.0, what='throttle cut')
 check('main bus off: throttle cut', True)
 inp('cb_main', 1)
 
-# ---------- second flight: engine display and extras, burn computer, target, game, abort modes ----------
+# ---------- second flight: engine display and extras, burn computer, target, game, abort ----------
 def pin(panel, ctl, v, retain=True):
     cli.publish(f'panel/{panel}/in/{ctl}', json.dumps({'v': v}), qos=1, retain=retain)
     time.sleep(0.3)
@@ -131,8 +130,8 @@ def ok(pred, timeout=8):
 
 cli.publish('sim/reset', '{}', qos=1)
 for pnl, c, v in (('eng', 'throttle', 0), ('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0), ('eng', 'abort_arm', 0), ('eng', 'sas', 0),
-                  ('eng', 'rcs', 0), ('eng', 'abort_mode', 0), ('eng', 'thrust_lim', 1), ('eng', 'gimbal_lock', 0),
-                  ('cmp', 'burn_arm', 0), ('rdv', 'ctrl_port', 0), ('sys', 'pause', 0), ('sys', 'save_arm', 0), ('sys', 'evt_src', 0)):
+                  ('eng', 'rcs', 0), ('eng', 'thrust_lim', 1), ('eng', 'gimbal_lock', 0),
+                  ('cmp', 'burn_arm', 0), ('rdv', 'ctrl_port', 0), ('sys', 'pause', 0), ('sys', 'evt_src', 0)):
     pin(pnl, c, v)
 press('cmp', 'pad_clr')
 wait(lambda: seen.get('tlm/vessel', {}).get('situation') == 'pre_launch', what='second reset')
@@ -189,7 +188,7 @@ pin('cmp', 'burn_arm', 0); pin('eng', 'throttle', 0.0)
 press('rdv', 'tgt_next')
 check('TGT ▸ selects the nearest vessel', ok(lambda: pout('rdv', 'txt_tgt').get('text') == 'STATION' and pout('rdv', 'led_tgt').get('on')))
 check('range and closing speed displayed', ok(lambda: 30 <= float(pout('rdv', 'disp_range')['text']) <= 2000 and pout('rdv', 'disp_closing')['text'].startswith('+')))
-check('closing above the gate: OVERSPEED and CLOSING caution', ok(lambda: pout('rdv', 'lamp_overspeed').get('on') and pout('eng', 'cw_closing').get('on')))
+check('closing above the braking gate: CLOSING caution', ok(lambda: pout('eng', 'cw_closing').get('on')))
 press('rdv', 'port_next')
 check('PORT ▸ targets a docking port: alignment shown', ok(lambda: pout('rdv', 'led_port').get('on') and pout('rdv', 'disp_yaw').get('text') == '+1.5' and pout('rdv', 'disp_right').get('text') == '+0.10'))
 pin('rdv', 'ctrl_port', 1)
@@ -220,14 +219,10 @@ pin('sys', 'pause', 0)
 check('clock runs again', ok(lambda: seen['tlm/time']['met'] > m0))
 seen.pop('cmd/game', None)
 press('sys', 'quicksave')
-time.sleep(0.5)
-check('QUICK SAVE refused without SAVE ARM', 'cmd/game' not in seen)
-pin('sys', 'save_arm', 1)
-press('sys', 'quicksave')
+check('QUICK SAVE needs no guard', ok(lambda: seen.get('cmd/game') == {'quicksave': True}))
 m1 = seen['tlm/time']['met']; time.sleep(1.5)
 press('sys', 'quickload')
 check('QUICK LOAD goes back to the save', ok(lambda: seen['tlm/time']['met'] < m1 + 1.0, 3))
-pin('sys', 'save_arm', 0)
 met = seen['tlm/time']['met']
 cli.publish('pad/uplink', json.dumps({'tig_met': met + 400, 'dv': [5.0, 0, 0]}), qos=1); time.sleep(0.3)
 press('cmp', 'pad_accept')
@@ -270,18 +265,14 @@ cli.publish('cam/status', json.dumps({'online': False, 'playing': False}), qos=1
 cli.publish('cam/list', json.dumps({'cameras': []}), qos=1, retain=True)
 check('monitor gone → NO MONITOR', ok(lambda: pout('lab', 'txt_cam').get('text') == 'NO MONITOR'))
 
-# abort mode ASCENT: leave the launcher by staging, SAS and RCS forced on
-st0 = seen['tlm/vessel']['stage']
-pin('eng', 'abort_mode', 1); pin('eng', 'abort_arm', 1); press('eng', 'abort')
-check('ABORT in ASCENT mode stages', ok(lambda: seen['tlm/vessel']['stage'] == st0 - 1))
-time.sleep(2.5)                                    # longer than the panel-wins re-assert period
-check('abort holds SAS and RCS on against the switches', seen['tlm/vessel']['sas'] is True and seen['tlm/vessel']['rcs'] is True)
-pin('eng', 'sas', 1); pin('eng', 'sas', 0)
-check('moving the SAS switch takes it back', ok(lambda: seen['tlm/vessel']['sas'] is False))
+# ABORT fires KSP's abort group, nothing else: in the mock the capsule leaves everything behind
+pin('eng', 'abort_arm', 1); press('eng', 'abort')
+check('ABORT fires the abort group', ok(lambda: seen.get('cmd/abort') == {} and seen['tlm/vessel']['stage'] == 0))
+check('ABORT lamp blinks', ok(lambda: pout('eng', 'lamp_abort') == {'on': True, 'blink': True}))
 
 cli.publish('sim/reset', '{}', qos=1)
-for pnl, c, v in (('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0), ('eng', 'abort_arm', 0), ('eng', 'abort_mode', 0), ('eng', 'throttle', 0),
-                  ('eng', 'sas', 0), ('eng', 'rcs', 0), ('eng', 'disp_sel', 0)):
+for pnl, c, v in (('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0), ('eng', 'abort_arm', 0), ('eng', 'throttle', 0),
+                  ('eng', 'sas', 0), ('eng', 'rcs', 0)):
     pin(pnl, c, v)
 print(f'\n{len(fails)} failed' if fails else '\nall passed')
 sys.exit(1 if fails else 0)

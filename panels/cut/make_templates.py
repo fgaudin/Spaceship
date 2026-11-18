@@ -184,10 +184,11 @@ def component(item, footprint, settings):
         half_w, half_h = ((columns - 1) * fp['pitch'] + fp['hole']) / 2 + fp['pad'], ((rows - 1) * fp['pitch'] + fp['hole']) / 2 + fp['pad']
         front = (-half_w, -half_h, half_w, half_h)
 
-    elif kind == 'rotary':
-        positions = item['positions']
+    elif kind in ('rotary', 'knob'):
+        # a selector's positions, or a continuous knob's scale over 270° (as the virtual console, widgets.js)
+        positions = item['positions'] if kind == 'rotary' else fp['scale']
         count = len(positions)
-        sweep = min(270, 45 * (count - 1))             # as the virtual console (widgets.js)
+        sweep = min(270, 45 * (count - 1)) if kind == 'rotary' else 270
         for index, position in enumerate(positions):
             angle = math.radians(-sweep / 2 + (sweep * index / (count - 1) if count > 1 else 0))
             sine = math.sin(angle)                     # legends read outward from the knob, as on a dial plate

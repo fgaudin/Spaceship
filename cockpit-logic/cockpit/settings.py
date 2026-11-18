@@ -11,6 +11,7 @@ SOLO_PANEL = 'solo'           # PAD requests to the flight dynamics service, fly
 LAB_PANEL = 'lab'            # experimental panels
 
 # ---------- link to the plant ----------
+NO_CHARGE_BELOW = 0.01              # electric charge left under this: no power, the panels go dark
 TELEMETRY_STALE_AFTER_S = 2.0       # older telemetry than this raises NO LINK and dashes the displays
 REASSERT_EVERY_S = 1.0              # a "panel wins" switch is re-commanded this often while the game disagrees
 SAS_MODE_RETRIES = 5                # a SAS mode the game does not take is sent again this many times
@@ -18,31 +19,15 @@ SAS_DISAGREE_AFTER_S = 2.0          # SAS switch against the game for this long:
 
 # Switches that simply mirror to a plant command: control name → command topic.
 TOGGLE_COMMANDS = {'sas': 'cmd/sas', 'rcs': 'cmd/rcs', 'gear': 'cmd/gear', 'lights': 'cmd/lights',
-                   'brakes': 'cmd/brakes', 'solar': 'cmd/solar'}
+                   'brakes': 'cmd/brakes', 'solar': 'cmd/solar', 'fuel_cell': 'cmd/fuel_cell'}
 # Of those, the ones the panel wins: re-commanded while the game disagrees. For the others the game wins (lamp only).
 PANEL_WINS = {'sas', 'rcs', 'lights'}
 
 # ---------- rotary selectors (position index → meaning) ----------
 SAS_MODES = ['stability', 'prograde', 'retrograde', 'normal', 'antinormal', 'radial', 'antiradial', 'target',
              'antitarget', 'maneuver']
-MAIN_DISPLAY_SOURCES = ['ALT', 'APO', 'PERI', 'VEL', 'V/S', 'MASS']
 EVENT_TIMER_SOURCES = ['MAN', 'TIG', 'APO', 'PERI', 'SOI']
-ABORT_MODES = ['PAD', 'ASCENT', 'ORBIT', 'DESCENT']
 SPEED_MODES = ['orbit', 'surface', 'target']    # the navball's speed reference: what PRO and RETRO follow
-
-# What ABORT does in each mode, in order. Steps:
-#   cut_throttle  throttle to 0, held until the lever is back at idle
-#   abort_group   KSP's abort action group (what the craft's builder wired: escape tower, decouplers)
-#   stage         next stage
-#   sas_hold / sas_radial_out   SAS on, in stability / radial-out mode
-#   rcs_on        RCS on
-# SAS and RCS states forced by an abort hold until the pilot moves that switch.
-ABORT_SEQUENCES = {
-    'PAD': ('cut_throttle', 'abort_group'),                     # escape tower
-    'ASCENT': ('cut_throttle', 'stage', 'sas_hold', 'rcs_on'),  # tower gone: leave the launcher by staging
-    'ORBIT': ('cut_throttle', 'sas_hold', 'rcs_on'),            # stop the burn, nothing is thrown away
-    'DESCENT': ('abort_group', 'sas_radial_out', 'rcs_on'),     # lander: nose up; the throttle stays with the pilot
-}
 
 # ---------- engine and throttle ----------
 HAND_CONTROLLER_DEADBAND = 0.05     # a stick axis under this is zero
@@ -67,14 +52,11 @@ SINK_RATE_BELOW_ALTITUDE_M = 1000.0
 SINK_RATE_BASE_M_S, SINK_RATE_PER_ALTITUDE = 8.0, 0.1   # allowed descent rate: 8 m/s + 10 % of the radar altitude
 GEAR_UP_BELOW_ALTITUDE_M = 300.0
 CHUTE_BELOW_ALTITUDE_M = 15000.0
-SOI_CHANGE_WITHIN_S = 120.0
 ATTITUDE_ERROR_LIMIT_DEG = 5.0      # off the burn attitude by more than this ...
 ATTITUDE_ERROR_WINDOW_S = 30.0      # ... from this long before TIG
 RESIDUAL_MIN_M_S, RESIDUAL_FRACTION = 0.5, 0.02     # Δv residual after cutoff: 0.5 m/s or 2 % of the burn
 ENTRY_G_FORCE = 0.05                # the 0.05 G light (as on Mercury): drag is felt, the entry has begun
 
-# Lowest safe periapsis (m): top of the atmosphere, or just above the highest terrain.
-SAFE_PERIAPSIS_M = {'Kerbin': 70000.0, 'Mun': 7100.0, 'Minmus': 5800.0}
 # Gravitational parameter μ (m³/s²) and radius (m) of the bodies a Mun trip visits, for the TWR display.
 BODIES = {'Kerbin': (3.5316e12, 600000.0), 'Mun': (6.5138398e10, 200000.0), 'Minmus': (1.7658e9, 60000.0)}
 STANDARD_GRAVITY = 9.80665
@@ -86,7 +68,7 @@ BRAKING_GATE_TIME_S = 400.0         # allowed closing speed = range / 400 s ...
 BRAKING_GATE_FLOOR_M_S = 0.05       # ... but never under 0.05 m/s
 CLOSING_CAUTION_MARGIN = 1.2        # CLOSING caution at 20 % over the gate
 RANGE_IN_KM_FROM_M = 100000.0       # the range display switches to km from 100 km
-ALIGNED_WITHIN_DEG = 2.0            # yaw and pitch error under this lights ALIGNED
+DOCKING_RATE_SMOOTHING = 0.4       # weight of the newest sample in the yaw, pitch and roll rates
 # Capture envelope: closing speed, lateral offset and angle at contact; the lamp only works within 10 m.
 CAPTURE_SPEED_MIN_M_S, CAPTURE_SPEED_MAX_M_S = 0.03, 0.3
 CAPTURE_LATERAL_MAX_M = 0.3
@@ -104,11 +86,6 @@ CROSS_POINTER_ANGLE_SCALES_DEG = (4.0, 20.0, 90.0)
 CROSS_POINTER_OFFSET_SCALES_M = (1.0, 4.0, 20.0, 100.0)
 CROSS_POINTER_DRIFT_SCALES_M_S = (2.0, 10.0, 50.0, 250.0)
 CROSS_POINTER_MOVING_ABOVE_M_S = 1.0    # under this speed prograde and retrograde mean nothing
-# BRAKE lamp from 1.6 times the height needed to stop at full thrust, blinking from 1.3 times. Flown in KSP: the
-# height used was up to 7 % more than predicted (throttle latency, thrust off the vertical).
-BRAKE_SOON_MARGIN = 1.6
-BRAKE_NOW_MARGIN = 1.3
-BRAKE_ONLY_BELOW_VERTICAL_SPEED_M_S = 1.0   # the lamp stays dark unless descending faster than this
 ACTION_GROUP_COUNT = 10
 BODY_NAME_CHARACTERS = 8
 CAMERA_NAME_CHARACTERS = 16

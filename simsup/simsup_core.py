@@ -39,7 +39,7 @@ FAILURES = {
     'overheat': ('Thermal', 'Overheat (mock plant only)', 'plant', {}),
     'false_alarm': ('Instruments', 'A caution or warning lights with no cause', 'cockpit', {'alarm': 'cw_low_fuel'}),
     'panel_dark': ('Instruments', 'A panel loses power: dark and dead', 'cockpit', {'panel': 'sys'}),
-    'display_frozen': ('Instruments', 'A display freezes on its last value', 'cockpit', {'output': 'eng/disp_a'}),
+    'display_frozen': ('Instruments', 'A display freezes on its last value', 'cockpit', {'output': 'eng/disp_alt'}),
     'switch_stuck': ('Instruments', 'A switch or button does nothing', 'cockpit', {'control': 'sas'}),
 }
 

@@ -3,7 +3,7 @@ model them: instruments and switches. Failures of the vehicle (engines, RCS, com
 
     false_alarm     {"alarm": "cw_low_fuel"}     that caution or warning lights with no cause
     panel_dark      {"panel": "sys"}             the panel loses power: every output dark, every input dead
-    display_frozen  {"output": "eng/disp_a"}     the display keeps the value it showed when the failure came
+    display_frozen  {"output": "eng/disp_alt"}   the display keeps the value it showed when the failure came
     switch_stuck    {"control": "sas"}           the switch or button does nothing
 """
 COCKPIT_FAILURES = ('false_alarm', 'panel_dark', 'display_frozen', 'switch_stuck')

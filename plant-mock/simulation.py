@@ -14,7 +14,7 @@ import vehicle as V
 from vehicle import STAGES
 
 SWITCH_COMMANDS = {'cmd/sas': 'sas', 'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
-                   'cmd/brakes': 'brakes'}
+                   'cmd/brakes': 'brakes', 'cmd/fuel_cell': 'fuel_cell'}
 GROUND_SITUATIONS = ('pre_launch', 'landed', 'crashed')
 ACTION_GROUP_COUNT = 10
 ON_THE_PAD = -1                 # value of `firing_stage` before the first staging
@@ -25,6 +25,7 @@ WARP_TO_SECONDS_AHEAD = 4       # warp at a rate only while the time left is at 
 ROLL_PROGRAM_START_S, ROLL_PROGRAM_LENGTH_S = 8.0, 12.0     # a 90° roll shortly after liftoff, for the attitude display
 # electric charge, units per second
 BASE_DRAIN, LIGHTS_DRAIN, SAS_DRAIN, SOLAR_CHARGE, SHORT_CIRCUIT_DRAIN = 0.5, 3.0, 1.0, 2.5, 20.0
+FUEL_CELL_CHARGE = 1.5                         # EC/s while the fuel cell runs
 
 
 def clamp(value, low, high):
@@ -55,6 +56,7 @@ class Plant:
         self.sas_mode = 'stability'
         self.speed_mode = 'surface'
         self.solar_deployed, self.parachute = False, 'stowed'
+        self.fuel_cell = False
         self.antenna_deployed = False
         self.action_groups = [False] * ACTION_GROUP_COUNT
         self.warp_index, self.warp_to_time, self.paused = 0, None, False
@@ -296,7 +298,7 @@ class Plant:
 
     def _drain_battery(self, time_step):
         rate = BASE_DRAIN + (LIGHTS_DRAIN if self.lights else 0) + (SAS_DRAIN if self.sas else 0) \
-            - (SOLAR_CHARGE if self.solar_deployed else 0) + (SHORT_CIRCUIT_DRAIN if 'battery_short' in self.failures else 0)
+            - (SOLAR_CHARGE if self.solar_deployed else 0) - (FUEL_CELL_CHARGE if self.fuel_cell else 0) + (SHORT_CIRCUIT_DRAIN if 'battery_short' in self.failures else 0)
         self.electric_charge = clamp(self.electric_charge - rate * time_step, 0.0, V.BATTERY_CAPACITY)
 
     # ---------- orbit ----------
@@ -376,7 +378,7 @@ class Plant:
             'tlm/resources': self._resource_telemetry(),
             'tlm/target': self._target_telemetry(),
             'tlm/engines': self._engine_telemetry(),
-            'tlm/thermal': {'max': 0.9 if 'overheat' in self.failures else 0.2},
+            'tlm/thermal': {'max': 0.9 if 'overheat' in self.failures else 0.2, 'outside': self.outside_temperature()},
             'tlm/node': ({'set': True, **self.maneuver_node, 'att_err': 1.0, 'yaw': 0.6, 'pitch': -0.8}
                          if self.maneuver_node else {'set': False}),
             'tlm/comm': {'link': link_up, 'strength': 0.8 if link_up else 0.0, 'hops': 1 if link_up else 0,
@@ -407,6 +409,7 @@ class Plant:
                 'situation': self.situation, 'stage': self.ksp_stage_number(), 'throttle': self.throttle,
                 'sas': self.sas, 'rcs': self.rcs, 'gear': self.gear, 'lights': self.lights, 'brakes': self.brakes,
                 'sas_mode': self.sas_mode, 'speed_mode': self.speed_mode, 'solar': self.solar_deployed, 'chute': self.parachute,
+                'fuel_cell': self.fuel_cell,
                 'comm': 'comm_lost' not in self.failures, 'has_gear': False,
                 'contact': self.situation in ('pre_launch', 'landed')}
 
@@ -434,6 +437,13 @@ class Plant:
                              'right': 0.1, 'up': 0.05, 'fwd': round(self.target_range, 3),
                              'v_right': -0.01, 'v_up': 0.0, 'yaw': 1.5, 'pitch': -0.5, 'roll': 4.0}
         return state
+
+    def outside_temperature(self):
+        """°C: a standard atmosphere, cooling 6.5 °C per km down to −60 °C, and space's 4 K above the atmosphere."""
+        altitude = math.hypot(self.x, self.y) - V.RADIUS
+        if altitude >= V.ATMOSPHERE_TOP:
+            return -269.0
+        return round(max(-60.0, 15.0 - 0.0065 * altitude), 1)
 
     def static_pressure(self):
         altitude = math.hypot(self.x, self.y) - V.RADIUS

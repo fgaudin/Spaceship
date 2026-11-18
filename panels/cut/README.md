@@ -47,7 +47,7 @@ named in `part`: measure the real one when it is in hand, edit, and run the scri
   mounting holes: `{"circle": 3.2, "at": [0, -9]}`, `{"rect": [2, 4], "r": 0.5, "at": [8, 0]}`.
 - Types with repeated cells have their own fields: `annunciator` (`cell`, `pitch`), `seg7` (`digit_pitch`),
   `bar` (`segment_pitch`), `matrix` (`mode` holes or window, `hole`, `pitch`), `alpha` (`char_pitch`), `keypad`
-  (`key`, `gap`, `side_key_width`), `rotary` (`cut`, `knob`, `legend_radius`), `pot` (`travel`, `slot_width`,
+  (`key`, `gap`, `side_key_width`), `rotary` (`cut`, `knob`, `legend_radius`), `knob` (the same, with its `scale`), `pot` (`travel`, `slot_width`,
   `cap`), `screen` (`margin`, `top`, `extra` for the screen's mounting holes).
 - `plate`: corner radius, the mounting holes (diameter, inset from the edges, screw head for the check; they must
   match the frame adapter), the title band, the margin kept free along the edges.
@@ -72,7 +72,6 @@ After writing, the script lists:
 - a screen window that does not fit;
 - an item type with no footprint, a character the stroke font has no glyph for (drawn as a box).
 
-With the placeholder footprints some panels already report issues (2026-11-17): the 12 mm guarded toggles' covers are
-bigger than the virtual console draws them, the real 7-segment digits are wider, and the C&W annunciator grid is
-taller. That is the point of the check: when a part is chosen, put its size here, and move the controls in
+With the placeholder footprints some panels already report issues (2026-11-18: 14): the 12 mm guarded toggles'
+covers are bigger than the virtual console draws them, and the real 7-segment digits are wider (ASCENT, PAD). That is the point of the check: when a part is chosen, put its size here, and move the controls in
 `protocol/panels/<module>.json` until both the console page and this script report nothing.

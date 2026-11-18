@@ -19,6 +19,7 @@ ORBIT_STREAMS = ('body', 'apoapsis_altitude', 'periapsis_altitude', 'semi_major_
                  'period', 'time_to_apoapsis', 'time_to_periapsis', 'time_to_soi_change', 'true_anomaly',
                  'argument_of_periapsis', 'longitude_of_ascending_node')
 MOVING_ABOVE_M_S = 1.0          # under this speed the direction of travel means nothing
+KELVIN_AT_0_CELSIUS = 273.15
 
 NO_VESSEL, SAME_VESSEL, NEW_VESSEL = 'no vessel', 'same vessel', 'new vessel'
 
@@ -126,6 +127,7 @@ class VesselLink:
             # Slow to change, or only published on the slow cycle.
             **open_all(SLOW_HZ, {
                 'static_pressure': (over_the_ground, 'static_pressure'),
+                'outside_temperature': (over_the_ground, 'static_air_temperature'),
                 'speed_mode': (control, 'speed_mode'),
                 'available_thrust': (vessel, 'available_thrust'),
                 'specific_impulse': (vessel, 'specific_impulse'),
@@ -182,7 +184,8 @@ class VesselLink:
                 'stage': self.parts.stage_propellant(now['stage']),
                 'total': self.parts.total_resources()}
             payloads['tlm/engines'] = self.parts.engine_telemetry()
-            payloads['tlm/thermal'] = self.parts.thermal_telemetry()
+            payloads['tlm/thermal'] = {**self.parts.thermal_telemetry(),
+                                       'outside': round(now['outside_temperature'] - KELVIN_AT_0_CELSIUS, 1)}
             payloads['tlm/node'] = self._node_payload()
             payloads['tlm/comm'] = self._comm_payload(now)
             payloads['tlm/groups'] = {'on': [bool(group()) for group in self.action_groups]}
@@ -232,6 +235,7 @@ class VesselLink:
                 'sas': now['sas'], 'rcs': now['rcs'], 'gear': now['gear'], 'lights': now['lights'],
                 'brakes': now['brakes'], 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
                 'solar': self.parts.solar_deployed_state(), 'chute': self.parts.parachute_state(),
+                'fuel_cell': self.parts.fuel_cell_state(),
                 'comm': now['can_communicate'], 'has_gear': self.parts.has_landing_gear(),
                 'contact': situation in GROUND_SITUATIONS or self.parts.touches_ground()}
 
