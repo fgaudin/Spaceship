@@ -58,6 +58,10 @@ if (embedded) {
   document.documentElement.classList.add('embedded');
   window.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') window.parent.postMessage({ type: 'console-escape' }, location.origin);
+    if (event.code === 'AltLeft') window.parent.postMessage({ type: 'console-modules', on: true }, location.origin);
+  });
+  window.addEventListener('keyup', (event) => {
+    if (event.code === 'AltLeft') window.parent.postMessage({ type: 'console-modules', on: false }, location.origin);
   });
   // the wheel zooms the console, as it does everywhere else on it
   window.addEventListener('wheel', (event) => {

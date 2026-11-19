@@ -35,7 +35,7 @@ Each module is a dumb I/O node like its future ESP32: it publishes raw inputs (`
 switches), draws what the cockpit logic sends (`panel/eng/out/<output>`) and its heartbeat. Controls: guarded toggles (click the red guard to open
 it; closing it pushes the switch off), toggles with their indicator LED, lit push buttons, a throttle lever, rotary
 selectors (click / shift-click / wheel), 7-segment displays, LED bar graphs, an annunciator matrix, a tone.
-Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus** checkbox shows a live sniffer. Resetting
+Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test, Left Alt (held) = every module's name and boundary. The **bus** checkbox shows a live sniffer. Resetting
 the simulation and injecting failures are on the SIMSUP page.
 
 **Modules** (on the CONSOLE page): ENG (C&W, engine and staging, ascent and descent displays, propellant, radio link, abort), SYS (time warp, lights and fan, event timer, save), RES (electrical, life support), AUX (camera, action groups), LND (landing aid), RNT (reentry and recovery), SCI (science), CMP (burn

@@ -49,6 +49,13 @@ body { margin: 0; background: radial-gradient(ellipse at top, #1b1e21, var(--bg)
 .module { position: absolute; background: #08090a; }
 .module::after { content: ""; position: absolute; inset: 0; border: 1.5px solid #ffffff38; pointer-events: none; }
 .console.panning { cursor: grabbing; }
+/* Left Alt held: the modules' names and boundaries, the same size on screen at any zoom */
+.module-tag { display: none; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; max-width: 92%; width: max-content;
+  padding: .3em .7em; border-radius: 3px; background: var(--amber); color: #111; font-size: calc(14px / var(--view-zoom, 1)); font-weight: 700;
+  letter-spacing: .06em; line-height: 1.25; text-align: center; pointer-events: none; }
+.show-modules .module-tag { display: block; }
+.show-modules .plate { filter: brightness(.5); }
+.show-modules .module::after { z-index: 5; border: calc(3px / var(--view-zoom, 1)) solid var(--amber); }
 .zoom { display: inline-flex; gap: 2px; }
 .zoom button { white-space: nowrap; background: #2b3035; color: var(--legend); border: 1px solid #000; border-radius: 3px; padding: .1rem .5rem; cursor: pointer;
   font: inherit; min-width: 1.8rem; }

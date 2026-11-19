@@ -162,6 +162,8 @@ function buildModule(module) {
   Object.assign(element.style, { width: mm(sizeU[0] * U_MM), height: mm(sizeU[1] * U_MM) });
   modules.set(module.id, { definition: module, element, sizeU, client: null, restoring: true });
   for (const panel of module.panels) element.appendChild(buildPanel(module, panel));
+  const code = module.id.toUpperCase();
+  element.appendChild(createElement('div', 'module-tag', { textContent: module.title.startsWith(code) ? module.title : `${code} · ${module.title}` }));
   element.title = `${module.id.toUpperCase()} · ${module.title} · ${sizeU[0]}×${sizeU[1]} U · ${module.board} (double-click: fit)`;
   checkGrid(module.panels, (panel) => panel.size, (panel) => panel.id, `module ${module.id}`);
   return element;
@@ -262,6 +264,12 @@ const overview = () => document.getElementById('overview');
 
 function showZoom() {
   document.getElementById('zoom-level').textContent = `${Math.round(view.zoom * 100)} %`;
+  overview().style.setProperty('--view-zoom', view.zoom);    // keeps the module names one size at any zoom
+}
+
+/* While Left Alt is held: every module's name and boundary. */
+function showModules(on) {
+  overview().classList.toggle('show-modules', on);
 }
 
 /* The console and the side column (help, sniffer) fill the window under the top bar: nothing is below them. */
@@ -360,6 +368,7 @@ function wireViews() {
   window.addEventListener('message', (event) => {
     if (event.origin !== location.origin) return;
     if (event.data?.type === 'console-escape') fitAll();
+    if (event.data?.type === 'console-modules') showModules(Boolean(event.data.on));
     if (event.data?.type !== 'console-wheel') return;
     const frame = [...document.querySelectorAll('.glass iframe')].find((element) => element.contentWindow === event.source);
     if (!frame) return;
@@ -530,7 +539,13 @@ function wireSideResize() {
 /* Keyboard: Esc fits the whole console; keypad keys (Backspace = CLR); Space = STAGE, T = lamp test, arrows = throttle. */
 function wireKeyboard() {
   const heldKeys = new Set();     // so that a held key presses its button once
+  window.addEventListener('blur', () => showModules(false));     // Alt released in another window never reaches us
   window.addEventListener('keydown', (event) => {
+    if (event.code === 'AltLeft') {
+      event.preventDefault();                                    // no browser menu
+      showModules(true);
+      return;
+    }
     const typingInAField = event.target.tagName === 'INPUT' && !['range', 'checkbox'].includes(event.target.type);
     if (typingInAField || heldKeys.has(event.code)) return;
     if (event.key === 'Escape') {
@@ -557,6 +572,10 @@ function wireKeyboard() {
     if (event.code === 'ArrowDown') { event.preventDefault(); inputsByName.get('throttle')?.nudge(-THROTTLE_KEY_STEP); }
   });
   window.addEventListener('keyup', (event) => {
+    if (event.code === 'AltLeft') {
+      event.preventDefault();
+      showModules(false);
+    }
     heldKeys.delete(event.code);
     if (event.code === 'Space') inputsByName.get('stage')?.press(false);
     if (event.code === 'KeyT') inputsByName.get('lamp_test')?.press(false);

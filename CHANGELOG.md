@@ -9,6 +9,10 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   tapering outline (`outline` in `console.json`, replacing `taper`). The hand controllers stay outside the U grid.
 - **OVERHEAD** is cut to its 4 × 2 U and centred (`"align": "center"`).
 
+## 2026-11-19 — module names on the console
+
+- **Holding Left Alt** dims the panels and shows every module's boundary and name, at one size whatever the zoom.
+
 ## 2026-11-19 — SimSup, MCC and the docs catch up with the console
 
 - **`panel_dark` darkens one real panel** (`panel`: its id, suggested on the page), and no longer a whole bus. SimSup reads the
