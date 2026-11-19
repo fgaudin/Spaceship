@@ -58,7 +58,7 @@ seats for, pilots first, then flies the craft from that capsule (`cmd/station`).
 the kerbals in each, and TUNNEL when the two are docked. If the selector is turned back during the blackout, the crew
 goes back once it is over. Undocked, only the controls move: the game switches to the other capsule if it is close
 enough to be loaded. The selector wins: after a separation (the game stays on the side with the original root part)
-or "control from here" in the game, the controls go back to the capsule it names, if it has crew. The two windows (old 17" 5:4 monitors in portrait, 270 × 338 mm active area, 1024 × 1280, bare glass set into the board against MAIN's sides in a 22 mm riveted frame, 3.15 × 3.83 U, from 1 U below OVERHEAD's top; each holds its camera at 50° through JRTI) show that capsule's window cameras:
+or "control from here" in the game, the controls go back to the capsule it names, if it has crew. The two windows (old 17" 5:4 monitors in portrait, 270 × 338 mm active area, 1024 × 1280, bare glass set into the board against MAIN's sides in a 22 mm riveted frame, 3.15 × 3.83 U, their top level with MAIN's; each holds its camera at 50° through JRTI) show that capsule's window cameras:
 in the VAB, attach two Hullcam cameras straight onto each capsule, looking out where its windows would, and name them
 `cm_left`, `cm_right`, `lm_left`, `lm_right` in JRTI's part menu, the left ones rolled a quarter turn one way and the
 right ones the other: the left window turns its picture −90° (counter-clockwise) and the right one +90°

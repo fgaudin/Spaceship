@@ -42,8 +42,8 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   carried out by the gateway). The console goes dark for 15 s with TRANSFER blinking (throttle cut, inputs dead), then
   powers up with a 3 s lamp test. CM and LM lamps (the capsule with the controls), TUNNEL (docked: the crew can go
   across), CM CREW and LM CREW. Turned back during the blackout, the crew goes back once it is over.
-- **Two windows** (glass modules WNL and WNR, old 17" 5:4 monitors in portrait (270 × 338 mm), bare glass set into the board against MAIN's sides in a 22 mm riveted metal frame with 14 mm round corners (`screen.frame`), 3.15 × 3.83 U, from 1 U below
-  OVERHEAD's top: zones of their own, new `"side"`, `"top"` and `"flush"` in `console.json`, and `"bare"` panels, drawn
+- **Two windows** (glass modules WNL and WNR, old 17" 5:4 monitors in portrait (270 × 338 mm), bare glass set into the board against MAIN's sides in a 22 mm riveted metal frame with 14 mm round corners (`screen.frame`), 3.15 × 3.83 U, their top level
+  with MAIN's (`"top": 2.336` U below OVERHEAD's top): zones of their own, new `"side"`, `"top"` and `"flush"` in `console.json`, and `"bare"` panels, drawn
   without faceplate and not cut; MAIN keeps its 6 U Gemini outline): `cam.html?window=left|right` shows the camera the cockpit puts on `cam/window/left|right`, the current
   capsule's `cm_left`/`cm_right` or `lm_left`/`lm_right`, filling the glass; dark through the blackout. The window
   cameras are ordinary Hullcam cameras named in JRTI's part menu in the VAB; the gateway finds each capsule as the
