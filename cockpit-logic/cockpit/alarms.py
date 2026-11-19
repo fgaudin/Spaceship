@@ -49,7 +49,10 @@ def injected_false_alarms(cockpit):
 
 
 def active_alarms(cockpit):
-    """The set of active alarm names. Without a link nothing else can be trusted, so NO LINK stands alone."""
+    """The set of active alarm names. Without a link nothing else can be trusted, so NO LINK stands alone; but in the
+    VAB or the SPH there is no ship to lose: no alarm at all."""
+    if not cockpit.link_up and str(cockpit.scene or '').startswith(S.QUIET_SCENE_PREFIX):
+        return set()
     if not cockpit.telemetry_is_fresh() or not cockpit.link_up:
         return {'cw_no_link'}
     active = injected_false_alarms(cockpit)

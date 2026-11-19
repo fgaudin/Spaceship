@@ -1,0 +1,103 @@
+{
+  "id": "stn",
+  "title": "STATION",
+  "fw": "virtual-0.1",
+  "board": "olimex-esp32-poe",
+  "panels": [
+    {
+      "id": "station",
+      "title": "STATION",
+      "size": [
+        1,
+        2
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "rotary",
+          "id": "station",
+          "label": "STATION",
+          "in": "station",
+          "positions": [
+            "CM",
+            "LM"
+          ],
+          "at": [
+            50,
+            40
+          ]
+        },
+        {
+          "type": "annunciator",
+          "id": "stn_at",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_stn_cm",
+              "label": "CM",
+              "color": "green"
+            },
+            {
+              "out": "lamp_stn_lm",
+              "label": "LM",
+              "color": "green"
+            }
+          ],
+          "at": [
+            50,
+            82
+          ]
+        },
+        {
+          "type": "annunciator",
+          "id": "stn_move",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "led_xfer",
+              "label": "TRANSFER",
+              "color": "amber"
+            },
+            {
+              "out": "lamp_tunnel",
+              "label": "TUNNEL",
+              "color": "white"
+            }
+          ],
+          "at": [
+            50,
+            120
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_cm_crew",
+          "label": "CM CREW",
+          "out": "disp_cm_crew",
+          "digits": 1,
+          "color": "green",
+          "at": [
+            30,
+            160
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_lm_crew",
+          "label": "LM CREW",
+          "out": "disp_lm_crew",
+          "digits": 1,
+          "color": "green",
+          "at": [
+            70,
+            160
+          ]
+        }
+      ]
+    }
+  ]
+}

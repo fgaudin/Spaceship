@@ -59,7 +59,7 @@ def render(cockpit, wanted):
     if not cockpit.powered():
         outputs.all_dark(LAMPS, [*DISPLAYS, 'txt_tgt'])
         return
-    if cockpit.is_on('lamp_test'):
+    if cockpit.lamp_test():
         outputs.all_lit(LAMPS, DISPLAYS)
         outputs.text('txt_tgt', '*' * TARGET_NAME_CHARACTERS)
         return

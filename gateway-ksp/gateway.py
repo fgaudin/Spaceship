@@ -70,6 +70,14 @@ def run_commands(command_queue, commands, wait_until=None):
             print(f'slow command: {topic} {request} took {took:.2f} s', flush=True)
 
 
+def game_scene(link):
+    """The game's scene without a vessel: 'editor_vab', 'space_center', ... (the cockpit is quiet in the editors)."""
+    try:
+        return link.connection.krpc.game_scene.name
+    except Exception:
+        return 'no vessel'
+
+
 def fly(link, client, command_queue, publish_status, failures):
     """The telemetry loop for one kRPC connection. Returns only by raising (scene change, KSP quit, vessel gone)."""
     commands = CommandHandler(link, failures)
@@ -81,7 +89,7 @@ def fly(link, client, command_queue, publish_status, failures):
         if binding == NO_VESSEL:
             if time.monotonic() - status_sent_at > NO_VESSEL_STATUS_EVERY_S:
                 status_sent_at = time.monotonic()
-                publish_status(connected=False, scene='no vessel')
+                publish_status(connected=False, scene=game_scene(link))
             time.sleep(0.5)
             continue
         if binding == NEW_VESSEL or time.monotonic() - status_sent_at > STATUS_EVERY_S:
@@ -133,7 +141,7 @@ def main():
             fly(link, client, command_queue, publish_status, failures)
         except Exception as error:
             print('link lost:', repr(error)[:300], flush=True)
-            publish_status(connected=False, error=repr(error)[:200])
+            publish_status(connected=False, scene=game_scene(link), error=repr(error)[:200])
             link.close()
             time.sleep(RECONNECT_AFTER_S)
 

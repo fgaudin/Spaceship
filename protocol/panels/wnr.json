@@ -1,0 +1,44 @@
+{
+  "id": "wnr",
+  "title": "RIGHT WINDOW",
+  "fw": "window-glass-0.1",
+  "board": "raspberry-pi",
+  "panels": [
+    {
+      "id": "window_right",
+      "title": "RIGHT WINDOW",
+      "size": [
+        3.15,
+        3.83
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "screen": {
+        "page": "cam.html?window=right&rotate=90",
+        "inches": 17,
+        "mm": [
+          270,
+          338
+        ],
+        "px": [
+          1024,
+          1280
+        ],
+        "at": [
+          157,
+          191
+        ],
+        "frame": {
+          "width": 22,
+          "rivet": 5,
+          "rivet_every": 30,
+          "corner": 14
+        }
+      },
+      "items": [],
+      "bare": true
+    }
+  ]
+}

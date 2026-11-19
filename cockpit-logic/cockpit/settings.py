@@ -10,6 +10,7 @@ HAND_CONTROLLER_PANEL = 'hc'       # the hand controllers (USB joysticks), as a 
 SOLO_PANEL = 'solo'           # PAD requests to the flight dynamics service, flying solo
 LAB_PANEL = 'lab'            # experimental panels
 SCIENCE_PANEL = 'sci'
+STATION_PANEL = 'sys'          # the STATION selector (CM or LM), overhead
 
 # ---------- link to the plant ----------
 NO_CHARGE_BELOW = 0.01              # electric charge left under this: no power, the panels go dark
@@ -20,9 +21,12 @@ SAS_DISAGREE_AFTER_S = 2.0          # SAS switch against the game for this long:
 
 # Switches that simply mirror to a plant command: control name → command topic.
 TOGGLE_COMMANDS = {'sas': 'cmd/sas', 'rcs': 'cmd/rcs', 'gear': 'cmd/gear', 'lights': 'cmd/lights',
-                   'brakes': 'cmd/brakes', 'solar': 'cmd/solar', 'fuel_cell': 'cmd/fuel_cell'}
+                   'brakes': 'cmd/brakes', 'solar': 'cmd/solar', 'fuel_cell': 'cmd/fuel_cell',
+                   'rcs_fine': 'cmd/precision'}
 # Of those, the ones the panel wins: re-commanded while the game disagrees. For the others the game wins (lamp only).
-PANEL_WINS = {'sas', 'rcs', 'lights'}
+PANEL_WINS = {'sas', 'rcs', 'lights', 'rcs_fine'}
+# The tlm/vessel field a switch is compared with, when it is not named like the switch.
+SWITCH_TELEMETRY = {'rcs_fine': 'precision'}
 
 # ---------- rotary selectors (position index → meaning) ----------
 SAS_MODES = ['stability', 'prograde', 'retrograde', 'normal', 'antinormal', 'radial', 'antiradial', 'target',
@@ -35,7 +39,7 @@ FDAI_ERROR_SCALES_DEG = [5, 50]
 
 # ---------- engine and throttle ----------
 HAND_CONTROLLER_DEADBAND = 0.05     # a stick axis under this is zero
-FINE_CONTROL_SCALE = 0.3            # RCS FINE: the sticks command 30 % of their throw (KSP's precision mode is not in kRPC)
+FINE_CONTROL_SCALE = 0.3            # RCS FINE: the sticks command 30 % of their throw (KSP's precision mode scales only the keyboard)
 THROTTLE_IDLE_BELOW = 0.05          # the lever must come back under this to release a throttle cut
 THROTTLE_DISAGREE_ABOVE = 0.005     # game throttle this far from the one commanded: command it again (a 0.02 trickle
                                     # left after a save load gave 1 kN for minutes, and KSP will not time-warp then)
@@ -99,6 +103,7 @@ BODY_NAME_CHARACTERS = 8
 EXPERIMENT_NAME_CHARACTERS = 16
 BIOME_NAME_CHARACTERS = 12
 CAMERA_NAME_CHARACTERS = 16
+QUIET_SCENE_PREFIX = 'editor'     # gateway/status scenes with no alarm: editor_vab, editor_sph (building, not flying)
 
 # ---------- time warp ----------
 WARP_TO_EVENT_LEAD_S = 60.0         # WARP TO EVT stops this long before the event
@@ -107,3 +112,8 @@ EVENT_IMMINENT_S = 10.0             # the timer's RUN lamp blinks in the last 10
 # ---------- maneuver node mirror ----------
 NODE_ECHO_DELAY_S = 2.0             # after commanding a node, ignore the game's node for this long (stale telemetry)
 NODE_SAME_TIME_S, NODE_SAME_DELTA_V = 0.5, 0.05     # tolerances to recognise the node the cockpit itself made
+
+# ---------- STATION: moving between the CM and the LM ----------
+STATION_BLACKOUT_S = 15         # the console dark while the crew goes through the tunnel
+STATION_LAMP_TEST_S = 3         # then every lamp lit as it powers up
+STATION_REASSERT_EVERY_S = 2    # the controls sent back to the selector's capsule at most this often

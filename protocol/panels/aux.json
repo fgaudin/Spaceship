@@ -25,7 +25,7 @@
           "chars": 16,
           "at": [
             40,
-            44
+            30
           ]
         },
         {
@@ -36,7 +36,7 @@
           "out": "disp_cam",
           "at": [
             85,
-            44
+            30
           ],
           "color": "green"
         },
@@ -48,7 +48,7 @@
           "color": "green",
           "at": [
             26,
-            64
+            52
           ]
         },
         {
@@ -58,7 +58,7 @@
           "in": "cam_prev",
           "at": [
             50,
-            64
+            52
           ]
         },
         {
@@ -68,7 +68,18 @@
           "in": "cam_next",
           "at": [
             74,
-            64
+            52
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "cam_power",
+          "label": "MONITOR",
+          "in": "cam_power",
+          "default": 1,
+          "at": [
+            50,
+            80
           ]
         }
       ]

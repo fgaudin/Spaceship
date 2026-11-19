@@ -102,7 +102,7 @@ def render(cockpit, wanted):
     if not cockpit.powered():
         outputs.all_dark(LAMPS, DISPLAYS, BARS)
         return
-    if cockpit.is_on('lamp_test'):
+    if cockpit.lamp_test():
         outputs.all_lit(LAMPS, DISPLAYS, BARS)
         return
     fresh = cockpit.telemetry_is_fresh()

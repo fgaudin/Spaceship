@@ -2,6 +2,7 @@
 import time
 
 from .failures import PlantFailures
+from .station import STATIONS
 from .target import control_from_port, select_target, undock
 from .vessel_link import SAS_MODE_TO_KRPC
 
@@ -14,7 +15,7 @@ SCIENCE_ACTIONS = ('run', 'transmit', 'dump', 'reset')
 # is set again this long after either.
 SAS_MODE_SET_AGAIN_AFTER_S = (0.5, 1.5)
 ACTION_GROUP_SWITCHES = {'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
-                         'cmd/brakes': 'brakes'}
+                         'cmd/brakes': 'brakes', 'cmd/precision': 'precision_mode'}
 
 
 def clamp(value, low, high):
@@ -39,6 +40,7 @@ class CommandHandler:
             'cmd/control_from': lambda request: control_from_port(self.link, bool(request.get('port'))),
             'cmd/node': self.maneuver_node, 'cmd/pause': self.pause, 'cmd/game': self.save_or_load,
             'cmd/science': self.science, 'cmd/warp': self.warp, 'cmd/rotate': self.rotate, 'cmd/translate': self.translate,
+            'cmd/station': self.station,
         }
 
     def run(self, topic, request):
@@ -190,6 +192,13 @@ class CommandHandler:
                     item.experiment.run()
         elif request.get('action') in SCIENCE_ACTIONS:
             getattr(watched[int(request['index'])].experiment, request['action'])()
+
+    # ---------- the CM and the LM ----------
+    def station(self, request):
+        """{'to': 'cm' | 'lm'}: the crew goes across and the craft is flown from that capsule; with
+        'controls_only', the crew stays where it is."""
+        if request.get('to') in STATIONS:
+            self.link.station.go_to(request['to'], self.link, move_crew=not request.get('controls_only'))
 
     # ---------- game ----------
     def pause(self, request):

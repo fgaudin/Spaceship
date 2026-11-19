@@ -50,8 +50,10 @@ def handle_input(cockpit, change):
     if change.control in TRANSLATION_AXES:
         return cockpit.command_once('cmd/translate', translation(cockpit))
     if change.control == 'rcs_fine':
-        # a stick held while switching changes its command at once
-        return cockpit.command_once('cmd/rotate', rotation(cockpit)) + cockpit.command_once('cmd/translate', translation(cockpit))
+        # KSP's precision mode for the keyboard (it does not scale inputs through kRPC); a stick held while
+        # switching changes its command at once
+        return (cockpit.command(S.TOGGLE_COMMANDS['rcs_fine'], {'on': change.on})
+                + cockpit.command_once('cmd/rotate', rotation(cockpit)) + cockpit.command_once('cmd/translate', translation(cockpit)))
     return None
 
 

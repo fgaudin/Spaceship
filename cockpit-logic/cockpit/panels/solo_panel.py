@@ -12,7 +12,7 @@ def render(cockpit, wanted):
     if not cockpit.powered():
         outputs.all_dark(LAMPS, ['txt_fd'])
         return
-    if cockpit.is_on('lamp_test'):
+    if cockpit.lamp_test():
         outputs.all_lit(LAMPS)
         outputs.text('txt_fd', '*' * 16)
         return

@@ -464,6 +464,8 @@ def main():
         folder.mkdir(parents=True, exist_ok=True)
         on_module = []
         for panel in module['panels']:
+            if panel.get('bare'):
+                continue            # glass set straight into the console board: no faceplate to cut
             (width, height), layers, issues = build_panel(module, panel, settings)
             name = f'{module["id"]}-{panel["id"]}'
             (folder / f'{panel["id"]}.svg').write_text(svg(width, height, [(0, 0, layers)], settings, f'{name} · {width:g} × {height:g} mm'))

@@ -21,10 +21,10 @@ from .injected_failures import InjectedFailures
 from .messages import Message
 from .node_mirror import NodeMirror
 from .panels import (comm_panel, computer_panel, engine_panel, hand_controller, lab_panel, rendezvous_panel,
-                     science_panel, solo_panel, systems_panel)
+                     science_panel, solo_panel, station_panel, systems_panel)
 
 PANELS_WITH_INPUTS = (engine_panel, systems_panel, computer_panel, rendezvous_panel, comm_panel, lab_panel,
-                      science_panel, hand_controller)
+                      science_panel, station_panel, hand_controller)
 NEVER = -1e9
 
 
@@ -58,6 +58,7 @@ class Cockpit:
         self.telemetry = {}                     # topic → last payload
         self.last_telemetry_time = NEVER
         self.link_up = False                    # what the plant says in gateway/status
+        self.scene = None                       # its game scene there: 'flight', 'editor_vab', ...
         self.published = {}                     # topic → last payload published (only changes go out)
         self.last_commands = {}                 # command topic → (payload, time sent)
         self.acknowledged_alarms = set()        # active alarms whose master button was pressed
@@ -79,6 +80,7 @@ class Cockpit:
         self.camera_monitor = {}                # cam/status: {'online', 'playing'}
         self.selected_camera_id = None
         self.selected_experiment = 0            # its place in the list of tlm/science
+        self.station_move = station_panel.StationMove()     # CM ⇄ LM: the blackout, then the power-up
         self.injected_failures = InjectedFailures()   # instruments and switches the instructor broke (SimSup)
 
     # ---------- reading the state ----------
@@ -107,12 +109,20 @@ class Cockpit:
         return self.telemetry.get('tlm/target', {})
 
     def powered(self):
-        """The cockpit has power while the craft has electric charge (and the CB MAIN BUS breaker, when the console
-        has one, is in): without it every lamp and display is dark and the inputs are dead. A craft with no battery
-        at all, or telemetry not in yet, counts as powered."""
+        """Every lamp and display works and the inputs are live: the cockpit has power and is not in the blackout of
+        a move between the CM and the LM (station_panel). Otherwise everything is dark and the inputs are dead."""
+        return self.has_power() and self.station_move.phase(self.now) != 'dark'
+
+    def has_power(self):
+        """The craft has electric charge (and the CB MAIN BUS breaker, when the console has one, is in). A craft with
+        no battery at all, or telemetry not in yet, counts as powered."""
         charge = self.resources.get('total', {}).get('ElectricCharge')
         out_of_charge = bool(charge) and (charge.get('max') or 0) > 0 and (charge.get('amount') or 0) < S.NO_CHARGE_BELOW
         return bool(self.inputs.get('cb_main', 1)) and not out_of_charge
+
+    def lamp_test(self):
+        """Every lamp and segment lit: the LAMP TEST switch, or the power-up after a move between the CM and LM."""
+        return self.is_on('lamp_test') or self.station_move.phase(self.now) == 'lamp test'
 
     def telemetry_is_fresh(self):
         return self.now - self.last_telemetry_time <= S.TELEMETRY_STALE_AFTER_S
@@ -199,6 +209,7 @@ class Cockpit:
             commands = self._on_telemetry(topic, payload)
         elif topic == 'gateway/status':
             self.link_up = bool(payload.get('connected'))
+            self.scene = payload.get('scene')
         elif topic.startswith('sim/failures/'):
             self.injected_failures.update(topic.rsplit('/', 1)[1], payload, self.published)
         elif topic == 'fd/status':
@@ -273,12 +284,12 @@ class Cockpit:
     def tick(self, now):
         """Periodic work: mirror the PAD to the game, and re-command "panel wins" switches the game disagrees with."""
         self.now = now
-        commands = self._on_power_change()
+        commands = station_panel.tick(self) + self._on_power_change()
         if self.powered() and self.telemetry_is_fresh():
             commands += self.node_mirror.pad_to_node(self)
             for switch in S.PANEL_WINS:
-                wanted = self.switch_wanted(switch)
-                disagrees = switch in self.vessel and bool(self.vessel[switch]) != wanted
+                wanted, field = self.switch_wanted(switch), S.SWITCH_TELEMETRY.get(switch, switch)
+                disagrees = field in self.vessel and bool(self.vessel[field]) != wanted
                 if disagrees and self.seconds_since_command(S.TOGGLE_COMMANDS[switch]) >= S.REASSERT_EVERY_S:
                     commands += self.command(S.TOGGLE_COMMANDS[switch], {'on': wanted})
             commands += self._reassert_sas_mode()
@@ -325,6 +336,7 @@ class Cockpit:
         self.link_watch = comm_panel.LinkWatch()
         self.docking_rates = rendezvous_panel.DockingRates()
         self.attitude_rates = AngleRates(S.ATTITUDE_RATE_SMOOTHING)
+        self.station_move.stop()
         return self.render()
 
     # ---------- panel outputs ----------
@@ -343,7 +355,9 @@ class Cockpit:
         lab_panel.render(self, wanted)
         solo_panel.render(self, wanted)
         science_panel.render(self, wanted)
+        station_panel.render(self, wanted)
         wanted['cam/select'] = lab_panel.camera_selection(self)
+        wanted.update(station_panel.window_cameras(self))
         wanted['cmp/pad'] = self._pad_summary()
         wanted['cw/state'] = self._alarm_summary(active, unacknowledged)
         powered = self.powered()

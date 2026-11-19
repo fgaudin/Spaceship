@@ -35,12 +35,12 @@ Each module is a dumb I/O node like its future ESP32: it publishes raw inputs (`
 switches), draws what the cockpit logic sends (`panel/eng/out/<output>`) and its heartbeat. Controls: guarded toggles (click the red guard to open
 it; closing it pushes the switch off), toggles with their indicator LED, lit push buttons, a throttle lever, rotary
 selectors (click / shift-click / wheel), 7-segment displays, LED bar graphs, an annunciator matrix, a tone.
-Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test, Left Alt (held) = every module's name and boundary. The **bus** checkbox shows a live sniffer. Resetting
+Keys: Space = STAGE (when armed), Left Shift / Left Ctrl (held) = throttle up / down, KSP's WSADQE = rotation and IJKLHN = translation (the hand controllers, below), T = lamp test, Left Alt (held) = every module's name and boundary. The **bus** checkbox shows a live sniffer. Resetting
 the simulation and injecting failures are on the SIMSUP page.
 
 **Modules** (on the CONSOLE page): ENG (C&W, engine and staging, ascent and descent displays, propellant, radio link, abort), SYS (time warp, lights and fan, event timer, save), RES (electrical, life support), AUX (camera, action groups), LND (landing aid), RNT (reentry and recovery), SCI (science), CMP (burn
-computer), RDV (target and docking), SOLO (PAD requests, the orbit and navigation), and the glass modules FDAI (attitude) and CAM
-(camera monitor), drawn as screens with the live page in them. FDAI and CAM are also pages of their own (for a
+computer), RDV (target and docking), SOLO (PAD requests, the orbit and navigation), STN (the STATION selector, overhead), and the glass modules FDAI (attitude), CAM
+(camera monitor) and the two windows WNL and WNR, drawn as screens with the live page in them. FDAI and CAM are also pages of their own (for a
 Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
 **SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with ELECTRICAL and LIFE SUPPORT; PROPELLANT on the ENG module): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
@@ -50,6 +50,21 @@ value set with MIN + and SEC +10 and blinks at zero), time warp (slower / faster
 event the timer's source selects; pause), save (QUICK SAVE, QUICK LOAD, and REVERT TO LAUNCH behind the guarded REVERT ARM), lights and fan (FAN does nothing in the virtual cockpit; CABIN and BACKLIGHT light the cockpit itself
 through `cockpit/lighting`: on the console page the plates brighten and the legends glow; EXTERNAL is the craft's
 lights).
+
+**STATION** (overhead, on the `sys` bus) and the **windows**: the console is either the command module (CM) or the
+lander (LM). Turning STATION to the other one moves the crew across through the docking tunnel, as many as it has
+seats for, pilots first, then flies the craft from that capsule (`cmd/station`). Meanwhile the console goes dark for
+15 s, TRANSFER blinking, and powers up with a 3 s lamp test. The panel shows which capsule has the controls (CM, LM),
+the kerbals in each, and TUNNEL when the two are docked. If the selector is turned back during the blackout, the crew
+goes back once it is over. Undocked, only the controls move: the game switches to the other capsule if it is close
+enough to be loaded. The selector wins: after a separation (the game stays on the side with the original root part)
+or "control from here" in the game, the controls go back to the capsule it names, if it has crew. The two windows (old 17" 5:4 monitors in portrait, 270 × 338 mm active area, 1024 × 1280, bare glass set into the board against MAIN's sides in a 22 mm riveted frame, 3.15 × 3.83 U, from 1 U below OVERHEAD's top; each holds its camera at 50° through JRTI) show that capsule's window cameras:
+in the VAB, attach two Hullcam cameras straight onto each capsule, looking out where its windows would, and name them
+`cm_left`, `cm_right`, `lm_left`, `lm_right` in JRTI's part menu, the left ones rolled a quarter turn one way and the
+right ones the other: the left window turns its picture −90° (counter-clockwise) and the right one +90°
+(`cam.html?rotate=`, in `wnl.json` and `wnr.json`), so that the portrait glass gets the whole height of JRTI's
+landscape picture. The gateway finds a capsule as the crewed part its window cameras are attached to, and JRTI
+streams them under those names.
 
 **LANDING AID** (module in MAIN, on the `eng` bus): DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides), and four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN; CONTACT under them.
 
@@ -66,12 +81,17 @@ lights in the C&W grid, 0.05 G (drag is felt with the engine off while descendin
 (landed, or a leg or wheel touches the ground). The attitude switches are under the FDAI ball (below), still on the
 `eng` bus.
 
-**Hand controllers** (`hc`, no page yet): the USB joysticks will publish `panel/hc/in/rot_pitch`, `rot_yaw`,
+**Hand controllers** (`hc`; on the keyboard for now, drawn in the console's side column): the USB joysticks will publish `panel/hc/in/rot_pitch`, `rot_yaw`,
 `rot_roll`, `trans_right`, `trans_up` and `trans_fwd` (−1 to 1); tests publish them today. The cockpit passes them on
 as `cmd/rotate` and `cmd/translate`, and releases SAS while the rotation stick is off centre (KSP does that for the
 keyboard, not for inputs through kRPC), putting it back in the panel's mode when the stick is centred. RCS FINE (ENG, amber LED) scales
-both sticks to 30 % for docking (KSP's own precision mode cannot be reached through kRPC). The mock plant ignores
-them.
+both sticks to 30 % for docking, and switches KSP's precision mode for the keyboard (the panel wins over Caps Lock;
+precision mode does not scale inputs that come through kRPC, hence the cockpit's own 30 %). The mock plant ignores
+them. Until then the console page is the `hc` node
+(`panels/virtual/hand_controllers.js`), on KSP's keys: W/S pitch down/up, A/D yaw, Q/E roll; I/K down/up, J/L
+left/right, H/N forward/back; a key is the full throw. The keys work from the glass screens too, and everything is
+let go when the window loses the keyboard. Ctrl+W still closes the browser tab, so don't pitch down while lowering
+the throttle.
 
 **CMP** (I/O panel, burn computer): one PAD, one display per field (TIG, Δv prograde / normal / radial). Press a field's
 button, key the value (TIG as hhmmss, Δv in m/s; keyboard: digits, `.`, `-`, Enter, Backspace), ENTER stores it and
@@ -102,13 +122,14 @@ the antennas).
 - NAVIGATION (on the SOLO module): body orbited, latitude, longitude.
 - ORBIT (on the SOLO module, on the `lab` bus, 2 U wide): apoapsis and periapsis in km, the time to each, inclination.
 - ACTION GROUPS (on the AUX module in MAIN, on the `lab` bus): the craft's ten custom groups, each button lit while its group is on.
-- CAMERA (on the AUX module in MAIN, on the `lab` bus): CAM ◂ ▸ pick the camera shown on the monitor, with its name and number, and a LIVE LED.
+- CAMERA (on the AUX module in MAIN, on the `lab` bus): CAM ◂ ▸ pick the camera shown on the monitor (not the windows' cameras), with its name and number, a LIVE LED, and a MONITOR switch that turns the monitor off.
 
 **CAM** (glass panel, http://localhost:8650/cam.html): a monitor for the craft's cameras, fed by the
-Kerbcast mod's WebRTC streams (hull cameras, docking port cameras, kerbals' helmets, the
-launch pad camera). It shows the camera the CAMERA panel selects (`cam/select`) and publishes what it can show
-(`cam/list`). Kerbcast listens on the KSP machine only, unless its `BindAddress` setting is changed
-(`cam.html?kerbcast=http://host:8088`).
+JRTI mod's MJPEG streams (Just Read The Instructions: Hullcam cameras and docking port cameras). JRTI lists a camera
+once it streams it: turn on "Auto-stream every camera" in its window (or press Stream per camera). The monitor shows
+the camera the CAMERA panel selects (`cam/select`) and publishes what it can show (`cam/list`), each camera under the
+name set in JRTI's part menu. The page reaches JRTI (port 8080 on the KSP machine) through the panel server's `/jrti/`
+([panels/nginx.conf](panels/nginx.conf)), since JRTI sends no CORS header; another source: `cam.html?jrti=<url>`.
 
 **SOLO** (I/O module, `index.html#solo`): for a pilot flying without Mission Control. CIRC, PLANE, RDV TGT and INJECT
 (knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which it reads up to the burn computer as CAPCOM

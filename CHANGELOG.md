@@ -3,6 +3,62 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-19 — one console, two capsules: STATION and the windows
+
+- **EVENT TIMER and LIGHTS · FAN swapped** on OVERHEAD's SYS module, which now reads TIME WARP, EVENT TIMER,
+  LIGHTS · FAN, SAVE: the timer sits next to TIME WARP.
+- **No alarm in the VAB or the SPH:** the gateway puts the game's scene in `gateway/status` when there is no ship to
+  fly (`editor_vab`, `space_center`, ... from kRPC's `game_scene`), and the cockpit raises no alarm, NO LINK included,
+  while it is an editor. At the Space Center or in the tracking station NO LINK still sounds.
+- **MONITOR switch on the CAMERA panel** (`cam_power`, on by default): off, the cockpit sends
+  `cam/select {"id": null, "off": true}`, the monitor goes black (no NO SIGNAL flag) and the panel reads MONITOR OFF.
+  Back on, it returns to the camera it was on. The panel's rows moved up to make room.
+- **The camera monitor leaves out the window cameras:** CAM ◂ ▸ skip `cm_left`, `cm_right`, `lm_left` and
+  `lm_right` (numbered copies too), which belong to the windows. `cam/list` still has every camera.
+- **Rolled window cameras:** `cam.html?rotate=90` (or −90, 180) turns the picture clockwise. The left window turns
+  −90° and the right +90° (checked against the cameras in the game), for window cameras rolled a quarter turn on their parts in the VAB (opposite ways, for
+  looks): a portrait window then gets the whole height of JRTI's landscape picture across its width instead of a
+  strip from its middle.
+- **The windows hold their cameras at 50°** (`cam.html?window=…`, `?fov=` to change it): set through JRTI's
+  `/camera/<id>/settings` when a camera is shown and checked on every camera list (3 s), since JRTI does not keep it
+  across a reload and its viewer can change it. In portrait the 16:9 stream is cropped to its middle.
+- **Hand controllers on the keyboard** until the joysticks exist (`panels/virtual/hand_controllers.js`): the console
+  page publishes `panel/hc/in/*` on KSP's keys, WSADQE for rotation and IJKLHN for translation, and draws both sticks
+  in the side column. The keys reach it from the glass screens too (`shell.js` passes them on); losing the keyboard
+  lets everything go. The throttle moves from the arrow keys to Left Shift / Left Ctrl held, as in KSP (0 to full in
+  2 s).
+- **RCS FINE switches KSP's precision mode** (`cmd/precision`, `precision` in `tlm/vessel`), so the keyboard is fine
+  too; the panel wins (Caps Lock in the game is undone). The sticks keep the cockpit's own 30 %: measured in KSP,
+  precision mode does not scale inputs sent through kRPC. (kRPC 0.7 has `precision_mode`; the README said it could not
+  be reached.)
+- **STATION** (new overhead module STN, 1 × 2 U, `sys` bus; OVERHEAD is now 5 × 2 U): a CM / LM selector. Turning it
+  moves the crew into the other capsule while it has seats, pilots first, and flies the craft from it (`cmd/station`,
+  carried out by the gateway). The console goes dark for 15 s with TRANSFER blinking (throttle cut, inputs dead), then
+  powers up with a 3 s lamp test. CM and LM lamps (the capsule with the controls), TUNNEL (docked: the crew can go
+  across), CM CREW and LM CREW. Turned back during the blackout, the crew goes back once it is over.
+- **Two windows** (glass modules WNL and WNR, old 17" 5:4 monitors in portrait (270 × 338 mm), bare glass set into the board against MAIN's sides in a 22 mm riveted metal frame with 14 mm round corners (`screen.frame`), 3.15 × 3.83 U, from 1 U below
+  OVERHEAD's top: zones of their own, new `"side"`, `"top"` and `"flush"` in `console.json`, and `"bare"` panels, drawn
+  without faceplate and not cut; MAIN keeps its 6 U Gemini outline): `cam.html?window=left|right` shows the camera the cockpit puts on `cam/window/left|right`, the current
+  capsule's `cm_left`/`cm_right` or `lm_left`/`lm_right`, filling the glass; dark through the blackout. The window
+  cameras are ordinary Hullcam cameras named in JRTI's part menu in the VAB; the gateway finds each capsule as the
+  crewed part its window cameras are attached to.
+- **The camera monitor uses JRTI instead of Kerbcast:** Kerbcast reports only the Hullcam part's built-in camera name
+  (two NavCams are both "NavCam") and reads it once, so a camera cannot be told apart by a name set in the VAB. JRTI
+  lists each camera under the name set in its part menu and streams it as MJPEG, shown in an `<img>`. The page reaches
+  JRTI through the panel server's `/jrti/` (JRTI sends no CORS header); JRTI's "Auto-stream every camera" must be on.
+- **The selector keeps the controls:** while the game flies the other capsule (a separation leaves it on the side
+  with the original root part; "control from here" in the game), the cockpit sends `cmd/station` with
+  `controls_only` every 2 s, switching vessels when the capsules are apart. Never to an empty capsule, nor during
+  time warp.
+  The windows follow the selector too, so they no longer flash the CM's view during that moment (the game's
+  capsule only when the selector's is empty).
+- **`tlm/station`** (gateway): crew and seats per capsule, the one flown from, docked or not. MCC EECOM shows it
+  (CM · LM line in LIFE SUPPORT).
+- **Gateway:** never moves a kerbal into a full part: kRPC's `transfer_crew` then drops the kerbal out of the vessel,
+  back to the astronaut complex.
+- **Cockpit:** `powered()` is now "has power and not in the blackout" (`has_power()` is the charge alone); the lamp test
+  is `lamp_test()`, the switch or the power-up.
+
 ## 2026-11-19 — the console's final shape
 
 - **LOW joins MAIN:** MAIN is 6 U wide for 4 U, then narrows through a 4 × 2 U block to the 3 U burn computer, inside one

@@ -84,6 +84,24 @@ def test_camera_selection():
     assert c.published['cam/select'] == {'id': 22}
 
 
+def test_the_monitor_leaves_out_the_window_cameras_and_switches_off():
+    c = Cockpit(); fed(c)
+    c.handle('cam/status', {'online': True, 'playing': True}, 0)
+    c.handle('cam/list', {'cameras': [{'id': 1, 'name': 'cm_left'}, {'id': 2, 'name': 'NavCam'},
+                                      {'id': 3, 'name': 'lm_right 2'}, {'id': 4, 'name': 'Docking'}]}, 0)
+    assert c.published['cam/select'] == {'id': 2} and c.published[LAB + 'disp_cam']['text'] == '1'
+    c.handle(LAB_IN + 'cam_next', {'v': 1}, 0)
+    assert c.published['cam/select'] == {'id': 4} and c.published[LAB + 'disp_cam']['text'] == '2'
+    c.handle(LAB_IN + 'cam_next', {'v': 0}, 0)
+    c.handle(LAB_IN + 'cam_next', {'v': 1}, 0)                         # wraps around, past the windows
+    assert c.published['cam/select'] == {'id': 2}
+    c.handle(LAB_IN + 'cam_power', {'v': 0}, 0)
+    assert c.published['cam/select'] == {'id': None, 'off': True}
+    assert c.published[LAB + 'txt_cam']['text'] == 'MONITOR OFF' and c.published[LAB + 'disp_cam']['blank']
+    c.handle(LAB_IN + 'cam_power', {'v': 1}, 0)
+    assert c.published['cam/select'] == {'id': 2}                     # back on the same camera
+
+
 # ---------- communications ----------
 def comm(c, t, link, **more):
     c.handle('tlm/time', {'ut': 1000 + t, 'met': t, 'warp': 1}, t)

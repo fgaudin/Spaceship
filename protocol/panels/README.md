@@ -49,7 +49,7 @@ A **glass module** (a Raspberry Pi and a screen: FDAI, CAM) has a panel with a `
   "screen": { "page": "fdai.html", "inches": 8, "mm": [162, 122], "px": [1024, 768] } }
 ```
 
-The console shows the page (`fdai.html?embed=1`: no top bar, fitted to the screen) at the screen's resolution
+The console shows the page (`fdai.html?embed=1`: no top bar, fitted to the screen; a page may carry its own query, as the windows' `cam.html?window=left`) at the screen's resolution
 (`px`), scaled to its visible size (`mm`), centred under the panel's title. The page publishes its own status
 (`panel/fdai/status`, `cam/status`); a module made only of glass has no I/O node of its own. The wheel and Esc over
 the page act on the console, as everywhere else on it.
@@ -76,7 +76,12 @@ Components are drawn at about their real size: 0.36" 7-segment digits (9 mm high
 
 Each zone is a grid of U; a module's `at` is its top-left corner on it. A zone's optional `size` ([width, height]
 in U) makes it bigger than what it holds, so that its free places show. The zones are drawn one under the other, flat.
-`"align": "center"` centres a zone over the others. `outline` (corners in U, clockwise) gives a zone a shape of its own: its grid is
+`"align": "center"` centres a zone over the others. `"side": "left"` (or `"right"`) draws a zone beside that
+column instead, its top at the column's top, or `top` U lower; `"flush": true` puts it against the column with no
+title: the windows, alongside OVERHEAD and MAIN. A panel with `"bare": true` is glass set straight into the console
+board, drawn without faceplate, title or screws, and not cut. A screen's `"frame": {"width", "rivet", "rivet_every", "corner"}` (mm)
+draws a riveted metal ring that wide around its glass, rivets along its middle about `rivet_every` apart, its outer
+corners rounded to `corner`. `outline` (corners in U, clockwise) gives a zone a shape of its own: its grid is
 cut to that shape and the outline drawn around it, as MAIN's taper down to the burn computer. A module's `at` may be fractional.
 The firmware never reads this file.
 

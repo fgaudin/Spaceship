@@ -2,24 +2,47 @@
   "title": "CENTRE CONSOLE",
   "zones": [
     {
+      "id": "window_left",
+      "title": "LEFT WINDOW",
+      "side": "left",
+      "modules": [
+        {
+          "module": "wnl",
+          "at": [
+            0,
+            0
+          ]
+        }
+      ],
+      "top": 1,
+      "flush": true
+    },
+    {
       "id": "overhead",
       "title": "OVERHEAD",
       "size": [
-        4,
+        5,
         2
       ],
       "modules": [
         {
-          "module": "solo",
+          "module": "stn",
           "at": [
             0,
             0
           ]
         },
         {
+          "module": "solo",
+          "at": [
+            1,
+            0
+          ]
+        },
+        {
           "module": "sys",
           "at": [
-            0,
+            1,
             1
           ]
         }
@@ -131,6 +154,22 @@
           4
         ]
       ]
+    },
+    {
+      "id": "window_right",
+      "title": "RIGHT WINDOW",
+      "side": "right",
+      "modules": [
+        {
+          "module": "wnr",
+          "at": [
+            0,
+            0
+          ]
+        }
+      ],
+      "top": 1,
+      "flush": true
     }
   ]
 }

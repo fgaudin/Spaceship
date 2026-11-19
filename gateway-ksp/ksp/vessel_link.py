@@ -5,6 +5,7 @@ import math
 import krpc
 
 from .parts_watch import PartsWatch
+from .station import StationWatch
 from .streams import FAST_HZ, SLOW_HZ, UNLIMITED, StreamGroup
 from .target import target_telemetry
 
@@ -31,6 +32,7 @@ class VesselLink:
         self.vessel = None
         self.streams = StreamGroup(self.connection)
         self.parts = None                   # PartsWatch of the bound vessel
+        self.station = None                 # StationWatch of the bound vessel: the CM and LM capsules
         self.commanded_throttle = 0.0       # what the cockpit last asked for
         self.warp_to_universal_time = None  # set by cmd/warp {"to_ut"}, worked on by the main loop
         self.has_target = False
@@ -53,6 +55,7 @@ class VesselLink:
         active_vessel.control.throttle = self.commanded_throttle
         self._open_streams(active_vessel)
         self.parts = PartsWatch(self.connection, active_vessel)
+        self.station = StationWatch(self.space_center, active_vessel)
         self.body_names = {}
         self.body_atmospheres = {}          # body → top of its atmosphere (m), None without one
         self.warp_to_universal_time = None
@@ -67,7 +70,7 @@ class VesselLink:
         self.streams.close()
         if self.parts:
             self.parts.close()
-        self.vessel, self.parts, self.vessel_name, self.target_facts = None, None, None, None
+        self.vessel, self.parts, self.station, self.vessel_name, self.target_facts = None, None, None, None, None
 
     def _open_streams(self, vessel):
         streams = self.streams
@@ -126,6 +129,7 @@ class VesselLink:
                 'gear': (control, 'gear'),
                 'lights': (control, 'lights'),
                 'brakes': (control, 'brakes'),
+                'precision': (control, 'precision_mode'),
             }),
             # Slow to change, or only published on the slow cycle.
             **open_all(SLOW_HZ, {
@@ -195,6 +199,7 @@ class VesselLink:
             payloads['tlm/comm'] = self._comm_payload(now)
             payloads['tlm/groups'] = {'on': [bool(group()) for group in self.action_groups]}
             payloads['tlm/science'] = {'experiments': self.parts.science_telemetry(), 'biome': now['biome']}
+            payloads['tlm/station'] = self.station.telemetry()
         if include_slow or (include_target and self.has_target):
             payloads['tlm/target'] = target_telemetry(self, refresh_slow_facts=include_slow)
         return payloads
@@ -240,7 +245,7 @@ class VesselLink:
                 'thrust_avail': round(now['available_thrust'], 1), 'isp': round(now['specific_impulse'], 1),
                 'situation': situation, 'crew': now['crew_count'], 'stage': now['stage'], 'throttle': round(now['throttle'], 3),
                 'sas': now['sas'], 'rcs': now['rcs'], 'gear': now['gear'], 'lights': now['lights'],
-                'brakes': now['brakes'], 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
+                'brakes': now['brakes'], 'precision': now['precision'], 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
                 'solar': self.parts.solar_deployed_state(), 'chute': self.parts.parachute_state(),
                 'chute_safe': self.parts.parachute_safety_state(),
                 'fuel_cell': self.parts.fuel_cell_state(),

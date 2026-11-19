@@ -12,13 +12,14 @@ export function mount(root) {
   setPower = figures(box(root, 'ELECTRICAL', { at: [0, 0] }), [['ec', 'Charge'], ['rate', 'Trend'], ['endurance', 'Lasts'], ['solar', 'Solar panels'], ['lights', 'Lights']]);
   setThermal = figures(box(root, 'THERMAL · CONSUMABLES', { at: [1, 0] }), [['heat', 'Hottest part'], ['mono', 'Monopropellant'], ['lf', 'Fuel (vessel)'], ['ox', 'Oxidizer (vessel)'], ['xenon', 'Xenon'], ['ablator', 'Ablator']]);
   setComm = figures(box(root, 'COMMUNICATIONS', { at: [2, 0] }), [['link', 'Link'], ['strength', 'Signal'], ['via', 'Via'], ['hops', 'Hops'], ['antenna', 'Antennas']]);
-  setLife = figures(box(root, 'LIFE SUPPORT', { at: [0, 1] }), [['crew', 'Crew'], ...LIFE_SUPPORT.map(([id, name]) => [id, name])]);
+  setLife = figures(box(root, 'LIFE SUPPORT', { at: [0, 1] }), [['crew', 'Crew'], ['station', 'CM · LM'], ...LIFE_SUPPORT.map(([id, name]) => [id, name])]);
   setScience = figures(box(root, 'SCIENCE', { at: [1, 1] }), [['count', 'Experiments'], ['ready', 'Ready'], ['data', 'Holding data'],
     ['value', 'Science held'], ['biome', 'Biome']]);
 }
 
 function updateLifeSupport(totals, crew) {
   setLife('crew', crew ?? '—');
+  setLife('station', stationText(store['tlm/station']));
   for (const [id, name, usePerSecond] of LIFE_SUPPORT) {
     const carried = totals[name];
     if (!carried || !carried.max) { setLife(id, store['tlm/resources'] ? 'not carried' : '—'); continue; }
@@ -26,6 +27,14 @@ function updateLifeSupport(totals, crew) {
     const hours = crew ? `, ${fixed(carried.amount / (usePerSecond * crew) / 3600, 1, 'h')}` : '';
     setLife(id, `${Math.round(fraction * 100)} %${hours}`, fraction <= 0 || fraction < 0.1 ? 'bad' : fraction < 0.2 ? 'warn' : '');
   }
+}
+
+/* tlm/station: the crew in each capsule, the one flown from, docked or not. */
+function stationText(station) {
+  if (!station || (!station.cm && !station.lm)) return '—';
+  const count = (capsule) => (capsule ? `${capsule.crew}/${capsule.seats}` : '—');
+  const flown = station.at ? `, flown from ${station.at.toUpperCase()}` : '';
+  return `${count(station.cm)} · ${count(station.lm)}${station.joined ? ' docked' : ''}${flown}`;
 }
 
 function updateScience(science) {

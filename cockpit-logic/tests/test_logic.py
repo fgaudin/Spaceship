@@ -118,6 +118,18 @@ def test_no_link_when_telemetry_stale():
     assert out[O + 'disp_alt'] == {'text': '--------', 'blank': False, 'blink': False}
 
 
+def test_no_alarm_in_the_vab():
+    c = Cockpit()
+    fed(c, 0)
+    c.handle('gateway/status', {'connected': False, 'plant': 'ksp', 'scene': 'editor_vab'}, 1)
+    c.tick(5.0)
+    assert not c.published[O + 'cw_no_link']['on'] and not c.published[O + 'master_alarm']['on']
+    assert not c.published[O + 'buzzer']['on']
+    c.handle('gateway/status', {'connected': False, 'plant': 'ksp', 'scene': 'space_center'}, 6)
+    c.tick(6.0)
+    assert c.published[O + 'cw_no_link']['on'] and c.published[O + 'buzzer']['on']   # out of the VAB: NO LINK again
+
+
 def test_sas_panel_wins_and_disagree_lamp():
     c = Cockpit()
     fed(c)
@@ -516,7 +528,15 @@ def test_rcs_fine_scales_the_sticks():
     assert topics(c.handle(HC + 'trans_fwd', {'v': 1.0}, 1))['cmd/translate']['forward'] == 1.0
     out = topics(c.handle(P + 'rcs_fine', {'v': 1}, 2))                  # switching with the stick held
     assert out['cmd/translate']['forward'] == 0.3 and c.published[O + 'led_rcs_fine']['on']
+    assert out['cmd/precision'] == {'on': True}                           # KSP's precision mode, for the keyboard
     assert topics(c.handle(HC + 'rot_roll', {'v': -0.5}, 3))['cmd/rotate']['roll'] == -0.15
+
+
+def test_rcs_fine_wins_over_the_game_precision_mode():
+    c = Cockpit(); fed(c)
+    c.handle(P + 'rcs_fine', {'v': 1}, 1)
+    assert topics(fed(c, 1, vessel={'precision': True})).get('cmd/precision') is None
+    assert topics(fed(c, 3, vessel={'precision': False}))['cmd/precision'] == {'on': True}   # Caps Lock in the game
 
 
 def test_a_small_throttle_left_in_the_game_is_cut():

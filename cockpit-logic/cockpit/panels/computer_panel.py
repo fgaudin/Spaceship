@@ -37,5 +37,5 @@ def handle_input(cockpit, change):
 
 def render(cockpit, wanted):
     outputs = PanelOutputs(wanted, S.COMPUTER_PANEL)
-    cockpit.burn_computer.render(outputs, cockpit.telemetry, cockpit.powered(), cockpit.is_on('lamp_test'),
+    cockpit.burn_computer.render(outputs, cockpit.telemetry, cockpit.powered(), cockpit.lamp_test(),
                                  cockpit.telemetry_is_fresh())

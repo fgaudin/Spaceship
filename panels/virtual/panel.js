@@ -15,6 +15,7 @@
 
 import { connectBus, parse } from './bus.js';
 import { createElement, createWidgetBuilders } from './widgets.js';
+import { handControllerKey, releaseHandControllers, startHandControllers } from './hand_controllers.js';
 
 const U_MM = 100;                            // a slot; a panel is built smaller by its clearance
 const PANEL_CLEARANCE_MM = 0.5;              // on each side: a 1 U panel is 99 mm, neighbours are 1 mm apart
@@ -28,7 +29,6 @@ const STATUS_EVERY_MS = 5000;
 const SNIFFER_MAX_LINES = 300;
 const SNIFFER_TOPICS = ['panel/#', 'cmd/#', 'cw/#', 'tlm/#', 'sim/#'];
 const SNIFFER_MAX_PAYLOAD_CHARACTERS = 160;
-const THROTTLE_KEY_STEP = 0.05;
 const SIDE_MIN_PX = 240;                     // the side column (help, bus): narrowest it can be dragged
 const SIDE_MAX_FRACTION = 0.7;               // and widest, as a share of the window
 const SIDE_WIDTH_KEY = 'console-side-width';
@@ -95,13 +95,15 @@ const faceplateMm = (size) => size.map((u) => u * U_MM - 2 * PANEL_CLEARANCE_MM)
 function buildPanel(module, panel) {
   const [width, height] = panel.size;
   const [widthMm, heightMm] = faceplateMm(panel.size);
-  const plate = createElement('section', 'plate', { title: `${panel.title} · ${width}×${height} U (${widthMm}×${heightMm} mm)` });
+  // a bare panel is glass set straight into the console board: no faceplate, title or screws
+  const plate = createElement('section', panel.bare ? 'plate bare' : 'plate', { title: `${panel.title} · ${width}×${height} U (${widthMm}×${heightMm} mm)` });
   Object.assign(plate.style, {
     left: mm(panel.at[0] * U_MM + PANEL_CLEARANCE_MM), top: mm(panel.at[1] * U_MM + PANEL_CLEARANCE_MM), width: mm(widthMm), height: mm(heightMm),
   });
   plate.dataset.panel = panel.id;
-  plate.append(createElement('div', 'plate-title', { textContent: panel.title }), createElement('i', 'screw-b'));
+  if (!panel.bare) plate.append(createElement('div', 'plate-title', { textContent: panel.title }), createElement('i', 'screw-b'));
 
+  if (panel.screen?.frame) plate.appendChild(buildScreenFrame(module, panel));
   if (panel.screen) plate.appendChild(buildScreen(module, panel));
   const node = modules.get(module.id);
   const prefix = `panel/${panel.bus}/`;
@@ -148,17 +150,50 @@ function buildScreen(module, panel) {
   Object.assign(frame.style, { left: mm(left), top: mm(top), width: mm(widthMm), height: mm(heightMm) });
   if (left < 0 || top < 0 || left + widthMm > plateWidthMm || top + heightMm > plateHeightMm) reportLayout(`${module.id}/${panel.id}: the screen does not fit the panel`, frame);
   const broker = new URLSearchParams(location.search).get('broker');
-  const page_url = `${page}?embed=1${broker ? `&broker=${encodeURIComponent(broker)}` : ''}`;
+  const page_url = `${page}${page.includes('?') ? '&' : '?'}embed=1${broker ? `&broker=${encodeURIComponent(broker)}` : ''}`;
   const view = createElement('iframe', '', { src: page_url, title: panel.title, loading: 'eager' });
   Object.assign(view.style, { width: `${widthPx}px`, height: `${heightPx}px`, transform: `scale(${(widthMm * PX_PER_MM) / widthPx})` });
   frame.appendChild(view);
   return frame;
 }
 
+/* A riveted metal frame around a screen (`screen.frame`: {width, rivet, rivet_every, corner}, mm): a ring `width` wide
+   around the glass, its outer corners rounded to `corner`, with rivets of `rivet` diameter along its middle, about
+   `rivet_every` apart and one in each corner. */
+function buildScreenFrame(module, panel) {
+  const { mm: [glassWidth, glassHeight], at, frame: { width, rivet = 5, rivet_every: spacing = 30, corner = 3 } } = panel.screen;
+  const [plateWidthMm, plateHeightMm] = faceplateMm(panel.size);
+  const [centreX, centreY] = at || [plateWidthMm / 2, SCREEN_TOP_MM + glassHeight / 2];
+  const [outerWidth, outerHeight] = [glassWidth + 2 * width, glassHeight + 2 * width];
+  const [left, top] = [centreX - outerWidth / 2, centreY - outerHeight / 2];
+  const ring = createElement('div', 'screen-frame');
+  Object.assign(ring.style, { left: mm(left), top: mm(top), width: mm(outerWidth), height: mm(outerHeight), borderRadius: mm(corner) });
+  if (left < -LAYOUT_TOLERANCE_MM || top < -LAYOUT_TOLERANCE_MM || left + outerWidth > plateWidthMm + LAYOUT_TOLERANCE_MM
+      || top + outerHeight > plateHeightMm + LAYOUT_TOLERANCE_MM) reportLayout(`${module.id}/${panel.id}: the screen frame does not fit the panel`, ring);
+  // the rivets' line: the middle of the ring, corner to corner
+  const [lineWidth, lineHeight] = [outerWidth - width, outerHeight - width];
+  const along = (length) => {
+    const gaps = Math.max(1, Math.round(length / spacing));
+    return Array.from({ length: gaps + 1 }, (_, index) => (index * length) / gaps);
+  };
+  const points = [
+    ...along(lineWidth).flatMap((x) => [[x, 0], [x, lineHeight]]),
+    ...along(lineHeight).slice(1, -1).flatMap((y) => [[0, y], [lineWidth, y]]),
+  ];
+  for (const [x, y] of points) {
+    const head = createElement('i', 'rivet');
+    Object.assign(head.style, { left: mm(width / 2 + x), top: mm(width / 2 + y), width: mm(rivet), height: mm(rivet) });
+    ring.appendChild(head);
+  }
+  return ring;
+}
+
 /* One module: its panels on a grid of U, and the cover that opens it from the overview. */
 function buildModule(module) {
   const sizeU = extent(module.panels, (panel) => panel.size);
-  const element = createElement('article', 'module', { id: `module-${module.id}` });
+  // a module of bare glass only (the windows) has no board of its own to draw: the glass is set into the console's
+  const bare = module.panels.every((panel) => panel.bare);
+  const element = createElement('article', bare ? 'module bare' : 'module', { id: `module-${module.id}` });
   Object.assign(element.style, { width: mm(sizeU[0] * U_MM), height: mm(sizeU[1] * U_MM) });
   modules.set(module.id, { definition: module, element, sizeU, client: null, restoring: true });
   for (const panel of module.panels) element.appendChild(buildPanel(module, panel));
@@ -186,9 +221,16 @@ function buildOutlinedZone(grid, outline, widthMm, heightMm) {
   return body;
 }
 
+/* The zones one under the other, in a column; a zone with a `side` (left or right) beside that column, its top at
+   the column's top, or `top` U lower (the windows, alongside OVERHEAD and MAIN). A `flush` side zone has no title
+   and touches the column. */
 function buildConsole(consoleLayout, definitions) {
   const overview = document.getElementById('overview');
+  const columns = { left: createElement('div', 'zone-side left'), centre: createElement('div', 'zone-column'),
+    right: createElement('div', 'zone-side right') };
+  overview.append(columns.left, columns.centre, columns.right);
   for (const zone of consoleLayout.zones) {
+    if (zone.side && !(zone.side in columns && zone.side !== 'centre')) reportLayout(`zone ${zone.id}: side ${zone.side}`);
     const placed = zone.modules.filter((entry) => {
       if (definitions.has(entry.module)) return true;
       reportLayout(`console.json places ${entry.module}, which has no file`);
@@ -209,9 +251,14 @@ function buildConsole(consoleLayout, definitions) {
     Object.assign(grid.style, { width: mm(width * U_MM), height: mm(height * U_MM) });
     checkGrid(placed, sizeOf, (entry) => entry.module, `zone ${zone.id}`);
     if (zone.align === 'center') section.classList.add('centered');
+    if (zone.side && zone.top) section.style.marginTop = mm(zone.top * U_MM);
+    if (zone.side && zone.flush) {
+      section.classList.add('flush');
+      columns[zone.side]?.classList.add('flush');
+    }
     const body = zone.outline ? buildOutlinedZone(grid, zone.outline, width * U_MM, height * U_MM) : grid;
     section.append(createElement('div', 'zone-title', { textContent: zone.title }), body);
-    overview.appendChild(section);
+    (columns[zone.side] && zone.side !== 'centre' ? columns[zone.side] : columns.centre).appendChild(section);
   }
 }
 
@@ -369,6 +416,8 @@ function wireViews() {
     if (event.origin !== location.origin) return;
     if (event.data?.type === 'console-escape') fitAll();
     if (event.data?.type === 'console-modules') showModules(Boolean(event.data.on));
+    if (event.data?.type === 'console-key') handControllerKey(event.data.code, Boolean(event.data.down));
+    if (event.data?.type === 'console-key-release') releaseHandControllers();
     if (event.data?.type !== 'console-wheel') return;
     const frame = [...document.querySelectorAll('.glass iframe')].find((element) => element.contentWindow === event.source);
     if (!frame) return;
@@ -536,7 +585,8 @@ function wireSideResize() {
   });
 }
 
-/* Keyboard: Esc fits the whole console; keypad keys (Backspace = CLR); Space = STAGE, T = lamp test, arrows = throttle. */
+/* Keyboard: Esc fits the whole console; keypad keys (Backspace = CLR); Space = STAGE, T = lamp test; the hand
+   controllers and the throttle on KSP's keys (hand_controllers.js). */
 function wireKeyboard() {
   const heldKeys = new Set();     // so that a held key presses its button once
   window.addEventListener('blur', () => showModules(false));     // Alt released in another window never reaches us
@@ -547,6 +597,10 @@ function wireKeyboard() {
       return;
     }
     const typingInAField = event.target.tagName === 'INPUT' && !['range', 'checkbox'].includes(event.target.type);
+    if (!typingInAField && handControllerKey(event.code, true)) {
+      event.preventDefault();                                    // Ctrl + a stick key: no browser shortcut
+      return;
+    }
     if (typingInAField || heldKeys.has(event.code)) return;
     if (event.key === 'Escape') {
       event.preventDefault();
@@ -568,14 +622,13 @@ function wireKeyboard() {
       inputsByName.get('stage')?.press(true);
     }
     if (event.code === 'KeyT') { heldKeys.add(event.code); inputsByName.get('lamp_test')?.press(true); }
-    if (event.code === 'ArrowUp') { event.preventDefault(); inputsByName.get('throttle')?.nudge(THROTTLE_KEY_STEP); }
-    if (event.code === 'ArrowDown') { event.preventDefault(); inputsByName.get('throttle')?.nudge(-THROTTLE_KEY_STEP); }
   });
   window.addEventListener('keyup', (event) => {
     if (event.code === 'AltLeft') {
       event.preventDefault();
       showModules(false);
     }
+    if (handControllerKey(event.code, false)) return;
     heldKeys.delete(event.code);
     if (event.code === 'Space') inputsByName.get('stage')?.press(false);
     if (event.code === 'KeyT') inputsByName.get('lamp_test')?.press(false);
@@ -598,6 +651,7 @@ if (oldPanelLink && !location.hash) history.replaceState(null, '', `#${oldPanelL
 buildConsole(consoleLayout, definitions);
 wireViews();
 wireKeyboard();
+startHandControllers({ container: document.getElementById('hand-controllers'), throttle: inputsByName.get('throttle')?.nudge });
 wireSideResize();
 sizeConsoleBox();
 showView();

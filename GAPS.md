@@ -37,7 +37,6 @@ Gaps in the Moonshot course itself are in `selftest/gaps.md`.
   drain a resource or heat a part.
 
 ### C8. The camera monitor was only tried in Chrome
-- Kerbcast's own page showed black video in Firefox; not tried with the monitor page.
 
 ### C9. Mission Control has no voice and no history
 - The loop is text; consoles show the present, with no plots over time. RETRO's entry corridor (25–45 km) and

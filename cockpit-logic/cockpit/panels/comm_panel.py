@@ -56,7 +56,7 @@ def render(cockpit, wanted):
     if not cockpit.powered():
         outputs.all_dark(LAMPS, [*DISPLAYS, 'txt_via'], BARS)
         return
-    if cockpit.is_on('lamp_test'):
+    if cockpit.lamp_test():
         outputs.all_lit(LAMPS, DISPLAYS, BARS)
         outputs.text('txt_via', '*' * S.STATION_NAME_CHARACTERS)
         return

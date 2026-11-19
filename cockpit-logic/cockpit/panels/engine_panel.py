@@ -62,7 +62,7 @@ def render(cockpit, wanted, active_alarms, unacknowledged_alarms):
     outputs = PanelOutputs(wanted, S.ENGINE_PANEL)
     warning_waiting = any(ALARMS[name].is_warning for name in unacknowledged_alarms)
     caution_waiting = any(not ALARMS[name].is_warning for name in unacknowledged_alarms)
-    powered, lamp_test = cockpit.powered(), cockpit.is_on('lamp_test')
+    powered, lamp_test = cockpit.powered(), cockpit.lamp_test()
     outputs.raw('buzzer', {'on': powered and not lamp_test and warning_waiting})
     outputs.raw('fdai', fdai_settings(cockpit))
 

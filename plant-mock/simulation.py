@@ -14,7 +14,7 @@ import vehicle as V
 from vehicle import STAGES
 
 SWITCH_COMMANDS = {'cmd/sas': 'sas', 'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
-                   'cmd/brakes': 'brakes', 'cmd/fuel_cell': 'fuel_cell'}
+                   'cmd/brakes': 'brakes', 'cmd/fuel_cell': 'fuel_cell', 'cmd/precision': 'precision'}
 GROUND_SITUATIONS = ('pre_launch', 'landed', 'crashed')
 ACTION_GROUP_COUNT = 10
 ON_THE_PAD = -1                 # value of `firing_stage` before the first staging
@@ -53,6 +53,7 @@ class Plant:
         # what the cockpit commands
         self.throttle, self.thrust_limit, self.gimbal_locked = 0.0, 1.0, False
         self.sas, self.rcs, self.gear, self.lights, self.brakes = False, False, True, False, False
+        self.precision = False
         self.sas_mode = 'stability'
         self.speed_mode = 'surface'
         self.solar_deployed, self.parachute = False, 'stowed'
@@ -408,7 +409,7 @@ class Plant:
         return {'name': 'Mock X', 'mass': round(self.mass(), 1), 'thrust': round(self.thrust, 1),
                 'thrust_avail': available_thrust, 'isp': stage.vacuum_isp if stage else 0,
                 'situation': self.situation, 'stage': self.ksp_stage_number(), 'throttle': self.throttle,
-                'sas': self.sas, 'rcs': self.rcs, 'gear': self.gear, 'lights': self.lights, 'brakes': self.brakes,
+                'sas': self.sas, 'rcs': self.rcs, 'gear': self.gear, 'lights': self.lights, 'brakes': self.brakes, 'precision': self.precision,
                 'sas_mode': self.sas_mode, 'speed_mode': self.speed_mode, 'solar': self.solar_deployed, 'chute': self.parachute,
                 'fuel_cell': self.fuel_cell,
                 'comm': 'comm_lost' not in self.failures, 'has_gear': False,

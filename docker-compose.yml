@@ -49,4 +49,5 @@ services:
       - ./panels/virtual:/srv/panel:ro
       - ./protocol/panels:/srv/panels:ro
       - ./panels/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    extra_hosts: ["host.docker.internal:host-gateway"]     # JRTI's camera server, proxied as /jrti/
     restart: unless-stopped
