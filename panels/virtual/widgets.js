@@ -134,15 +134,13 @@ export function createWidgetBuilders(registry, publishInput) {
       return [display.node];
     },
 
-    /* An LED bar graph: payload {v: 0..1}, filling upward when `vertical`. The top segments are amber then red. */
+    /* An LED bar graph: payload {v: 0..1}, filling upward when `vertical`. All green: colour is kept for the alarms. */
     bar(item) {
       const bar = createElement('div', item.vertical ? 'bar vertical' : 'bar');
       const segmentCount = item.segments || 10;
       const segments = [];
       for (let index = 0; index < segmentCount; index++) {
         const segment = createElement('i');
-        if (index >= segmentCount * 0.7) segment.classList.add('hi');
-        if (index === segmentCount - 1) segment.classList.add('top');
         bar.appendChild(segment);
         segments.push(segment);
       }

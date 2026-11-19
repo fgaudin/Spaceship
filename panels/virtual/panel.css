@@ -167,8 +167,6 @@ body.lighting-known.backlight .toggle .pos {
 .bar.vertical { flex-direction: column-reverse; }
 .bar.vertical i { width: 1.6rem; height: .55rem; }
 .bar i.on { background: var(--green); box-shadow: 0 0 5px #35e06f88; }
-.bar i.on.hi { background: var(--amber); box-shadow: 0 0 5px #ffb00088; }
-.bar i.on.top { background: var(--red); box-shadow: 0 0 5px #ff3b2f88; }
 
 /* rotary */
 .rotary-wrap { position: relative; width: 7.4rem; height: 6.4rem; }

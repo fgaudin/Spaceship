@@ -33,7 +33,7 @@ ALARMS = {
     'cw_eng_fail': Alarm('ENG FAIL', WARNING),
     'cw_sas_dis': Alarm('SAS DISAGREE', CAUTION),
     'cw_att': Alarm('ATT ERR', CAUTION),
-    'cw_resid': Alarm('DV RESID', CAUTION),
+    'cw_ablator': Alarm('ABLATOR LOW', CAUTION),
     'cw_closing': Alarm('CLOSING', CAUTION),
     'cw_ls_low': Alarm('LS LOW', CAUTION),
     'cw_ls_out': Alarm('LS OUT', WARNING),
@@ -114,6 +114,8 @@ def _vehicle_alarms(cockpit, active):
         active.add('cw_low_power')
     if _is_below(fraction_left(totals, 'MonoPropellant'), S.LOW_MONOPROPELLANT_FRACTION):
         active.add('cw_rcs_low')
+    if _is_below(fraction_left(totals, 'Ablator'), S.LOW_ABLATOR_FRACTION):
+        active.add('cw_ablator')
     if (cockpit.telemetry.get('tlm/thermal', {}).get('max') or 0) >= S.OVERHEAT_FRACTION:
         active.add('cw_overheat')
     _life_support_alarms(vessel, cockpit.life_support_resources(), active)
@@ -168,9 +170,6 @@ def _burn_alarms(cockpit, active):
             in_window = in_window and time_from_ignition < S.ATTITUDE_ERROR_WINDOW_S
         if in_window and node.get('set') and (node.get('att_err') or 0) > S.ATTITUDE_ERROR_LIMIT_DEG:
             active.add('cw_att')
-    allowed_residual = max(S.RESIDUAL_MIN_M_S, S.RESIDUAL_FRACTION * computer.delta_v_total())
-    if state == 'done' and abs(computer.delta_v_to_go()) > allowed_residual:
-        active.add('cw_resid')
 
 
 def _rendezvous_alarms(cockpit, active):

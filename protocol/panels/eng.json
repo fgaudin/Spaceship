@@ -122,8 +122,8 @@
               "color": "amber"
             },
             {
-              "out": "cw_resid",
-              "label": "ΔV RESID",
+              "out": "cw_ablator",
+              "label": "ABLATOR LOW",
               "color": "amber"
             },
             {

@@ -395,7 +395,7 @@ def test_more_cautions():
     assert 'cw_comm' in c.active_alarms()
 
 
-def test_burn_cautions_attitude_and_residual():
+def test_burn_caution_attitude():
     c = Cockpit(); fed(c, vessel={'isp': 345.0})
     c.handle('pad/uplink', {'tig_met': 85, 'dv': [50, 0, 0]}, 1); c.handle('panel/cmp/in/pad_accept', {'v': 1}, 1)
     c.handle('tlm/node', {'set': True, 'ut': c.node_mirror.known_node['ut'], 'dv': [50.0, 0.0, 0.0], 'att_err': 20.0}, 4)
@@ -403,9 +403,7 @@ def test_burn_cautions_attitude_and_residual():
     c.handle('tlm/node', {'set': True, 'ut': c.node_mirror.known_node['ut'], 'dv': [50.0, 0.0, 0.0], 'att_err': 2.0}, 5)
     assert 'cw_att' not in c.active_alarms() and c.published['panel/cmp/out/disp_att']['text'] == '2.0'
     c.burn_computer.cutoff, c.burn_computer.delta_v_counted = True, 47.0
-    assert 'cw_resid' in c.active_alarms()                                      # 3 m/s short of 50
     c.burn_computer.delta_v_counted = 49.8
-    assert 'cw_resid' not in c.active_alarms()
 
 
 def test_undock_needs_arm_and_docked_lamp():
@@ -693,6 +691,14 @@ def test_science_panel_steps_through_experiments_and_commands_the_one_shown():
     assert c.published[out + 'txt_sci']['text'] == 'CREW REPORT' and c.published[out + 'disp_sci_transmit']['text'] == '3.2'
     assert topics(c.handle(IN + 'sci_transmit', {'v': 1}, 3))['cmd/science'] == {'index': 1, 'action': 'transmit'}
     assert topics(c.handle(IN + 'sci_run_all', {'v': 1}, 4))['cmd/science'] == {'all': True}
+
+
+def test_ablator_low_caution():
+    c = Cockpit()
+    fed(c, resources={'stage': {}, 'total': {'Ablator': {'amount': 100.0, 'max': 800.0}}})
+    assert 'cw_ablator' in c.active_alarms()
+    fed(c, 1, resources={'stage': {}, 'total': {'Ablator': {'amount': 400.0, 'max': 800.0}}})
+    assert 'cw_ablator' not in c.active_alarms()
 
 
 def test_outside_pressure_in_kilopascals():

@@ -159,7 +159,7 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 - LAMP TEST: every lamp on, displays show 8.8.8.
 - Caution & warning, cautions (amber, MASTER CAUTION): LOW FUEL, LOW POWER, HIGH Q, SAS DISAGREE, FLAMEOUT, RCS LOW,
   CLOSING (above the braking gate), THROTTLE (lever up with ENG ARM off), ATT ERR (over 5° off the burn attitude from
-  30 s before TIG), ΔV RESID (after cutoff, over 0.5 m/s or 2 %), CHUTE (descending under 15 km, parachute neither armed nor
+  30 s before TIG), ABLATOR LOW (under 20 %), CHUTE (descending under 15 km, parachute neither armed nor
   out), COMM LOST, LS LOW (food, water or oxygen under 10 %, with a crew aboard). Warnings (red, MASTER ALARM blinking + tone): HIGH G, NO LINK, ENG FAIL, SINK RATE, OVERHEAT (a part
   over 80 % of its temperature limit), GEAR UP (under 300 m, descending, gear up), LS OUT (one of them empty, with a crew aboard). Pressing the master button acknowledges: the master lamp and tone go
   off, the annunciator stays lit (steady) while the condition lasts; a condition that clears and returns needs a new ack.

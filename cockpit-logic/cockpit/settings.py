@@ -51,6 +51,7 @@ DYNAMIC_PRESSURE_LIMIT_PA = 30000.0
 LOW_FUEL_FRACTION = 0.10
 LOW_POWER_FRACTION = 0.20
 LOW_MONOPROPELLANT_FRACTION = 0.10
+LOW_ABLATOR_FRACTION = 0.20
 OVERHEAT_FRACTION = 0.80            # hottest part, as a fraction of its temperature limit
 SINK_RATE_BELOW_ALTITUDE_M = 1000.0
 SINK_RATE_BASE_M_S, SINK_RATE_PER_ALTITUDE = 8.0, 0.1   # allowed descent rate: 8 m/s + 10 % of the radar altitude
@@ -62,7 +63,6 @@ TOUCHDOWN_TILT_DEG = 10.0
 CHUTE_BELOW_ALTITUDE_M = 15000.0
 ATTITUDE_ERROR_LIMIT_DEG = 5.0      # off the burn attitude by more than this ...
 ATTITUDE_ERROR_WINDOW_S = 30.0      # ... from this long before TIG
-RESIDUAL_MIN_M_S, RESIDUAL_FRACTION = 0.5, 0.02     # Δv residual after cutoff: 0.5 m/s or 2 % of the burn
 ENTRY_G_FORCE = 0.05                # the 0.05 G light (as on Mercury): drag is felt, the entry has begun
 
 # Gravitational parameter μ (m³/s²) and radius (m) of the bodies a Mun trip visits, for the TWR display.
