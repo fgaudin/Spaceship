@@ -26,7 +26,8 @@
           "at": [
             26,
             31
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "seg7",
@@ -37,7 +38,8 @@
           "at": [
             73,
             31
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "annunciator",

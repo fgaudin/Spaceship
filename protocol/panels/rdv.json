@@ -128,7 +128,8 @@
           "at": [
             32,
             30
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "seg7",
@@ -139,7 +140,8 @@
           "at": [
             32,
             54
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "seg7",
@@ -150,7 +152,8 @@
           "at": [
             32,
             78
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "seg7",
@@ -212,7 +215,8 @@
           "at": [
             32,
             30
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "seg7",
@@ -235,7 +239,8 @@
           "at": [
             32,
             54
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "seg7",
@@ -258,7 +263,8 @@
           "at": [
             32,
             78
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "seg7",
@@ -296,7 +302,8 @@
           "at": [
             32,
             24
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "led",
@@ -318,7 +325,8 @@
           "at": [
             32,
             48
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "annunciator",

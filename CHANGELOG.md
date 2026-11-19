@@ -9,6 +9,10 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   tapering outline (`outline` in `console.json`, replacing `taper`). The hand controllers stay outside the U grid.
 - **OVERHEAD** is cut to its 4 × 2 U and centred (`"align": "center"`).
 
+## 2026-11-19 — all 7-segment displays green
+
+- **Every 7-segment display is green**, on trial: red and amber are left to the warnings and cautions.
+
 ## 2026-11-19 — module names on the console
 
 - **Holding Left Alt** dims the panels and shows every module's boundary and name, at one size whatever the zoom.

@@ -37,7 +37,8 @@
           "at": [
             85,
             44
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "led",

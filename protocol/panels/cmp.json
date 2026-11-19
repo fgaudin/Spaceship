@@ -38,7 +38,8 @@
           "at": [
             62,
             24
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "lamp_button",
@@ -61,7 +62,8 @@
           "at": [
             62,
             43
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "lamp_button",
@@ -84,7 +86,8 @@
           "at": [
             62,
             62
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "lamp_button",
@@ -107,7 +110,8 @@
           "at": [
             62,
             80
-          ]
+          ],
+          "color": "green"
         }
       ]
     },

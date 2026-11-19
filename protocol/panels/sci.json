@@ -37,7 +37,8 @@
           "at": [
             96,
             30
-          ]
+          ],
+          "color": "green"
         },
         {
           "type": "alpha",
