@@ -1,21 +1,16 @@
-"""The lab bus: panels first tried as experiments, now on other modules.
+"""The aux bus: the AUX module in MAIN.
 
-- NAVIGATION: latitude, longitude and the body orbited.
-- ORBIT (on the SOLO module, but on this bus): apoapsis, periapsis, the time to each, inclination.
 - ACTION GROUPS: the ten custom groups of the craft, with their state.
 - CAMERA: picks the camera shown on the monitor page (cam.html, fed by the JRTI mod), among the cameras that are
   not the windows'; its MONITOR switch turns the monitor off (cam/select {"id": null, "off": true}: a black screen).
 """
 from .. import settings as S
 from .station_panel import is_window_camera
-from ..display_format import fit_number, format_time_to
+from ..display_format import fit_number
 from ..messages import PanelOutputs
 
 ACTION_GROUP_NUMBERS = range(1, S.ACTION_GROUP_COUNT + 1)
 LAMPS = ['led_cam_live', *[f'lamp_ag_{number}' for number in ACTION_GROUP_NUMBERS]]
-DISPLAYS = ['disp_lat', 'disp_lon', 'disp_apo', 'disp_peri',
-            'disp_t_apo', 'disp_t_peri', 'disp_incl', 'disp_cam']
-TEXTS = {'txt_body': S.BODY_NAME_CHARACTERS, 'txt_cam': S.CAMERA_NAME_CHARACTERS}
 
 
 # ---------- inputs ----------
@@ -66,40 +61,18 @@ def camera_selection(cockpit):
 
 # ---------- outputs ----------
 def render(cockpit, wanted):
-    outputs = PanelOutputs(wanted, S.LAB_PANEL)
+    outputs = PanelOutputs(wanted, S.AUX_PANEL)
     if not cockpit.powered():
-        outputs.all_dark(LAMPS, [*DISPLAYS, *TEXTS])
+        outputs.all_dark(LAMPS, ['disp_cam', 'txt_cam'])
         return
     if cockpit.lamp_test():
-        outputs.all_lit(LAMPS, DISPLAYS)
-        for name, characters in TEXTS.items():
-            outputs.text(name, '*' * characters)
+        outputs.all_lit(LAMPS, ['disp_cam'])
+        outputs.text('txt_cam', '*' * S.CAMERA_NAME_CHARACTERS)
         return
-    fresh = cockpit.telemetry_is_fresh()
-    _render_navigation(cockpit, outputs, fresh)
-    _render_orbit(cockpit, outputs, fresh)
-    groups = cockpit.telemetry.get('tlm/groups', {}).get('on') or [] if fresh else []
+    groups = cockpit.telemetry.get('tlm/groups', {}).get('on') or [] if cockpit.telemetry_is_fresh() else []
     for number in ACTION_GROUP_NUMBERS:
         outputs.lamp(f'lamp_ag_{number}', number <= len(groups) and groups[number - 1])
     _render_camera(cockpit, outputs)
-
-
-def _render_navigation(cockpit, outputs, fresh):
-    flight, orbit = (cockpit.flight, cockpit.orbit) if fresh else ({}, {})
-    outputs.text('disp_lat', fit_number(flight.get('lat'), 2, 5, signed=True))
-    outputs.text('disp_lon', fit_number(flight.get('lon'), 2, 6, signed=True))
-    outputs.text('txt_body', (orbit.get('body') or '').upper()[:S.BODY_NAME_CHARACTERS])
-
-
-def _render_orbit(cockpit, outputs, fresh):
-    """Apoapsis and periapsis in km above the surface (negative: under it), the time to each, inclination in degrees."""
-    orbit = cockpit.orbit if fresh else {}
-    in_km = lambda metres: metres / 1000 if metres is not None else None
-    outputs.text('disp_apo', fit_number(in_km(orbit.get('apo')), 2, 7))
-    outputs.text('disp_peri', fit_number(in_km(orbit.get('peri')), 2, 7))
-    outputs.text('disp_t_apo', format_time_to(orbit.get('t_apo')))
-    outputs.text('disp_t_peri', format_time_to(orbit.get('t_peri')))
-    outputs.text('disp_incl', fit_number(orbit.get('i'), 2, 5))
 
 
 def _render_camera(cockpit, outputs):

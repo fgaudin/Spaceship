@@ -148,7 +148,7 @@ def test_sas_panel_wins_and_disagree_lamp():
 def test_gear_game_wins_no_resend():
     c = Cockpit()
     fed(c)
-    c.handle('panel/lab/in/gear', {'v': 1}, 1)
+    c.handle('panel/eng/in/gear', {'v': 1}, 1)
     out = topics(fed(c, 3))
     assert 'cmd/gear' not in out
     assert out.get(O + 'led_gear', c.published[O + 'led_gear']) == {'on': True, 'blink': True}

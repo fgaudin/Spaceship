@@ -3,7 +3,8 @@
 With a full crew, PADs (the numbers for a burn: ignition time and Δv) are worked out on the ground, by the students,
 and read up over the radio by CAPCOM. A pilot flying alone has no ground: the SOLO panel asks this service instead.
 It does the sums a flight dynamics officer would, and reads the PAD up to the burn computer exactly as CAPCOM does
-(`pad/uplink`): it blinks there until the pilot accepts it, then is flown like any other.
+(`pad/uplink`): it blinks there until the pilot accepts it, then is flown like any other. With the SOLO panel's MODE
+switch on MCC (on NAVIGATION, `panel/solo/in/mcc_mode`), Mission Control is there: the service ignores the buttons.
 
 ```
   SOLO panel ── panel/solo/in/fd_* ──▶ flight-dynamics ── pad/uplink ──▶ cockpit (burn computer: blinking, ACCEPT)

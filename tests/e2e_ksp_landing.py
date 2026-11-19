@@ -64,7 +64,7 @@ def number(panel, name):
         return None
 
 
-lab = lambda name: seen.get(f'panel/lab/out/{name}') or {}
+solo = lambda name: seen.get(f'panel/solo/out/{name}') or {}
 eng = lambda name: seen.get(f'panel/eng/out/{name}') or {}
 flight = lambda: seen['tlm/flight']
 ALIGNED_WITHIN_DEG = 1.0

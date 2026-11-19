@@ -1,22 +1,22 @@
-"""COM panel and LAB panel."""
+"""COM panel, the AUX module (CAMERA, ACTION GROUPS) and the SOLO module (PAD REQUEST, ORBIT, NAVIGATION)."""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from cockpit import Cockpit  # noqa: E402
 from test_logic import fed, topics  # noqa: E402
 
-COM, LAB, ENG = 'panel/com/out/', 'panel/lab/out/', 'panel/eng/out/'
-LAB_IN, ENG_IN = 'panel/lab/in/', 'panel/eng/in/'
+COM, AUX, SOLO, ENG = 'panel/com/out/', 'panel/aux/out/', 'panel/solo/out/', 'panel/eng/out/'
+AUX_IN, SOLO_IN, ENG_IN = 'panel/aux/in/', 'panel/solo/in/', 'panel/eng/in/'
 
 
 # ---------- landing ----------
 def test_orbit_panel_counts_down_to_the_apsides():
     c = Cockpit(); fed(c)
     c.handle('tlm/orbit', {'apo': 80000.0, 'peri': 70000.0, 't_apo': 3725.9, 't_peri': 442800.0}, 1)
-    assert c.published[LAB + 'disp_t_apo']['text'] == '01.02.05'
-    assert c.published[LAB + 'disp_t_peri']['text'] == '123.00.00'
+    assert c.published[SOLO + 'disp_t_apo']['text'] == '01.02.05'
+    assert c.published[SOLO + 'disp_t_peri']['text'] == '123.00.00'
     c.handle('tlm/orbit', {'apo': None, 'peri': 70000.0, 't_apo': None, 't_peri': -5.0}, 2)      # escaping, periapsis past
-    assert c.published[LAB + 'disp_t_apo']['text'] == '-------'
-    assert c.published[LAB + 'disp_t_peri']['text'] == '-------'
+    assert c.published[SOLO + 'disp_t_apo']['text'] == '-------'
+    assert c.published[SOLO + 'disp_t_peri']['text'] == '-------'
 
 
 def test_landing_hover_time_gear_and_orbit():
@@ -34,9 +34,9 @@ def test_landing_hover_time_gear_and_orbit():
     # 1000 kg of propellant: Δv = 300·g0·ln(4000/3000) = 846 m/s; Mun gravity at 5.6 km is 1.541 m/s², and hovering
     # spends Δv at that rate: 549 s
     assert c.published[ENG + 'disp_hover']['text'] == '549'
-    # ORBIT, on the lab bus: km above the surface, and the inclination
-    assert c.published[LAB + 'disp_apo']['text'] == '10.00' and c.published[LAB + 'disp_peri']['text'] == '-50.00'
-    assert c.published[LAB + 'disp_incl']['text'] == '12.35'
+    # ORBIT, on the solo bus: km above the surface, and the inclination
+    assert c.published[SOLO + 'disp_apo']['text'] == '10.00' and c.published[SOLO + 'disp_peri']['text'] == '-50.00'
+    assert c.published[SOLO + 'disp_incl']['text'] == '12.35'
     # an engine that cannot lift the lander: no hover time
     over_the_mun(1, thrust_avail=5000.0)
     assert c.published[ENG + 'disp_hover']['text'] == '----'
@@ -52,34 +52,34 @@ def test_navigation_figures():
     c = Cockpit()
     fed(c, flight={'lat': -1.243, 'lon': 92.141})
     c.handle('tlm/orbit', {'body': 'Minmus', 'apo': 1.0, 'peri': 1.0, 'i': 6.02}, 0)
-    assert c.published[LAB + 'disp_lat']['text'] == '-1.24' and c.published[LAB + 'disp_lon']['text'] == '+92.14'
-    assert c.published[LAB + 'disp_incl']['text'] == '6.02' and c.published[LAB + 'txt_body']['text'] == 'MINMUS'
+    assert c.published[SOLO + 'disp_lat']['text'] == '-1.24' and c.published[SOLO + 'disp_lon']['text'] == '+92.14'
+    assert c.published[SOLO + 'disp_incl']['text'] == '6.02' and c.published[SOLO + 'txt_body']['text'] == 'MINMUS'
 
 
 # ---------- action groups ----------
 def test_action_groups():
     c = Cockpit(); fed(c)
-    assert topics(c.handle(LAB_IN + 'ag_10', {'v': 1}, 0))['cmd/action_group'] == {'n': 10}
-    assert 'cmd/action_group' not in topics(c.handle(LAB_IN + 'ag_10', {'v': 0}, 0))
+    assert topics(c.handle(AUX_IN + 'ag_10', {'v': 1}, 0))['cmd/action_group'] == {'n': 10}
+    assert 'cmd/action_group' not in topics(c.handle(AUX_IN + 'ag_10', {'v': 0}, 0))
     c.handle('tlm/groups', {'on': [False, True] + [False] * 8}, 0)
-    assert c.published[LAB + 'lamp_ag_2']['on'] and not c.published[LAB + 'lamp_ag_1']['on']
+    assert c.published[AUX + 'lamp_ag_2']['on'] and not c.published[AUX + 'lamp_ag_1']['on']
 
 
 # ---------- cameras ----------
 def test_camera_selection():
     c = Cockpit(); fed(c)
-    assert c.published[LAB + 'txt_cam']['text'] == 'NO MONITOR' and c.published['cam/select'] == {'id': None}
+    assert c.published[AUX + 'txt_cam']['text'] == 'NO MONITOR' and c.published['cam/select'] == {'id': None}
     c.handle('cam/status', {'online': True, 'playing': False}, 0)
-    assert c.published[LAB + 'txt_cam']['text'] == 'NO CAMERA'
+    assert c.published[AUX + 'txt_cam']['text'] == 'NO CAMERA'
     c.handle('cam/list', {'cameras': [{'id': 11, 'name': 'NavCam 1'}, {'id': 22, 'name': 'Dunvey Kerman'}]}, 0)
-    assert c.published['cam/select'] == {'id': 11} and c.published[LAB + 'txt_cam']['text'] == 'NAVCAM 1'
-    c.handle(LAB_IN + 'cam_next', {'v': 1}, 0)
-    assert c.published['cam/select'] == {'id': 22} and c.published[LAB + 'disp_cam']['text'] == '2'
-    c.handle(LAB_IN + 'cam_next', {'v': 0}, 0)
-    c.handle(LAB_IN + 'cam_next', {'v': 1}, 0)                         # wraps around
+    assert c.published['cam/select'] == {'id': 11} and c.published[AUX + 'txt_cam']['text'] == 'NAVCAM 1'
+    c.handle(AUX_IN + 'cam_next', {'v': 1}, 0)
+    assert c.published['cam/select'] == {'id': 22} and c.published[AUX + 'disp_cam']['text'] == '2'
+    c.handle(AUX_IN + 'cam_next', {'v': 0}, 0)
+    c.handle(AUX_IN + 'cam_next', {'v': 1}, 0)                         # wraps around
     assert c.published['cam/select'] == {'id': 11}
     c.handle('cam/status', {'online': True, 'playing': True}, 0)
-    assert c.published[LAB + 'led_cam_live']['on']
+    assert c.published[AUX + 'led_cam_live']['on']
     c.handle('cam/list', {'cameras': [{'id': 22, 'name': 'Dunvey Kerman'}]}, 0)     # the selected camera is gone
     assert c.published['cam/select'] == {'id': 22}
 
@@ -89,16 +89,16 @@ def test_the_monitor_leaves_out_the_window_cameras_and_switches_off():
     c.handle('cam/status', {'online': True, 'playing': True}, 0)
     c.handle('cam/list', {'cameras': [{'id': 1, 'name': 'cm_left'}, {'id': 2, 'name': 'NavCam'},
                                       {'id': 3, 'name': 'lm_right 2'}, {'id': 4, 'name': 'Docking'}]}, 0)
-    assert c.published['cam/select'] == {'id': 2} and c.published[LAB + 'disp_cam']['text'] == '1'
-    c.handle(LAB_IN + 'cam_next', {'v': 1}, 0)
-    assert c.published['cam/select'] == {'id': 4} and c.published[LAB + 'disp_cam']['text'] == '2'
-    c.handle(LAB_IN + 'cam_next', {'v': 0}, 0)
-    c.handle(LAB_IN + 'cam_next', {'v': 1}, 0)                         # wraps around, past the windows
+    assert c.published['cam/select'] == {'id': 2} and c.published[AUX + 'disp_cam']['text'] == '1'
+    c.handle(AUX_IN + 'cam_next', {'v': 1}, 0)
+    assert c.published['cam/select'] == {'id': 4} and c.published[AUX + 'disp_cam']['text'] == '2'
+    c.handle(AUX_IN + 'cam_next', {'v': 0}, 0)
+    c.handle(AUX_IN + 'cam_next', {'v': 1}, 0)                         # wraps around, past the windows
     assert c.published['cam/select'] == {'id': 2}
-    c.handle(LAB_IN + 'cam_power', {'v': 0}, 0)
+    c.handle(AUX_IN + 'cam_power', {'v': 0}, 0)
     assert c.published['cam/select'] == {'id': None, 'off': True}
-    assert c.published[LAB + 'txt_cam']['text'] == 'MONITOR OFF' and c.published[LAB + 'disp_cam']['blank']
-    c.handle(LAB_IN + 'cam_power', {'v': 1}, 0)
+    assert c.published[AUX + 'txt_cam']['text'] == 'MONITOR OFF' and c.published[AUX + 'disp_cam']['blank']
+    c.handle(AUX_IN + 'cam_power', {'v': 1}, 0)
     assert c.published['cam/select'] == {'id': 2}                     # back on the same camera
 
 
@@ -145,3 +145,15 @@ def test_solo_panel_shows_the_flight_dynamics_answer():
     assert c.published['panel/solo/out/txt_fd']['text'] == 'CIRC APO 1004.2' and c.published['panel/solo/out/lamp_fd_sent']['on']
     c.handle('fd/status', {'text': 'RDV: NO TARGET', 'ok': False}, 2)
     assert c.published['panel/solo/out/lamp_fd_refused']['on'] and not c.published['panel/solo/out/lamp_fd_sent']['on']
+
+
+def test_mcc_mode_darkens_orbit_navigation_and_pad_request():
+    c = Cockpit(); fed(c)
+    c.handle('fd/status', {'text': 'READY', 'ok': True}, 0)
+    c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 90000.0, 'peri': 80000.0, 'i': 1.0}, 0)
+    c.handle(SOLO_IN + 'mcc_mode', {'v': 1}, 1)
+    for name in ('disp_apo', 'disp_peri', 'disp_t_apo', 'disp_incl', 'disp_lat', 'disp_lon', 'txt_body'):
+        assert c.published[SOLO + name]['blank'], name
+    assert c.published[SOLO + 'txt_fd']['blank'] and not c.published[AUX + 'disp_cam']['blank']
+    c.handle(SOLO_IN + 'mcc_mode', {'v': 0}, 2)
+    assert c.published[SOLO + 'disp_apo']['text'] == '90.00' and c.published['panel/solo/out/txt_fd']['text'] == 'READY'

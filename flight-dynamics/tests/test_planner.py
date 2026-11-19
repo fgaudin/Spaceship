@@ -96,3 +96,10 @@ def test_a_suborbital_apoapsis_close_ahead_is_kept_not_moved_an_orbit_later():
     tlm['tlm/vessel']['thrust_avail'] = 1500000.0        # a short burn: half of it is about 10 s
     pad = circularise(tlm)
     assert isinstance(pad, Pad) and 100.0 + 10 < pad.tig_met < 100.0 + 40
+
+
+def test_the_service_ignores_requests_in_mcc_mode():
+    from service import answer
+    tlm = telemetry(700000.0, e=0.01)
+    assert answer('fd_circ', tlm, {'mcc_mode': 1}) == (None, {'text': '', 'ok': False})
+    assert answer('fd_circ', tlm, {'mcc_mode': 0})[1]['text'] != ''

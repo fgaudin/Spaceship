@@ -15,7 +15,7 @@
         0,
         0
       ],
-      "bus": "lab",
+      "bus": "aux",
       "items": [
         {
           "type": "alpha",
@@ -95,7 +95,7 @@
         0,
         1
       ],
-      "bus": "lab",
+      "bus": "aux",
       "items": [
         {
           "type": "lamp_button",

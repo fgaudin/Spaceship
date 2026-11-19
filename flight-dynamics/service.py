@@ -2,7 +2,8 @@
 the PAD (planner.py) and reads it up to the burn computer on pad/uplink, exactly as CAPCOM would; the crew accepts
 it there. fd/status says what it did, for the panel's display.
 
-    panel/solo/in/fd_circ, fd_plane, fd_rdv, fd_inject (buttons), fd_body (knob: 0 MUN, 1 MINMUS)
+    panel/solo/in/fd_circ, fd_plane, fd_rdv, fd_inject (buttons), fd_body (knob: 0 MUN, 1 MINMUS),
+    mcc_mode (the MODE switch on NAVIGATION, SOLO / MCC: on MCC, Mission Control is there and the buttons do nothing)
 """
 import json
 import os
@@ -26,8 +27,8 @@ REQUESTS = {
 def answer(control, telemetry, inputs, powered=True):
     """(uplink payload or None, status payload) for a request button. `powered`: cockpit/power, what the cockpit
     logic says (no electric charge, or the breaker out)."""
-    if not powered:
-        return None, {'text': '', 'ok': False}              # no power: the panel is dead
+    if not powered or inputs.get('mcc_mode'):
+        return None, {'text': '', 'ok': False}              # no power, or MCC flying: the panel is dead
     moon = MOONS[int(inputs.get('fd_body') or 0) % len(MOONS)]
     result = REQUESTS[control](telemetry, moon)
     if isinstance(result, Pad):

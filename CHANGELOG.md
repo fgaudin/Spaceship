@@ -5,6 +5,12 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-19 — one console, two capsules: STATION and the windows
 
+- **No more `lab` bus:** ORBIT and NAVIGATION move to the `solo` bus of their module (`panel/solo/...`), CAMERA and
+  ACTION GROUPS to a new `aux` bus (`panel/aux/...`). In the cockpit logic, `lab_panel.py` becomes `aux_panel.py`
+  and ORBIT and NAVIGATION join `solo_panel.py`; the tests and KSP scripts read the new topics.
+- **SOLO / MCC switch** (MODE, `mcc_mode`, at the bottom of NAVIGATION, whose rows moved up for it; starts on SOLO): on MCC, for a crew flying with Mission
+  Control, PAD REQUEST, ORBIT and NAVIGATION go dark (lamp test still lights them) and the flight dynamics service
+  ignores the PAD requests. The cockpit and the service both read the switch from `panel/solo/in/mcc_mode`.
 - **EVENT TIMER and LIGHTS · FAN swapped** on OVERHEAD's SYS module, which now reads TIME WARP, EVENT TIMER,
   LIGHTS · FAN, SAVE: the timer sits next to TIME WARP.
 - **No alarm in the VAB or the SPH:** the gateway puts the game's scene in `gateway/status` when there is no ship to

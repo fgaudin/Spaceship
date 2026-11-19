@@ -118,11 +118,9 @@ just came on blinks for 10 s), signal strength bar, the first station or relay o
 long the link has been in its present state, and ANTENNA DEPLOY (acts only when moved, so a restart cannot retract
 the antennas).
 
-**The `lab` bus** (no module of its own any more): panels first tried as experiments, now placed on other modules.
-- NAVIGATION (on the SOLO module): body orbited, latitude, longitude.
-- ORBIT (on the SOLO module, on the `lab` bus, 2 U wide): apoapsis and periapsis in km, the time to each, inclination.
-- ACTION GROUPS (on the AUX module in MAIN, on the `lab` bus): the craft's ten custom groups, each button lit while its group is on.
-- CAMERA (on the AUX module in MAIN, on the `lab` bus): CAM ◂ ▸ pick the camera shown on the monitor (not the windows' cameras), with its name and number, a LIVE LED, and a MONITOR switch that turns the monitor off.
+**AUX** (I/O module in MAIN, `aux` bus):
+- ACTION GROUPS: the craft's ten custom groups, each button lit while its group is on.
+- CAMERA: CAM ◂ ▸ pick the camera shown on the monitor (not the windows' cameras), with its name and number, a LIVE LED, and a MONITOR switch that turns the monitor off.
 
 **CAM** (glass panel, http://localhost:8650/cam.html): a monitor for the craft's cameras, fed by the
 JRTI mod's MJPEG streams (Just Read The Instructions: Hullcam cameras and docking port cameras). JRTI lists a camera
@@ -131,9 +129,13 @@ the camera the CAMERA panel selects (`cam/select`) and publishes what it can sho
 name set in JRTI's part menu. The page reaches JRTI (port 8080 on the KSP machine) through the panel server's `/jrti/`
 ([panels/nginx.conf](panels/nginx.conf)), since JRTI sends no CORS header; another source: `cam.html?jrti=<url>`.
 
-**SOLO** (I/O module, `index.html#solo`): for a pilot flying without Mission Control. CIRC, PLANE, RDV TGT and INJECT
-(knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which it reads up to the burn computer as CAPCOM
-would; the display says what it sent or why not. The ORBIT panel sits next to it. How it works: [flight-dynamics/README.md](flight-dynamics/README.md).
+**SOLO** (I/O module, `index.html#solo`, `solo` bus): for a pilot flying without Mission Control.
+- PAD REQUEST: CIRC, PLANE, RDV TGT and INJECT (knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which
+  it reads up to the burn computer as CAPCOM would; the display says what it sent or why not. How it works:
+  [flight-dynamics/README.md](flight-dynamics/README.md).
+- ORBIT (2 U wide): apoapsis and periapsis in km, the time to each, inclination.
+- NAVIGATION: body orbited, latitude, longitude, and the MODE switch: on MCC, for a crew with Mission Control,
+  PAD REQUEST, ORBIT and NAVIGATION are dark and the flight-dynamics service ignores the requests.
 
 **MCC** (Mission Control, http://localhost:8650/mcc.html): one tab per flight controller (FLIGHT, FIDO, RETRO,
 GUIDO, BOOSTER, EECOM, CAPCOM), meant for one laptop per controller on the same network. A go/no-go poll run by

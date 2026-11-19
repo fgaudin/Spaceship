@@ -122,8 +122,8 @@ inp('eng', 'cb_main', 1)
 inp('eng', 'throttle', 0.0)
 inp('eng', 'eng_arm', 0)
 check('throttle back to 0', wait(lambda: v.control.throttle == 0.0))
-apo_txt = out('lab', 'disp_apo').get('text', '')
-check('ORBIT shows APO in km', wait(lambda: abs(float(out('lab', 'disp_apo')['text']) - o.apoapsis_altitude / 1000) < 1), apo_txt)
+apo_txt = out('solo', 'disp_apo').get('text', '')
+check('ORBIT shows APO in km', wait(lambda: abs(float(out('solo', 'disp_apo')['text']) - o.apoapsis_altitude / 1000) < 1), apo_txt)
 
 # ---------- SYS panel ----------
 has_solar = any(p.deployable for p in v.parts.solar_panels)

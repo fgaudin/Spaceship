@@ -246,19 +246,19 @@ check('ANTENNA DEPLOY → plant, LED steady', ok(lambda: seen['tlm/comm']['anten
 pin('com', 'antenna', 0)
 
 # experimental panels
-press('lab', 'ag_3')
-check('AG 3 → plant toggles the group, lamp on', ok(lambda: seen['tlm/groups']['on'][2] and pout('lab', 'lamp_ag_3').get('on')))
-press('lab', 'ag_3')
-check('AG 3 again → off', ok(lambda: not seen['tlm/groups']['on'][2] and not pout('lab', 'lamp_ag_3').get('on')))
-check('navigation: body and latitude', ok(lambda: pout('lab', 'txt_body').get('text') == 'KERBIN' and pout('lab', 'disp_lat').get('text') == '+0.00'))
+press('aux', 'ag_3')
+check('AG 3 → plant toggles the group, lamp on', ok(lambda: seen['tlm/groups']['on'][2] and pout('aux', 'lamp_ag_3').get('on')))
+press('aux', 'ag_3')
+check('AG 3 again → off', ok(lambda: not seen['tlm/groups']['on'][2] and not pout('aux', 'lamp_ag_3').get('on')))
+check('navigation: body and latitude', ok(lambda: pout('solo', 'txt_body').get('text') == 'KERBIN' and pout('solo', 'disp_lat').get('text') == '+0.00'))
 cli.publish('cam/status', json.dumps({'online': True, 'playing': True}), qos=1, retain=True)
 cli.publish('cam/list', json.dumps({'cameras': [{'id': 7, 'name': 'NavCam'}, {'id': 9, 'name': 'Kerbal'}]}), qos=1, retain=True)
-check('camera list → first camera selected and named', ok(lambda: seen.get('cam/select') == {'id': 7} and pout('lab', 'txt_cam').get('text') == 'NAVCAM'))
-press('lab', 'cam_next')
-check('CAM ▸ → next camera', ok(lambda: seen.get('cam/select') == {'id': 9} and pout('lab', 'led_cam_live').get('on')))
+check('camera list → first camera selected and named', ok(lambda: seen.get('cam/select') == {'id': 7} and pout('aux', 'txt_cam').get('text') == 'NAVCAM'))
+press('aux', 'cam_next')
+check('CAM ▸ → next camera', ok(lambda: seen.get('cam/select') == {'id': 9} and pout('aux', 'led_cam_live').get('on')))
 cli.publish('cam/status', json.dumps({'online': False, 'playing': False}), qos=1, retain=True)
 cli.publish('cam/list', json.dumps({'cameras': []}), qos=1, retain=True)
-check('monitor gone → NO MONITOR', ok(lambda: pout('lab', 'txt_cam').get('text') == 'NO MONITOR'))
+check('monitor gone → NO MONITOR', ok(lambda: pout('aux', 'txt_cam').get('text') == 'NO MONITOR'))
 
 # ABORT fires KSP's abort group, nothing else: in the mock the capsule leaves everything behind
 pin('eng', 'abort_arm', 1); press('eng', 'abort')

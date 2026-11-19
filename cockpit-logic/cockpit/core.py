@@ -20,10 +20,10 @@ from .event_timer import EventTimer
 from .injected_failures import InjectedFailures
 from .messages import Message
 from .node_mirror import NodeMirror
-from .panels import (comm_panel, computer_panel, engine_panel, hand_controller, lab_panel, rendezvous_panel,
+from .panels import (aux_panel, comm_panel, computer_panel, engine_panel, hand_controller, rendezvous_panel,
                      science_panel, solo_panel, station_panel, systems_panel)
 
-PANELS_WITH_INPUTS = (engine_panel, systems_panel, computer_panel, rendezvous_panel, comm_panel, lab_panel,
+PANELS_WITH_INPUTS = (engine_panel, systems_panel, computer_panel, rendezvous_panel, comm_panel, aux_panel,
                       science_panel, station_panel, hand_controller)
 NEVER = -1e9
 
@@ -129,6 +129,11 @@ class Cockpit:
 
     def is_on(self, control):
         return bool(self.inputs.get(control))
+
+    def mcc_mode(self):
+        """The SOLO / MCC switch on MCC: Mission Control flies with the crew, so ORBIT, NAVIGATION and PAD REQUEST
+        (what a solo pilot needs in its place) are dark."""
+        return self.is_on('mcc_mode')
 
     def selected(self, rotary, positions):
         """The position a rotary selector points at."""
@@ -352,11 +357,11 @@ class Cockpit:
         rendezvous_panel.render(self, wanted)
         computer_panel.render(self, wanted)
         comm_panel.render(self, wanted)
-        lab_panel.render(self, wanted)
+        aux_panel.render(self, wanted)
         solo_panel.render(self, wanted)
         science_panel.render(self, wanted)
         station_panel.render(self, wanted)
-        wanted['cam/select'] = lab_panel.camera_selection(self)
+        wanted['cam/select'] = aux_panel.camera_selection(self)
         wanted.update(station_panel.window_cameras(self))
         wanted['cmp/pad'] = self._pad_summary()
         wanted['cw/state'] = self._alarm_summary(active, unacknowledged)

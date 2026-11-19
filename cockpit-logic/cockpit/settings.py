@@ -8,7 +8,7 @@ RENDEZVOUS_PANEL = 'rdv'
 COMM_PANEL = 'com'
 HAND_CONTROLLER_PANEL = 'hc'       # the hand controllers (USB joysticks), as a panel
 SOLO_PANEL = 'solo'           # PAD requests to the flight dynamics service, flying solo
-LAB_PANEL = 'lab'            # experimental panels
+AUX_PANEL = 'aux'            # the AUX module: CAMERA, ACTION GROUPS
 SCIENCE_PANEL = 'sci'
 STATION_PANEL = 'sys'          # the STATION selector (CM or LM), overhead
 
