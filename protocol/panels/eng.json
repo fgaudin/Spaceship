@@ -336,7 +336,7 @@
             "color": "green"
           },
           "at": [
-            29,
+            25,
             35
           ]
         },
@@ -346,7 +346,7 @@
           "label": "THROTTLE",
           "in": "throttle",
           "at": [
-            53,
+            55,
             35
           ]
         },
@@ -356,7 +356,7 @@
           "label": "STAGE ARM",
           "in": "stage_arm",
           "at": [
-            76,
+            115,
             35
           ]
         },
@@ -368,8 +368,8 @@
           "in": "stage",
           "out": "lamp_stage",
           "at": [
-            100,
-            35
+            145,
+            47
           ]
         },
         {
@@ -379,8 +379,8 @@
           "digits": 2,
           "out": "disp_stage",
           "at": [
-            124,
-            35
+            145,
+            24
           ],
           "color": "green"
         },
@@ -392,8 +392,8 @@
           "in": "eng_cutoff",
           "out": "lamp_cutoff",
           "at": [
-            148,
-            35
+            85,
+            36
           ]
         },
         {
@@ -403,7 +403,7 @@
           "in": "thrust_lim",
           "default": 1,
           "at": [
-            173,
+            175,
             37
           ]
         },
@@ -417,7 +417,7 @@
             "color": "amber"
           },
           "at": [
-            170,
+            175,
             78
           ]
         },
@@ -428,9 +428,10 @@
           "segments": 10,
           "out": "bar_fuel",
           "at": [
-            40,
-            80
-          ]
+            85,
+            76
+          ],
+          "vertical": true
         },
         {
           "type": "seg7",
@@ -439,7 +440,7 @@
           "digits": 5,
           "out": "disp_dv",
           "at": [
-            86,
+            40,
             80
           ],
           "color": "green"

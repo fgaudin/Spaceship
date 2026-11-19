@@ -12,6 +12,7 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 ## 2026-11-19 — all 7-segment displays green
 
 - **Every 7-segment display is green**, and so is every **LED bar**: red and amber are left to the warnings and cautions.
+- **ENGINE:** six evenly spaced columns: CUTOFF over a vertical STAGE FUEL bar next to the throttle, the stage number above the STAGE button.
 - **ABLATOR LOW** (a caution, under 20 %) replaces **ΔV RESID** on the annunciator; ΔV TO GO still shows the residual after a burn.
 
 ## 2026-11-19 — module names on the console
