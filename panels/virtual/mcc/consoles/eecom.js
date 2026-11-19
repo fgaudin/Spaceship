@@ -1,14 +1,42 @@
 /* EECOM: electrical, environmental and communications. Charge and its trend, solar panels, heat, consumables,
-   the radio link. */
+   life support, science, the radio link. */
 import { box, figures, fixed } from '../ui.js';
 import { store, vessel, met } from '../bus.js';
 
-let setPower, setThermal, setComm, lastCharge = null, chargeRate = null;
+// TAC Life Support: units each kerbal uses per second, recyclers not counted
+const LIFE_SUPPORT = [['food', 'Food', 1.6927083333e-05], ['water', 'Water', 1.1188078704e-05], ['oxygen', 'Oxygen', 0.001713537562385]];
+
+let setLife, setScience, setPower, setThermal, setComm, lastCharge = null, chargeRate = null;
 
 export function mount(root) {
   setPower = figures(box(root, 'ELECTRICAL', { at: [0, 0] }), [['ec', 'Charge'], ['rate', 'Trend'], ['endurance', 'Lasts'], ['solar', 'Solar panels'], ['lights', 'Lights']]);
-  setThermal = figures(box(root, 'THERMAL · CONSUMABLES', { at: [1, 0] }), [['heat', 'Hottest part'], ['mono', 'Monopropellant'], ['lf', 'Fuel (vessel)'], ['ox', 'Oxidizer (vessel)']]);
+  setThermal = figures(box(root, 'THERMAL · CONSUMABLES', { at: [1, 0] }), [['heat', 'Hottest part'], ['mono', 'Monopropellant'], ['lf', 'Fuel (vessel)'], ['ox', 'Oxidizer (vessel)'], ['xenon', 'Xenon'], ['ablator', 'Ablator']]);
   setComm = figures(box(root, 'COMMUNICATIONS', { at: [2, 0] }), [['link', 'Link'], ['strength', 'Signal'], ['via', 'Via'], ['hops', 'Hops'], ['antenna', 'Antennas']]);
+  setLife = figures(box(root, 'LIFE SUPPORT', { at: [0, 1] }), [['crew', 'Crew'], ...LIFE_SUPPORT.map(([id, name]) => [id, name])]);
+  setScience = figures(box(root, 'SCIENCE', { at: [1, 1] }), [['count', 'Experiments'], ['ready', 'Ready'], ['data', 'Holding data'],
+    ['value', 'Science held'], ['biome', 'Biome']]);
+}
+
+function updateLifeSupport(totals, crew) {
+  setLife('crew', crew ?? '—');
+  for (const [id, name, usePerSecond] of LIFE_SUPPORT) {
+    const carried = totals[name];
+    if (!carried || !carried.max) { setLife(id, store['tlm/resources'] ? 'not carried' : '—'); continue; }
+    const fraction = carried.amount / carried.max;
+    const hours = crew ? `, ${fixed(carried.amount / (usePerSecond * crew) / 3600, 1, 'h')}` : '';
+    setLife(id, `${Math.round(fraction * 100)} %${hours}`, fraction <= 0 || fraction < 0.1 ? 'bad' : fraction < 0.2 ? 'warn' : '');
+  }
+}
+
+function updateScience(science) {
+  const experiments = science.experiments || [];
+  const holding = experiments.filter((each) => each.data);
+  setScience('count', science.experiments ? experiments.length : '—');
+  const known = Boolean(science.experiments);
+  setScience('ready', known ? experiments.filter((each) => each.available && !each.data && !each.inoperable).length : '—');
+  setScience('data', known ? holding.length : '—');
+  setScience('value', known ? fixed(holding.reduce((sum, each) => sum + (each.value || 0), 0), 1) : '—');
+  setScience('biome', science.biome || '—');
 }
 
 const amount = (resource, unit = '') => (resource ? `${fixed(resource.amount, 0)} / ${fixed(resource.max, 0)}${unit}` : '—');
@@ -35,6 +63,11 @@ export function update() {
   setThermal('mono', amount(totals.MonoPropellant));
   setThermal('lf', amount(totals.LiquidFuel));
   setThermal('ox', amount(totals.Oxidizer));
+  setThermal('xenon', amount(totals.XenonGas));
+  const ablator = totals.Ablator;
+  setThermal('ablator', amount(ablator), ablator && ablator.amount / ablator.max < 0.2 ? 'warn' : '');
+  updateLifeSupport(totals, craft.crew);
+  updateScience(store['tlm/science'] || {});
   const comm = store['tlm/comm'] || {};
   setComm('link', comm.link ? 'AOS' : 'LOS', comm.link ? 'good' : 'bad');
   setComm('strength', comm.link ? `${Math.round((comm.strength || 0) * 100)} %` : '—');

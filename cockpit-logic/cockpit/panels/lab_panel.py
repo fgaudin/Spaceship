@@ -1,4 +1,4 @@
-"""LAB panel: experimental panels, tried here before they earn a place in the cockpit.
+"""The lab bus: panels first tried as experiments, now on other modules.
 
 - NAVIGATION: latitude, longitude and the body orbited.
 - ORBIT (on the SOLO module, but on this bus): apoapsis, periapsis, the time to each, inclination.

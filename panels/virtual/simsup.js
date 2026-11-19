@@ -73,9 +73,12 @@ function buildFailure(failure) {
   toggle.type = 'button';
   const controls = create('div', 'controls');
   const parameterInputs = Object.entries(failure.parameters).map(([name, value]) => {
-    const input = create('input');
+    const choices = failure.choices?.[name];
+    const input = create(choices?.length ? 'select' : 'input');
+    for (const choice of choices || []) input.append(Object.assign(create('option', '', choice.label), { value: choice.value }));
     input.value = value;
     input.name = name;
+    input.title = name;
     input.setAttribute('aria-label', `${failure.id} ${name}`);
     return input;
   });

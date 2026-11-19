@@ -137,13 +137,13 @@ def _render_reentry(cockpit, outputs, fresh):
     drag_felt = (flight.get('g') or 0) >= S.ENTRY_G_FORCE and not vessel.get('thrust')
     descending = (flight.get('vs') or 0) < 0 and vessel.get('situation') in ('flying', 'sub_orbital')
     outputs.lamp('lamp_05g', fresh and drag_felt and descending)
-    safety = vessel.get('chute_safe') if fresh else None
+    safety = (cockpit.injected_failures.chute_reading() or vessel.get('chute_safe')) if fresh else None
     for state in ('safe', 'risky', 'unsafe'):
         outputs.lamp(f'lamp_chute_{state}', safety == state)
 
 
 def _render_life_support(cockpit, outputs, fresh):
-    totals = cockpit.resources.get('total', {})
+    totals = cockpit.life_support_resources()
     for name, resource in (('food', 'Food'), ('water', 'Water'), ('oxygen', 'Oxygen')):
         outputs.bar(f'bar_ls_{name}', fraction_left(totals, resource) if fresh else 0.0)
         outputs.text(f'disp_ls_{name}', fit_number(life_support_hours(cockpit, resource) if fresh else None, 1, 4))

@@ -23,7 +23,7 @@ LOG_LIMIT = 2000
 THROTTLE_LOG_EVERY_S = 1.0          # a lever or stick moving sends many messages: log one a second per control
 NOISY_COMMANDS = {'cmd/throttle', 'cmd/rotate', 'cmd/translate'}
 FLIGHT_EVENT_CONTROLS = {'stage', 'abort', 'eng_cutoff', 'master_alarm', 'master_caution', 'undock',
-                         'chute_deploy'}
+                         'chute_deploy', 'revert'}
 
 # id → (group, title, where it acts, parameters the page asks for)
 FAILURES = {
@@ -33,12 +33,16 @@ FAILURES = {
     'rcs_fail': ('Attitude', 'RCS thrusters dead', 'plant', {}),
     'wheels_fail': ('Attitude', 'Reaction wheels dead (SAS weak or useless)', 'plant', {}),
     'chute_fail': ('Recovery', 'Parachutes do not deploy', 'plant', {}),
+    'chute_gauge': ('Recovery', 'The chute safety lamps read wrong', 'cockpit', {'reads': 'safe'}),
+    'ls_gauge': ('Life support', 'A life support gauge reads wrong (fraction of full)', 'cockpit',
+                 {'resource': 'Oxygen', 'reads': '0.05'}),
+    'science_dead': ('Science', 'The SCIENCE controls do nothing', 'cockpit', {}),
     'comm_lost': ('Communications', 'Radio link lost (LOS)', 'plant', {}),
     'telemetry_freeze': ('Instruments', 'All telemetry stops (NO LINK)', 'plant', {}),
     'battery_short': ('Electrical', 'Battery short (mock plant only)', 'plant', {}),
     'overheat': ('Thermal', 'Overheat (mock plant only)', 'plant', {}),
     'false_alarm': ('Instruments', 'A caution or warning lights with no cause', 'cockpit', {'alarm': 'cw_low_fuel'}),
-    'panel_dark': ('Instruments', 'A panel loses power: dark and dead', 'cockpit', {'panel': 'sys'}),
+    'panel_dark': ('Instruments', 'A panel loses power: dark and dead', 'cockpit', {'panel': 'electrical'}),
     'display_frozen': ('Instruments', 'A display freezes on its last value', 'cockpit', {'output': 'eng/disp_alt'}),
     'switch_stuck': ('Instruments', 'A switch or button does nothing', 'cockpit', {'control': 'sas'}),
 }
@@ -89,6 +93,8 @@ class ArmedFailure:
 @dataclass
 class SimSup:
     scenarios: list = field(default_factory=list)
+    panels: dict = field(default_factory=dict)          # panel id → its wires (panel_wiring)
+    choices: dict = field(default_factory=dict)         # what the page offers (parameter_choices)
     active: dict = field(default_factory=dict)          # failure id → parameters
     armed: list = field(default_factory=list)           # ArmedFailure
     scenario: str = None                                # title of the scenario started last
@@ -117,6 +123,8 @@ class SimSup:
             self._log_crew_input(topic, payload)
         elif topic.startswith('cmd/'):
             self._log_command(topic, payload)
+            if topic == 'cmd/game' and payload.get('revert'):
+                messages += self._flight_reverted()
         elif topic == 'cw/state':
             self._log_alarms(payload)
         return messages + self._state_if_changed()
@@ -146,7 +154,8 @@ class SimSup:
 
     def startup(self):
         """Retained messages to publish when the service starts: the scenarios, and no failure left over."""
-        messages = [Message('sim/simsup/scenarios', {'scenarios': self.scenarios, 'failures': failure_catalogue()},
+        messages = [Message('sim/simsup/scenarios', {'scenarios': self.scenarios,
+                                                          'failures': failure_catalogue(self.choices)},
                             retain=True)]
         messages += [Message(f'sim/failures/{failure}', {'on': False}, retain=True) for failure in FAILURES]
         return messages + [Message('sim/freeze', {'on': False}, retain=True)] + self._state()
@@ -200,13 +209,27 @@ class SimSup:
         self._add_log('simsup', f'armed: {armed.describe()}')
         self.changed = True
 
+    def _flight_reverted(self):
+        """A new start: what had failed is cleared; failures armed and not fired yet still wait for their trigger."""
+        self._add_log('simsup', 'flight reverted to launch: active failures cleared')
+        messages = []
+        for name in list(self.active):
+            messages += self._clear(name)
+        return messages
+
     def _inject(self, failure, parameters):
+        wiring = {}
+        if failure == 'panel_dark':
+            wiring = self.panels.get(parameters.get('panel'))
+            if wiring is None:
+                self._add_log('simsup', f"panel_dark: no panel {parameters.get('panel')!r}")
+                return []
         self.active[failure] = parameters
         details = f' {parameters}' if parameters else ''
         self._add_log('failure', f'{failure} ON{details}')
         self.debrief.append({'failure': failure, 'met': self._met(), 'first_ack': None, 'first_action': None})
         self.changed = True
-        return [Message(f'sim/failures/{failure}', {'on': True, **parameters}, retain=True)]
+        return [Message(f'sim/failures/{failure}', {'on': True, **parameters, **wiring}, retain=True)]
 
     def _clear(self, failure):
         self.active.pop(failure, None)
@@ -304,6 +327,73 @@ def _after(entry, key):
     return round(entry[key] - entry['met'], 1)
 
 
-def failure_catalogue():
-    return [{'id': name, 'group': group, 'title': title, 'where': where, 'parameters': parameters}
+def option(value, label=None):
+    return {'value': value, 'label': label or value}
+
+
+# Parameters whose values do not depend on the panels: {failure: {parameter: options}}
+FIXED_CHOICES = {
+    'ls_gauge': {'resource': [option('Food'), option('Water'), option('Oxygen')],
+                 'reads': [option('0', 'empty'), option('0.05', '5 %'), option('0.1', '10 %'), option('0.25', '25 %'),
+                           option('0.5', '50 %'), option('1', 'full')]},
+    'chute_gauge': {'reads': [option('safe', 'SAFE'), option('risky', 'RISKY'), option('unsafe', 'UNSAFE')]},
+}
+DISPLAY_TYPES = ('seg7', 'alpha', 'bar')
+
+
+def parameter_choices(modules):
+    """{failure: {parameter: [{'value', 'label'}]}}: what the page offers, read from the panel definitions."""
+    panels, alarms, displays, controls = [], [], [], []
+    for module in modules:
+        for panel in module.get('panels', []):
+            title = panel.get('title', panel['id'])
+            items = panel.get('items', [])
+            if items:
+                panels.append(option(panel['id'], title))
+            for item in items:
+                name = f"{title} · {item.get('label') or item.get('id')}"
+                if isinstance(item.get('in'), str):
+                    controls.append(option(item['in'], name))
+                if item.get('type') in DISPLAY_TYPES and panel.get('bus') and item.get('out'):
+                    displays.append(option(f"{panel['bus']}/{item['out']}", name))
+                alarms += [option(cell['out'], cell.get('label')) for cell in item.get('cells', [])
+                           if cell.get('out', '').startswith('cw_')]
+    by_label = lambda options: sorted(options, key=lambda each: each['label'])
+    return {**FIXED_CHOICES, 'panel_dark': {'panel': by_label(panels)}, 'false_alarm': {'alarm': by_label(alarms)},
+            'display_frozen': {'output': by_label(displays)}, 'switch_stuck': {'control': by_label(controls)}}
+
+
+def failure_catalogue(choices=None):
+    """The failures for the page; `choices` are the values each parameter can take."""
+    choices = choices or FIXED_CHOICES
+    return [{'id': name, 'group': group, 'title': title, 'where': where, 'parameters': parameters,
+             'choices': choices.get(name, {})}
             for name, (group, title, where, parameters) in FAILURES.items()]
+
+
+def panel_wiring(modules):
+    """{panel id: {'outputs': ['<bus>/<output>'], 'inputs': [control]}} from the module definitions: a panel moved to
+    another module, or sharing its bus with others, stays one panel."""
+    wiring = {}
+    for module in modules:
+        for panel in module.get('panels', []):
+            inputs, outputs = set(), set()
+            collect_wires(panel.get('items', []), inputs, outputs)
+            bus = panel.get('bus')
+            wiring[panel['id']] = {'outputs': sorted(f'{bus}/{name}' for name in outputs) if bus else [],
+                                   'inputs': sorted(inputs)}
+    return wiring
+
+
+def collect_wires(node, inputs, outputs):
+    if isinstance(node, list):
+        for each in node:
+            collect_wires(each, inputs, outputs)
+    elif isinstance(node, dict):
+        for key, value in node.items():
+            if key == 'in' and isinstance(value, str):
+                inputs.add(value)
+            elif key == 'out' and isinstance(value, str):
+                outputs.add(value)
+            else:
+                collect_wires(value, inputs, outputs)

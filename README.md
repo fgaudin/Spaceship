@@ -38,23 +38,22 @@ selectors (click / shift-click / wheel), 7-segment displays, LED bar graphs, an 
 Keys: Space = STAGE (when armed), ↑/↓ = throttle, T = lamp test. The **bus** checkbox shows a live sniffer. Resetting
 the simulation and injecting failures are on the SIMSUP page.
 
-**Modules** (on the CONSOLE page): ENG (C&W, ascent displays, propulsion, staging, abort, attitude), SYS, CMP (burn
-computer), RDV (target and docking), SOLO (PAD requests, the orbit and navigation), and the glass modules FDAI and CAM
+**Modules** (on the CONSOLE page): ENG (C&W, engine and staging, ascent and descent displays, propellant, radio link, abort), SYS (time warp, lights and fan, event timer, save), RES (electrical, life support), AUX (camera, action groups), LND (landing aid), RNT (reentry and recovery), SCI (science), CMP (burn
+computer), RDV (target and docking), SOLO (PAD requests, the orbit and navigation), and the glass modules FDAI (attitude) and CAM
 (camera monitor), drawn as screens with the live page in them. FDAI and CAM are also pages of their own (for a
 Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
 **SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with ELECTRICAL and LIFE SUPPORT; PROPELLANT on the ENG module): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
 whole vessel (fuel, oxidizer, monoprop and xenon bars) with BURN TIME (the stage's propellant at the present thrust, or at full thrust) and RCS ΔV (an estimate, from the stock thrusters' 240 s), life support (TAC Life Support: food, water and oxygen bars, the hours each lasts for the crew aboard, recyclers not counted, and CREW; LS LOW and LS OUT on the annunciator), event timer (manual,
 or counting down to TIG / apoapsis / periapsis / SOI change; with COUNT DOWN on, the manual timer counts down from a
-value set with MIN + and SEC +10 and blinks at zero), recovery (chute arm + deploy, brakes, the ablator left, the
-outside temperature and air pressure), time warp (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
+value set with MIN + and SEC +10 and blinks at zero), time warp (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
 event the timer's source selects; pause), save (QUICK SAVE, QUICK LOAD, and REVERT TO LAUNCH behind the guarded REVERT ARM), lights and fan (FAN does nothing in the virtual cockpit; CABIN and BACKLIGHT light the cockpit itself
 through `cockpit/lighting`: on the console page the plates brighten and the legends glow; EXTERNAL is the craft's
 lights).
 
-**LANDING AID** (module in MAIN, on the `eng` bus): DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides), and four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN.
+**LANDING AID** (module in MAIN, on the `eng` bus): DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides), and four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN; CONTACT under them.
 
-**REENTRY · RECOVERY** (module in MAIN, on the `sys` bus): CHUTE ARM, CHUTE, BRAKES, ablator, the hottest part as a percentage of its limit, time to the atmosphere at the present sink rate, outside temperature and pressure, and KSP's verdict on opening the chutes (SAFE, RISKY, UNSAFE). **SCIENCE** (module in MAIN, `sci` bus): step through the experiments; RUN, SEND, DUMP, RESET the one shown, RUN ALL, with its state, biome and science value.
+**REENTRY · RECOVERY** (module in MAIN, on the `sys` bus): CHUTE ARM, CHUTE, BRAKES, ablator, the hottest part as a percentage of its limit, time to the atmosphere at the present sink rate, outside temperature and pressure, the 0.05 G light, and KSP's verdict on opening the chutes (SAFE, RISKY, UNSAFE). **SCIENCE** (module in MAIN, `sci` bus): step through the experiments; RUN, SEND, DUMP, RESET the one shown, RUN ALL, with its state, biome and science value.
 
 **ENG** (I/O module): CAUTION & WARNING (the MET is on the camera monitor's panel); ASCENT · DESCENT (altitude in m, above the sea or the ground by ALT REF; horizontal, vertical and total speed against the orbit or the surface by the SPEED REF knob, TGT reading the surface; g, dynamic pressure in kPa, TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; GEAR); ENGINE (ENG ARM, throttle,
 STAGE ARM and STAGE, the stage number, CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
@@ -107,7 +106,7 @@ the antennas).
 
 **CAM** (glass panel, http://localhost:8650/cam.html): a monitor for the craft's cameras, fed by the
 Kerbcast mod's WebRTC streams (hull cameras, docking port cameras, kerbals' helmets, the
-launch pad camera). It shows the camera the LAB panel selects (`cam/select`) and publishes what it can show
+launch pad camera). It shows the camera the CAMERA panel selects (`cam/select`) and publishes what it can show
 (`cam/list`). Kerbcast listens on the KSP machine only, unless its `BindAddress` setting is changed
 (`cam.html?kerbcast=http://host:8088`).
 
@@ -161,8 +160,8 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 - Caution & warning, cautions (amber, MASTER CAUTION): LOW FUEL, LOW POWER, HIGH Q, SAS DISAGREE, FLAMEOUT, RCS LOW,
   CLOSING (above the braking gate), THROTTLE (lever up with ENG ARM off), ATT ERR (over 5° off the burn attitude from
   30 s before TIG), ΔV RESID (after cutoff, over 0.5 m/s or 2 %), CHUTE (descending under 15 km, parachute neither armed nor
-  out), COMM LOST. Warnings (red, MASTER ALARM blinking + tone): HIGH G, NO LINK, ENG FAIL, SINK RATE, OVERHEAT (a part
-  over 80 % of its temperature limit), GEAR UP (under 300 m, descending, gear up). Pressing the master button acknowledges: the master lamp and tone go
+  out), COMM LOST, LS LOW (food, water or oxygen under 10 %, with a crew aboard). Warnings (red, MASTER ALARM blinking + tone): HIGH G, NO LINK, ENG FAIL, SINK RATE, OVERHEAT (a part
+  over 80 % of its temperature limit), GEAR UP (under 300 m, descending, gear up), LS OUT (one of them empty, with a crew aboard). Pressing the master button acknowledges: the master lamp and tone go
   off, the annunciator stays lit (steady) while the condition lasts; a condition that clears and returns needs a new ack.
 - KSP is the authority: indicator LEDs show the game's state and blink when it disagrees with the switch; SAS, RCS and
   external lights are re-commanded once a second while they disagree (panel wins); gear, solar panels and fuel

@@ -72,6 +72,6 @@ After writing, the script lists:
 - a screen window that does not fit;
 - an item type with no footprint, a character the stroke font has no glyph for (drawn as a box).
 
-With the placeholder footprints some panels already report issues (2026-11-18: 10): the 12 mm guarded toggles'
+With the placeholder footprints some panels already report issues (2026-11-19: 8): the 12 mm guarded toggles'
 covers are bigger than the virtual console draws them, and the real 7-segment digits are wider (PAD). That is the point of the check: when a part is chosen, put its size here, and move the controls in
 `protocol/panels/<module>.json` until both the console page and this script report nothing.

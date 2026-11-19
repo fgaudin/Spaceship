@@ -36,7 +36,9 @@ services:
 
   simsup:
     build: ./simsup
-    environment: { MQTT_HOST: broker }
+    environment: { MQTT_HOST: broker, PANELS_DIR: /panels }
+    volumes:
+      - ./protocol/panels:/panels:ro
     depends_on: [broker]
     restart: unless-stopped
 

@@ -1,7 +1,7 @@
 /* RETRO, retrofire officer: the way home. Periapsis against the entry corridor, the Δv to deorbit from apoapsis,
    entry loads. */
 import { box, figures, fixed, km } from '../ui.js';
-import { orbit, flight, store } from '../bus.js';
+import { orbit, flight, store, vessel } from '../bus.js';
 import { bodyOf } from '../bodies.js';
 
 // Kerbin entry corridor for a capsule (vacuum periapsis): shallower skips or overheats less but lands long.
@@ -12,7 +12,7 @@ let setEntry;
 
 export function mount(root) {
   setEntry = figures(box(root, 'ENTRY', { at: [0, 0] }), [['peri', 'Periapsis'], ['corridor', 'Corridor'], ['deorbit', 'Deorbit Δv at apoapsis'],
-    ['g', 'Load'], ['q', 'Dynamic pressure'], ['heat', 'Hottest part']]);
+    ['toAtmosphere', 'Time to atmosphere'], ['g', 'Load'], ['q', 'Dynamic pressure'], ['heat', 'Hottest part'], ['chute', 'Opening the chutes']]);
 }
 
 /* Δv (m/s) at apoapsis, retrograde, to bring the periapsis down to the target. */
@@ -34,8 +34,12 @@ export function update() {
     : `not at Kerbin (${o.body || '?'})`, atKerbin ? (inCorridor ? 'good' : o.peri < CORRIDOR_LOW_M ? 'bad' : '') : '');
   const deorbit = atKerbin && o.peri > CORRIDOR_HIGH_M ? deorbitDeltaV(o, body) : null;
   setEntry('deorbit', deorbit == null ? '—' : fixed(deorbit, 1, 'm/s retrograde'));
+  const descending = f.alt > o.atm && f.vs < -0.1 && !(o.peri >= o.atm);
+  setEntry('toAtmosphere', o.atm != null && descending ? fixed((f.alt - o.atm) / -f.vs, 0, 's') : '—');
   setEntry('g', fixed(f.g, 2, 'g'));
   setEntry('q', fixed(f.q == null ? null : f.q / 1000, 1, 'kPa'));
   const heat = store['tlm/thermal']?.max;
   setEntry('heat', heat == null ? '—' : `${Math.round(heat * 100)} % of limit`, heat > 0.8 ? 'bad' : heat > 0.6 ? 'warn' : '');
+  const chute = vessel().chute_safe;
+  setEntry('chute', chute || '—', { safe: 'good', risky: 'warn', unsafe: 'bad' }[chute] || '');
 }

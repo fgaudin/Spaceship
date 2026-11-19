@@ -9,6 +9,16 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   tapering outline (`outline` in `console.json`, replacing `taper`). The hand controllers stay outside the U grid.
 - **OVERHEAD** is cut to its 4 × 2 U and centred (`"align": "center"`).
 
+## 2026-11-19 — SimSup, MCC and the docs catch up with the console
+
+- **`panel_dark` darkens one real panel** (`panel`: its id, suggested on the page), and no longer a whole bus. SimSup reads the
+  panel definitions (`PANELS_DIR`, mounted in `docker-compose.yml`) and sends the panel's outputs and inputs with the failure.
+- **SimSup's failure parameters are lists** of their possible values (panels, alarms, displays, controls by their names on the console), no longer text to type.
+- **New SimSup failures:** `ls_gauge`, `chute_gauge`, `science_dead`. A **revert** is logged as a flight event and clears the
+  active failures; armed ones stay armed.
+- **MCC:** EECOM gains LIFE SUPPORT and SCIENCE boxes, xenon and ablator; RETRO the time to the atmosphere and the chute verdict.
+- **Docs:** the README's modules, alarms and camera text, the laser-cut issue count.
+
 ## 2026-11-19 — the annunciator holds alarms only
 
 - **0.05 G** moves to REENTRY · RECOVERY, above the chute lamps (now `panel/sys/out/lamp_05g`), and **CONTACT** to LANDING AID,

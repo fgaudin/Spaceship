@@ -128,8 +128,8 @@ check('cleared: NO LINK off', wait(lambda: not out('eng', 'cw_no_link').get('on'
 # ---------- cockpit failures ----------
 simsup(action='inject', failure='false_alarm', parameters={'alarm': 'HIGH Q'})
 check('false_alarm → HIGH Q lit on the pad', wait(lambda: out('eng', 'cw_q').get('on'), 3), out('eng', 'cw_q'))
-simsup(action='inject', failure='panel_dark', parameters={'panel': 'sys'})
-check('panel_dark → SYS displays blank', wait(lambda: out('sys', 'disp_ec').get('blank'), 3))
+simsup(action='inject', failure='panel_dark', parameters={'panel': 'electrical'})
+check('panel_dark → ELECTRICAL displays blank', wait(lambda: out('sys', 'disp_ec').get('blank'), 3))
 simsup(action='clear_all')
 check('CLEAR ALL → all back', wait(lambda: not out('eng', 'cw_q').get('on') and not out('sys', 'disp_ec').get('blank'), 4))
 

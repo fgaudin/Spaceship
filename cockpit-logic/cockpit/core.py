@@ -146,6 +146,12 @@ class Cockpit:
         """(thrust at full throttle, specific impulse), also before ignition; see engines.propulsion."""
         return propulsion(self.telemetry.get('tlm/engines', {}), self.vessel, self.flight)
 
+    def life_support_resources(self):
+        """Food, water and oxygen as the gauges show them (SimSup can make one read wrong)."""
+        totals = self.resources.get('total', {})
+        return {name: self.injected_failures.life_support_reading(name, totals[name])
+                for name in S.LIFE_SUPPORT_USE_PER_KERBAL_S if name in totals}
+
     def active_alarms(self):
         return active_alarms(self)
 

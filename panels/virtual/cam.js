@@ -3,7 +3,7 @@
    On the bus this page is the camera node:
      cam/list    (this page, retained)   {"cameras": [{"id", "name", "vessel", "kind"}]}: what can be shown
      cam/status  (this page, retained)   {"online", "playing"}
-     cam/select  (cockpit logic)         {"id"}: the camera to show, chosen on the LAB panel
+     cam/select  (cockpit logic)         {"id"}: the camera to show, chosen on the CAMERA panel
 
    URL: cam.html?broker=ws://host:9001&kerbcast=http://host:8088
    Kerbcast listens on this machine only unless its BindAddress setting is changed. */

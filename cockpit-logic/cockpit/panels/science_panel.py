@@ -27,12 +27,12 @@ def handle_input(cockpit, change):
         if change.pressed and index is not None:
             cockpit.selected_experiment = index + (1 if control == 'sci_next' else -1)
         return []
-    if control == 'sci_run_all':
-        return cockpit.command('cmd/science', {'all': True}) if change.pressed else []
-    if control in ACTIONS:
+    if control == 'sci_run_all' or control in ACTIONS:
         index = selected_index(cockpit)
-        if not change.pressed or index is None:
+        if not change.pressed or index is None or cockpit.injected_failures.science_is_dead():
             return []
+        if control == 'sci_run_all':
+            return cockpit.command('cmd/science', {'all': True})
         return cockpit.command('cmd/science', {'index': index, 'action': ACTIONS[control]})
     return None
 

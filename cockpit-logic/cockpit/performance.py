@@ -118,7 +118,7 @@ def rcs_delta_v(cockpit):
 def life_support_hours(cockpit, resource):
     """Hours the crew can live on what is aboard, at TAC Life Support's rates and without recyclers. None without a
     crew, or when the vessel does not carry the resource."""
-    crew, carried = cockpit.vessel.get('crew'), cockpit.resources.get('total', {}).get(resource)
+    crew, carried = cockpit.vessel.get('crew'), cockpit.life_support_resources().get(resource)
     if not crew or not carried:
         return None
     return carried['amount'] / (S.LIFE_SUPPORT_USE_PER_KERBAL_S[resource] * crew) / 3600

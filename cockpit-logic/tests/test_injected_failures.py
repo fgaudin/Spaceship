@@ -17,11 +17,13 @@ def test_false_alarm_lights_a_caution_with_no_cause():
 
 def test_dark_panel_shows_nothing_and_ignores_its_inputs():
     c = Cockpit(); fed(c)
-    c.handle('sim/failures/panel_dark', {'on': True, 'panel': 'sys'}, 0)
+    c.handle('sim/failures/panel_dark', {'on': True, 'panel': 'x', 'outputs': ['sys/disp_ec', 'sys/bar_ec', 'sys/led_pause'],
+                                         'inputs': ['warp_up']}, 0)
     assert c.published['panel/sys/out/disp_ec']['blank'] and c.published['panel/sys/out/bar_ec'] == {'v': 0.0}
     assert c.published['panel/sys/out/led_pause'] == {'on': False, 'blink': False}
     assert 'cmd/warp' not in topics(c.handle('panel/sys/in/warp_up', {'v': 1}, 1))
-    assert 'cmd/stage' not in topics(c.handle(P + 'stage', {'v': 0}, 1))          # other panels unaffected
+    assert 'cmd/stage' not in topics(c.handle(P + 'stage', {'v': 0}, 1))
+    assert not c.published['panel/sys/out/disp_warp']['blank']                    # the same bus, another panel
     c.handle('sim/failures/panel_dark', {'on': False}, 2)
     assert not c.published['panel/sys/out/disp_ec']['blank']
 
@@ -43,3 +45,16 @@ def test_stuck_switch_does_nothing():
     assert 'cmd/sas' not in topics(c.handle(P + 'sas', {'v': 1}, 1))
     c.handle('sim/failures/switch_stuck', {'on': False}, 2)
     assert topics(c.handle(P + 'sas', {'v': 1}, 3))['cmd/sas'] == {'on': True}
+
+
+def test_gauge_and_science_failures():
+    c = Cockpit()
+    totals = {'Food': {'amount': 4.0, 'max': 4.0}, 'Water': {'amount': 3.0, 'max': 3.0}, 'Oxygen': {'amount': 400.0, 'max': 400.0}}
+    fed(c, vessel={'crew': 2, 'chute_safe': 'unsafe'}, resources={'stage': {}, 'total': totals})
+    c.handle('sim/failures/ls_gauge', {'on': True, 'resource': 'O2', 'reads': '0.05'}, 1)
+    assert c.published['panel/sys/out/bar_ls_oxygen'] == {'v': 0.05} and c.published[O + 'cw_ls_low']['on']
+    c.handle('sim/failures/chute_gauge', {'on': True, 'reads': 'safe'}, 2)
+    assert c.published['panel/sys/out/lamp_chute_safe']['on'] and not c.published['panel/sys/out/lamp_chute_unsafe']['on']
+    c.handle('tlm/science', {'experiments': [{'title': 'Goo', 'available': True}]}, 3)
+    c.handle('sim/failures/science_dead', {'on': True}, 3)
+    assert 'cmd/science' not in topics(c.handle('panel/sci/in/sci_run', {'v': 1}, 4))

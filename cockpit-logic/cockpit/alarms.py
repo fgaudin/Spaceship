@@ -116,7 +116,7 @@ def _vehicle_alarms(cockpit, active):
         active.add('cw_rcs_low')
     if (cockpit.telemetry.get('tlm/thermal', {}).get('max') or 0) >= S.OVERHEAT_FRACTION:
         active.add('cw_overheat')
-    _life_support_alarms(vessel, totals, active)
+    _life_support_alarms(vessel, cockpit.life_support_resources(), active)
     if vessel.get('comm') is False:
         active.add('cw_comm')
     # SAS switch against the game for a while

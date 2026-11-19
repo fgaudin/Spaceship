@@ -1,9 +1,14 @@
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from simsup_core import FAILURES, SimSup  # noqa: E402
+from simsup_core import FAILURES, SimSup, failure_catalogue, panel_wiring, parameter_choices  # noqa: E402
 
 SCENARIOS = [{'name': 'Engine out', 'save': 'pad-save', 'failures': [{'failure': 'engine_one_out', 'trigger': {'met': 25}}]},
              {'name': 'False alarm', 'failures': [{'failure': 'false_alarm', 'parameters': {'alarm': 'cw_high_g'}}]}]
+
+
+MODULES = [{'id': 'res', 'panels': [{'id': 'electrical', 'bus': 'sys', 'items': [
+    {'id': 'solar', 'in': 'solar', 'led': {'out': 'led_solar'}}, {'id': 'ec', 'out': 'disp_ec'}]}]}]
+WIRES = {'outputs': ['sys/disp_ec', 'sys/led_solar'], 'inputs': ['solar']}
 
 
 def topics(messages):
@@ -23,10 +28,10 @@ def test_startup_clears_every_failure_and_publishes_the_scenarios():
 
 
 def test_inject_and_clear_with_default_parameters():
-    simsup = SimSup()
+    simsup = SimSup(panels=panel_wiring(MODULES))
     out = topics(simsup.handle('sim/simsup/cmd', {'action': 'inject', 'failure': 'panel_dark'}, 0))
-    assert out['sim/failures/panel_dark'] == {'on': True, 'panel': 'sys'}
-    assert out['sim/simsup/state']['active'] == [{'failure': 'panel_dark', 'parameters': {'panel': 'sys'}}]
+    assert out['sim/failures/panel_dark'] == {'on': True, 'panel': 'electrical', **WIRES}
+    assert out['sim/simsup/state']['active'] == [{'failure': 'panel_dark', 'parameters': {'panel': 'electrical'}}]
     out = topics(simsup.handle('sim/simsup/cmd', {'action': 'clear', 'failure': 'panel_dark'}, 1))
     assert out['sim/failures/panel_dark'] == {'on': False} and out['sim/simsup/state']['active'] == []
 
@@ -99,3 +104,22 @@ def test_noisy_inputs_are_logged_once_a_second():
     assert len(simsup.log) == 1
     simsup.tick(1.1)                                    # the last value held back is logged, not lost
     assert simsup.log[-1]['text'] == 'eng/throttle = 0.9' and len(simsup.log) == 2
+
+
+def test_an_unknown_panel_is_refused_and_a_revert_clears_the_active_failures():
+    simsup = SimSup(panels=panel_wiring(MODULES))
+    out = topics(simsup.handle('sim/simsup/cmd', {'action': 'inject', 'failure': 'panel_dark', 'parameters': {'panel': 'nope'}}, 0))
+    assert 'sim/failures/panel_dark' not in out and not simsup.active
+    simsup.handle('sim/simsup/cmd', {'action': 'inject', 'failure': 'rcs_fail'}, 1)
+    out = topics(simsup.handle('cmd/game', {'revert': True}, 2))
+    assert out['sim/failures/rcs_fail'] == {'on': False} and not simsup.active
+
+
+def test_every_failure_parameter_offers_its_default_value():
+    modules = [{'panels': [
+        {'id': 'electrical', 'title': 'ELECTRICAL', 'bus': 'sys', 'items': [{'type': 'toggle', 'id': 'sas', 'label': 'SAS', 'in': 'sas'}]},
+        {'id': 'ascent', 'title': 'ASCENT', 'bus': 'eng', 'items': [{'type': 'seg7', 'id': 'alt', 'label': 'ALT', 'out': 'disp_alt'},
+            {'type': 'annunciator', 'cells': [{'out': 'cw_low_fuel', 'label': 'LOW FUEL'}]}]}]}]
+    for failure in failure_catalogue(parameter_choices(modules)):
+        for name, default in failure['parameters'].items():
+            assert default in [each['value'] for each in failure['choices'][name]], (failure['id'], name)

@@ -46,10 +46,10 @@ instructor (SimSup, a separate page) knows what was injected.
 |---|---|---|
 | FLIGHT | Flight director | Mission phase, vessel, MET, link, telemetry and cockpit health; the crew's alarms; the go/no-go poll board (open, close, each console's answer); the loop. |
 | FIDO | Flight dynamics | Orbit elements and a drawing; time to apsides and to the next SOI change; the target (range, closing speed, line-of-sight rate); latitude, longitude, altitude. |
-| RETRO | Retrofire | Periapsis against Kerbin's entry corridor (25–45 km), the Δv at apoapsis to bring it to 35 km, load, dynamic pressure, heat. |
+| RETRO | Retrofire | Periapsis against Kerbin's entry corridor (25–45 km), the Δv at apoapsis to bring it to 35 km, time to the atmosphere, load, dynamic pressure, heat, and KSP's verdict on opening the chutes. |
 | GUIDO | Guidance | The burn computer's PAD and state, time to TIG, burn time at full thrust, a read-up waiting for the crew; how far the nose is from the burn direction; attitude, SAS mode, navball reference. |
 | BOOSTER | Propulsion | Stage, throttle, thrust, TWR, specific impulse, limiter, gimbals, stage propellant; every engine with its state (burning, lit, weak, flameout, off). |
-| EECOM | Electrical, thermal, comms | Charge, its trend and how long it lasts, solar panels, lights; the hottest part; monopropellant, fuel, oxidizer; the radio link (signal, first relay, hops, antennas). |
+| EECOM | Electrical, thermal, comms | Charge, its trend and how long it lasts, solar panels, lights; the hottest part; monopropellant, fuel, oxidizer, xenon, ablator; life support (crew, and food, water and oxygen with the hours each lasts, recyclers not counted); science (experiments, ready, holding data, its value, biome); the radio link (signal, first relay, hops, antennas). |
 | CAPCOM | Capsule communicator | The PAD form: read-up only with a radio link (AOS); the readback (waiting on the burn computer, loaded); a feed of the crew's actions on the panels. |
 
 Every console except FLIGHT has the same footer: GO / NO-GO for the open poll, and a line to the loop.

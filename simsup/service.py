@@ -1,4 +1,5 @@
 """MQTT shell around SimSup (simsup_core.py): feeds it the bus and publishes what it returns. No rules here."""
+import glob
 import json
 import os
 import queue
@@ -6,11 +7,12 @@ import time
 
 import paho.mqtt.client as mqtt
 
-from simsup_core import SimSup
+from simsup_core import SimSup, panel_wiring, parameter_choices
 
 MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
 MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
 SCENARIOS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scenarios.json')
+PANELS_DIR = os.environ.get('PANELS_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'protocol', 'panels'))
 SUBSCRIPTIONS = ['sim/simsup/cmd', 'tlm/#', 'panel/+/in/#', 'cmd/#', 'cw/state']
 TICK_EVERY_S = 1.0
 INBOX_WAIT_S = 0.1
@@ -21,10 +23,19 @@ def publish(client, messages):
         client.publish(message.topic, json.dumps(message.payload), qos=message.qos, retain=message.retain)
 
 
+def load_modules():
+    modules = []
+    for path in glob.glob(os.path.join(PANELS_DIR, '*.json')):
+        with open(path, encoding='utf-8') as file:
+            modules.append(json.load(file))
+    return modules
+
+
 def main():
     with open(SCENARIOS_FILE) as file:
         scenarios = json.load(file)['scenarios']
-    simsup = SimSup(scenarios=scenarios)
+    modules = load_modules()
+    simsup = SimSup(scenarios=scenarios, panels=panel_wiring(modules), choices=parameter_choices(modules))
     inbox = queue.Queue()               # messages arrive on the MQTT thread; SimSup runs on this one
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='simsup')
 
