@@ -197,8 +197,8 @@
             "color": "green"
           },
           "at": [
-            25,
-            35
+            28,
+            37
           ]
         },
         {
@@ -207,43 +207,9 @@
           "label": "THROTTLE",
           "in": "throttle",
           "at": [
-            55,
+            64,
             35
           ]
-        },
-        {
-          "type": "guarded_toggle",
-          "id": "stage_arm",
-          "label": "STAGE ARM",
-          "in": "stage_arm",
-          "at": [
-            115,
-            35
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "stage",
-          "label": "STAGE",
-          "color": "green",
-          "in": "stage",
-          "out": "lamp_stage",
-          "at": [
-            145,
-            47
-          ]
-        },
-        {
-          "type": "seg7",
-          "id": "disp_stage",
-          "label": "STAGE",
-          "digits": 2,
-          "out": "disp_stage",
-          "at": [
-            145,
-            24
-          ],
-          "color": "green"
         },
         {
           "type": "lamp_button",
@@ -253,7 +219,7 @@
           "in": "eng_cutoff",
           "out": "lamp_cutoff",
           "at": [
-            85,
+            104,
             36
           ]
         },
@@ -264,8 +230,44 @@
           "in": "thrust_lim",
           "default": 1,
           "at": [
-            175,
+            155,
             37
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_dv",
+          "label": "STAGE ΔV M/S",
+          "digits": 5,
+          "out": "disp_dv",
+          "at": [
+            40,
+            80
+          ],
+          "color": "green"
+        },
+        {
+          "type": "bar",
+          "id": "bar_fuel",
+          "label": "STAGE FUEL",
+          "segments": 10,
+          "out": "bar_fuel",
+          "at": [
+            104,
+            76
+          ],
+          "vertical": true
+        },
+        {
+          "type": "seg7",
+          "id": "disp_twr",
+          "label": "TWR",
+          "digits": 4,
+          "out": "disp_twr",
+          "color": "green",
+          "at": [
+            143,
+            80
           ]
         },
         {
@@ -281,58 +283,98 @@
             175,
             78
           ]
-        },
-        {
-          "type": "bar",
-          "id": "bar_fuel",
-          "label": "STAGE FUEL",
-          "segments": 10,
-          "out": "bar_fuel",
-          "at": [
-            85,
-            76
-          ],
-          "vertical": true
-        },
-        {
-          "type": "seg7",
-          "id": "disp_dv",
-          "label": "STAGE ΔV M/S",
-          "digits": 5,
-          "out": "disp_dv",
-          "at": [
-            40,
-            80
-          ],
-          "color": "green"
-        },
-        {
-          "type": "seg7",
-          "id": "disp_twr",
-          "label": "TWR",
-          "digits": 4,
-          "out": "disp_twr",
-          "color": "green",
-          "at": [
-            130,
-            80
-          ]
         }
       ]
     },
     {
-      "id": "engines_abort",
-      "title": "ENGINES · ABORT",
+      "id": "staging_abort",
+      "title": "STAGING · ABORT",
       "size": [
         1,
-        1
+        2
       ],
       "at": [
         2,
-        1
+        0
       ],
       "bus": "eng",
       "items": [
+        {
+          "type": "annunciator",
+          "id": "next_stage",
+          "label": "NEXT STAGE",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_ns_engines",
+              "label": "ENGINES",
+              "color": "green"
+            },
+            {
+              "out": "lamp_ns_solids",
+              "label": "SOLIDS",
+              "color": "amber"
+            },
+            {
+              "out": "lamp_ns_decouple",
+              "label": "DECOUPLE",
+              "color": "white"
+            },
+            {
+              "out": "lamp_ns_clamps",
+              "label": "CLAMPS",
+              "color": "white"
+            },
+            {
+              "out": "lamp_ns_chutes",
+              "label": "CHUTES",
+              "color": "white"
+            },
+            {
+              "out": "lamp_ns_fairing",
+              "label": "FAIRING",
+              "color": "white"
+            }
+          ],
+          "at": [
+            32,
+            36
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_stage",
+          "label": "STAGE",
+          "digits": 2,
+          "out": "disp_stage",
+          "at": [
+            76,
+            28
+          ],
+          "color": "green"
+        },
+        {
+          "type": "guarded_toggle",
+          "id": "stage_arm",
+          "label": "STAGE ARM",
+          "in": "stage_arm",
+          "at": [
+            32,
+            80
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "stage",
+          "label": "STAGE",
+          "color": "green",
+          "in": "stage",
+          "out": "lamp_stage",
+          "at": [
+            72,
+            82
+          ]
+        },
         {
           "type": "matrix",
           "id": "mx_eng",
@@ -342,7 +384,7 @@
           "cols": 9,
           "at": [
             33,
-            34
+            127
           ]
         },
         {
@@ -354,7 +396,7 @@
           "color": "green",
           "at": [
             68,
-            34
+            127
           ]
         },
         {
@@ -366,7 +408,7 @@
           "out": "bar_thrust",
           "at": [
             87,
-            38
+            131
           ]
         },
         {
@@ -377,7 +419,7 @@
           "color": "red",
           "at": [
             36,
-            78
+            174
           ]
         },
         {
@@ -389,7 +431,7 @@
           "out": "lamp_abort",
           "at": [
             70,
-            78
+            174
           ]
         }
       ]

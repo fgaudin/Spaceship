@@ -1,4 +1,4 @@
-"""What the gateway watches part by part: engines, stage propellant, solar panels, parachutes, ground contact, heat
+"""What the gateway watches part by part: engines, stage propellant, solar panels, reaction wheels, parachutes, ground contact, heat
 and docking ports. Rebuilt after every staging, because parts leave and kRPC streams on them go stale."""
 from .streams import FAST_HZ, SLOW_HZ, StreamGroup, read_or
 
@@ -77,6 +77,8 @@ class PartsWatch:
         self.antennas = [antenna for antenna in parts.antennas if antenna.deployable]
         self.antennas_deployed = [streams.attribute(antenna, 'deployed', SLOW_HZ) for antenna in self.antennas]
         self._watch_fuel_cells(parts)
+        self.reaction_wheels = list(parts.reaction_wheels)
+        self.wheels_active = [streams.attribute(wheel, 'active', SLOW_HZ) for wheel in self.reaction_wheels]
         self.parachutes = list(parts.parachutes)
         self.parachute_states = [streams.attribute(parachute, 'state', SLOW_HZ) for parachute in self.parachutes]
         self.parachute_safety = [streams.attribute(parachute, 'safe_state', SLOW_HZ) for parachute in self.parachutes]
@@ -87,6 +89,7 @@ class PartsWatch:
                                 + [streams.attribute(wheel, 'grounded', FAST_HZ) for wheel in parts.wheels])
         self._watch_heat(parts)
         self.docking_ports = list(parts.docking_ports)
+        self.next_stage = self._next_stage_contents(parts)
         self.docking_port_states = [streams.attribute(port, 'state', SLOW_HZ) for port in self.docking_ports]
         self.docking_states_seen, self.is_docked = None, False
         self._watch_total_resources()
@@ -216,6 +219,25 @@ class PartsWatch:
             return 'armed'
         return 'cut' if states == {'cut'} else 'stowed'
 
+    # ---------- the next staging ----------
+    def _next_stage_contents(self, parts):
+        """What pressing STAGE does: how many liquid engines and solid motors it lights, and whether it decouples,
+        releases launch clamps, opens parachutes or jettisons a fairing. None when no stage is left. Read when the
+        part list is rebuilt, which every staging does (KSP numbers stages downwards: the next is current − 1)."""
+        try:
+            stage = self.vessel.control.current_stage - 1
+            if stage < 0:
+                return None
+            in_stage = lambda items: any(item.part.stage == stage for item in items)
+            lit = [engine for engine in self.engines if engine.stage == stage]
+            solids = sum('SolidFuel' in engine.propellants for engine in lit)
+            return {'stage': stage, 'engines': len(lit) - solids, 'solids': solids,
+                    'decouple': in_stage(parts.decouplers), 'clamps': in_stage(parts.launch_clamps),
+                    'chutes': in_stage(self.parachutes), 'fairing': in_stage(parts.fairings)}
+        except Exception as error:      # a part kRPC cannot read: no preview rather than no telemetry
+            print('next stage unreadable:', str(error).splitlines()[0], flush=True)
+            return None
+
     # ---------- fuel cells ----------
     def _watch_fuel_cells(self, parts):
         """The resource converters that are fuel cells, as (converter, index), and whether each is running."""
@@ -229,6 +251,10 @@ class PartsWatch:
     def fuel_cell_state(self):
         """True when a fuel cell runs, False, or None when the vessel has none."""
         return any(read_or(False, running) for running in self.fuel_cells_running) if self.fuel_cells_running else None
+
+    def wheels_state(self):
+        """True when a reaction wheel is on, False, or None when the vessel has none."""
+        return any(read_or(False, active) for active in self.wheels_active) if self.wheels_active else None
 
     def has_landing_gear(self):
         return bool(self.ground_contacts)

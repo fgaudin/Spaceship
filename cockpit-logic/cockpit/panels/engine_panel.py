@@ -1,4 +1,4 @@
-"""The eng bus: caution and warning, the flight data and landing panel, engine and staging, engine status matrix and abort, and the
+"""The eng bus: caution and warning, the flight data and landing panel, engine, staging (with what the next stage does), engine status matrix and abort, and the
 ATTITUDE panel (on the FDAI module): its switches, attitude and rate displays, and the settings of the ball; and the
 SAS MODE panel's ten buttons."""
 import math
@@ -11,10 +11,12 @@ from ..messages import PanelOutputs, switch_lamp
 from ..performance import current_thrust_to_weight, hover_time, speeds_in_reference, stage_delta_v, time_to_impact
 
 SWITCHES_WITH_LAMP = ('sas', 'rcs')
+NEXT_STAGE_LAMPS = {'engines': 'lamp_ns_engines', 'solids': 'lamp_ns_solids', 'decouple': 'lamp_ns_decouple',
+                    'clamps': 'lamp_ns_clamps', 'chutes': 'lamp_ns_chutes', 'fairing': 'lamp_ns_fairing'}
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
          'lamp_contact', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
          *(f'lamp_sas_{key}' for key in S.SAS_MODE_BUTTONS),
-         'led_rcs_fine', 'led_gear', 'lamp_td_sink', 'lamp_td_drift', 'lamp_td_upright', 'lamp_td_gear', *ALARMS]
+         *NEXT_STAGE_LAMPS.values(), 'led_rcs_fine', 'led_gear', 'lamp_td_sink', 'lamp_td_drift', 'lamp_td_upright', 'lamp_td_gear', *ALARMS]
 # display → (digits, the dashes shown without telemetry)
 DISPLAYS = {'disp_alt': 8, 'disp_hs': 5, 'disp_vs': 5, 'disp_speed': 5, 'disp_g': 4, 'disp_q': 4, 'disp_hover': 4,
             'disp_impact': 5, 'disp_drift_right': 5, 'disp_drift_up': 5, 'disp_met': 7,
@@ -54,30 +56,24 @@ def handle_input(cockpit, change):
     if control.startswith('sas_') and control[4:] in S.SAS_MODE_BUTTONS:
         if not change.pressed:
             return []
-        cockpit.sas_mode_retries = 0
-        return cockpit.command('cmd/sas_mode', {'mode': S.SAS_MODE_BUTTONS[control[4:]]})
+        cockpit.sas_mode_choice, cockpit.sas_mode_retries = S.SAS_MODE_BUTTONS[control[4:]], 0
+        return cockpit.command('cmd/sas_mode', {'mode': cockpit.sas_mode_choice})
     return None
 
 
 # ---------- outputs ----------
-def sas_mode_lamps(chosen, sas_on, game_mode):
-    """{button key: (lit, blink)}. The mode chosen on the panel is lit, steady once the game holds it (or while SAS
-    is off: it is the mode SAS will take), blinking while SAS is on in another mode (KSP refused it: no target, no
-    node). Before any choice, the game's own mode is lit while SAS is on."""
-    lamps = {}
-    for key, mode in S.SAS_MODE_BUTTONS.items():
-        if chosen is not None:
-            lit = mode == chosen
-            lamps[key] = (lit, lit and bool(sas_on) and game_mode is not None and game_mode != chosen)
-        else:
-            lamps[key] = (bool(sas_on) and game_mode == mode, False)
-    return lamps
+def sas_mode_lamps(choice, memory, game_mode):
+    """{button key: (lit, blink)}. One lamp: the game's mode while SAS is on, the mode SAS will take while it is off.
+    A button just pressed lights its own lamp, blinking while SAS is on in another mode (the game has not taken it
+    yet: it may still refuse, with no node or no target)."""
+    shown = choice or game_mode or memory
+    return {key: (mode == shown, mode == shown == choice and game_mode is not None and game_mode != choice)
+            for key, mode in S.SAS_MODE_BUTTONS.items()}
 
 
 def _render_sas_mode_lamps(cockpit, outputs, fresh):
-    last = cockpit.last_commands.get('cmd/sas_mode')
-    vessel = cockpit.vessel if fresh else {}
-    for key, (lit, blink) in sas_mode_lamps(last and last[0]['mode'], vessel.get('sas'), vessel.get('sas_mode')).items():
+    game_mode = cockpit.game_sas_mode() if fresh else None
+    for key, (lit, blink) in sas_mode_lamps(cockpit.sas_mode_choice, cockpit.sas_mode_memory, game_mode).items():
         outputs.lamp(f'lamp_sas_{key}', lit, blink=blink)
 
 
@@ -153,6 +149,10 @@ def _render_lamps(cockpit, outputs):
 
     _render_sas_mode_lamps(cockpit, outputs, fresh)
     _render_touchdown_lamps(cockpit, outputs, fresh)
+    # NEXT STAGE: what pressing STAGE would do; dark with no stage left or no telemetry
+    next_stage = (vessel.get('next_stage') if fresh else None) or {}
+    for key, lamp in NEXT_STAGE_LAMPS.items():
+        outputs.lamp(lamp, bool(next_stage.get(key)))
 
     # event lights
     landed = bool(vessel.get('contact')) and vessel.get('situation') != 'pre_launch'    # the pad is not a landing

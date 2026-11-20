@@ -22,6 +22,7 @@ SAS_DISAGREE_AFTER_S = 2.0          # SAS switch against the game for this long:
 # Switches that simply mirror to a plant command: control name → command topic.
 TOGGLE_COMMANDS = {'sas': 'cmd/sas', 'rcs': 'cmd/rcs', 'gear': 'cmd/gear', 'lights': 'cmd/lights',
                    'brakes': 'cmd/brakes', 'solar': 'cmd/solar', 'fuel_cell': 'cmd/fuel_cell',
+                   'wheels': 'cmd/wheels',
                    'rcs_fine': 'cmd/precision'}
 # Of those, the ones the panel wins: re-commanded while the game disagrees. For the others the game wins (lamp only).
 PANEL_WINS = {'sas', 'rcs', 'lights', 'rcs_fine'}

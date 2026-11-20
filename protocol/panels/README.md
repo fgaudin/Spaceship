@@ -23,8 +23,8 @@ does not notice. A module's heartbeat is `panel/<module>/status`.
 {
   "id": "eng", "title": "PROPULSION · FLIGHT CONTROL", "fw": "virtual-0.1", "board": "olimex-esp32-poe2",
   "panels": [
-    { "id": "engines_abort", "title": "ENGINES · ABORT", "size": [1, 1], "at": [2, 1], "bus": "eng",
-      "items": [ { "type": "guarded_toggle", "id": "abort_arm", "label": "ABORT ARM", "in": "abort_arm", "at": [56, 78] } ] }
+    { "id": "staging_abort", "title": "STAGING · ABORT", "size": [1, 2], "at": [2, 0], "bus": "eng",
+      "items": [ { "type": "guarded_toggle", "id": "abort_arm", "label": "ABORT ARM", "in": "abort_arm", "at": [36, 174] } ] }
   ]
 }
 ```

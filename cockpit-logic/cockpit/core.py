@@ -65,7 +65,10 @@ class Cockpit:
         self.condition_started = {}             # condition name → when it became true (see has_lasted)
         self.abort_fired = False
         self.throttle_cut_latched = False       # a cutoff holds the throttle at 0 until the lever is back at idle
-        self.sas_mode_retries = 0               # times the SAS mode was sent again since the game last agreed
+        self.sas_mode_retries = 0               # times the chosen SAS mode was sent again
+        self.sas_mode_choice = None             # the SAS mode a button asked for, until the game takes or refuses it
+        self.sas_mode_memory = None             # the last mode the game held: the one SAS takes when it comes on again
+        self.sas_was_on = False
         self.charge_rate = 0.0                  # EC/s, smoothed
         self.previous_charge_sample = None      # (mission time, amount)
         self.docking_rates = rendezvous_panel.DockingRates()   # yaw, pitch and roll rates against the port
@@ -297,7 +300,7 @@ class Cockpit:
                 disagrees = field in self.vessel and bool(self.vessel[field]) != wanted
                 if disagrees and self.seconds_since_command(S.TOGGLE_COMMANDS[switch]) >= S.REASSERT_EVERY_S:
                     commands += self.command(S.TOGGLE_COMMANDS[switch], {'on': wanted})
-            commands += self._reassert_sas_mode()
+            commands += self._follow_sas_mode()
             commands += self._reassert_throttle()
         return commands + self.render()
 
@@ -312,24 +315,43 @@ class Cockpit:
             return []
         return self.command('cmd/throttle', last_command[0])
 
-    def _reassert_sas_mode(self):
-        """The SAS mode last commanded wins over the game: KSP falls back to stability when SAS is switched on, and
-        can drop a mode set in the very frame its reference appears. Only a few tries, because the game refuses for
-        good a mode that has no reference (no node, no target)."""
-        last_command, game_mode = self.last_commands.get('cmd/sas_mode'), self.vessel.get('sas_mode')
-        if last_command is None or game_mode is None or game_mode == last_command[0]['mode']:
-            self.sas_mode_retries = 0           # nothing commanded yet, SAS off, or the game agrees
+    def game_sas_mode(self):
+        """The mode the game's SAS holds, or None with SAS off (the mock plant reports one either way)."""
+        return self.vessel.get('sas_mode') if self.vessel.get('sas') else None
+
+    def _follow_sas_mode(self):
+        """A SAS MODE button asks, the game decides. The mode asked for is sent again a few times while the game
+        does not hold it (KSP falls back to stability when SAS comes on, and can drop a mode set in the very frame its
+        reference appears); once the game takes it, or after the last try, the panel follows the game's mode,
+        whatever changes it: KSP's own buttons, a node deleted, a target lost. SAS coming on again asks for the last
+        mode the game held."""
+        game_mode, sas_on = self.game_sas_mode(), bool(self.vessel.get('sas'))
+        came_on, self.sas_was_on = sas_on and not self.sas_was_on, sas_on
+        if came_on and self.sas_mode_choice is None and self.sas_mode_memory not in (None, game_mode):
+            self.sas_mode_choice, self.sas_mode_retries = self.sas_mode_memory, 0
+        choice = self.sas_mode_choice
+        if game_mode is None:
+            return []                           # SAS off: the choice waits for it
+        if choice is None or game_mode == choice:
+            self._settle_sas_mode(game_mode)
             return []
-        if self.sas_mode_retries >= S.SAS_MODE_RETRIES or self.seconds_since_command('cmd/sas_mode') < S.REASSERT_EVERY_S:
+        if self.seconds_since_command('cmd/sas_mode') < S.REASSERT_EVERY_S:
+            return []
+        if self.sas_mode_retries >= S.SAS_MODE_RETRIES:
+            self._settle_sas_mode(game_mode)    # refused for good (no node, no target): the game's mode it is
             return []
         self.sas_mode_retries += 1
-        return self.command('cmd/sas_mode', last_command[0])
+        return self.command('cmd/sas_mode', {'mode': choice})
+
+    def _settle_sas_mode(self, game_mode):
+        self.sas_mode_choice, self.sas_mode_memory, self.sas_mode_retries = None, game_mode, 0
 
     def reset(self):
         """sim/reset: a new flight. Switch positions, the link and the telemetry are facts about the world and are
         kept; what the cockpit latched or remembered is cleared."""
         self.abort_fired = False
         self.throttle_cut_latched = False
+        self.sas_mode_choice = self.sas_mode_memory = None
         self.acknowledged_alarms.clear()
         self.condition_started.clear()
         self.last_commands.clear()

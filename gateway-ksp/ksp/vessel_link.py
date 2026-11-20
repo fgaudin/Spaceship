@@ -255,7 +255,8 @@ class VesselLink:
                 'brakes': now['brakes'], 'precision': now['precision'], 'hold': self.hold_engaged, 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
                 'solar': self.parts.solar_deployed_state(), 'chute': self.parts.parachute_state(),
                 'chute_safe': self.parts.parachute_safety_state(),
-                'fuel_cell': self.parts.fuel_cell_state(),
+                'fuel_cell': self.parts.fuel_cell_state(), 'wheels': self.parts.wheels_state(),
+                'next_stage': self.parts.next_stage,
                 'comm': now['can_communicate'], 'has_gear': self.parts.has_landing_gear(),
                 'contact': situation in GROUND_SITUATIONS or self.parts.touches_ground()}
 

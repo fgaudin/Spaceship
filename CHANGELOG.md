@@ -5,6 +5,36 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-20 — the game's bodies everywhere (JNSQ), ice and deserts on the wall's maps
 
+- **MAIN's row 5 centred:** REENTRY · RECOVERY and SCI (SCIENCE · ACTION GROUPS) move half a U left, to [0.5, 5]
+  and [2.5, 5], a 5 U row in the middle of the 6 U zone instead of a hole at [0, 5]. With STAGING · ABORT in [4, 2],
+  MAIN has no free place left.
+- **New: NEXT STAGE, on a new STAGING · ABORT panel** (1 × 2, `eng` bus, panel id `staging_abort`, filling MAIN's
+  free place right of C&W). Six cells lit for what pressing STAGE does: ENGINES and SOLIDS it lights (solids in
+  amber: they cannot be stopped), DECOUPLE, CLAMPS, CHUTES, FAIRING; all dark with no stage left. The gateway reads it
+  when it rebuilds the part list after each staging (the parts of stage current − 1: engines, decouplers, launch
+  clamps, parachutes, fairings) and sends it as `tlm/vessel.next_stage`; the mock from its three stages. Checked in
+  KSP on an orbiting ship: stage 1, DECOUPLE alone, as the game has it.
+- **ENGINE and ENGINES · ABORT regrouped** around it: STAGING · ABORT reads top to bottom NEXT STAGE, the stage
+  number, STAGE ARM and STAGE, then the engine status matrix, BURNING and THRUST, ABORT ARM and ABORT (two arm-then-press
+  pairs, one above the other); ENGINE (2 × 1) keeps the thrust (ENG ARM, throttle, CUTOFF, THRUST LIMIT, GIMBAL LOCK,
+  stage Δv, stage fuel, TWR), spread over the room STAGE left. ENG is now a plain 3 × 2; same inputs and outputs. The
+  cut templates lose three issues (the matrix in the title band, ABORT ARM off the plate, ENG ARM in ENGINE's title
+  band). C&W unchanged.
+- **SAS MODE follows the game instead of fighting it.** A button asks for a mode; it blinks until the game takes it,
+  is asked again up to five times (KSP falls back to stability when SAS comes on, and can drop a mode set in the very
+  frame its node or target appears), and then the game's mode is lit. A mode changed in the game afterwards (KSP's
+  own buttons, the node deleted at the end of a burn, a target lost) is followed: before, the cockpit sent the last
+  button's mode five more times and left its lamp blinking. With SAS off the lamp shows the mode SAS will take, the
+  last one the game held, and SAS coming on asks for it again. The gateway remembers the game's mode too, not the
+  last command, so SAS coming on does not bring back an old mode (`follow_sas_mode`, after each telemetry read).
+- **WHEELS on ELECTRICAL** (`sys` bus, `wheels`, LED `led_wheels`): switches every reaction wheel on or off, the
+  pods' own included, so SAS has only RCS to turn with (`cmd/wheels`, new; `tlm/vessel.wheels`, null with no wheel on
+  board). The game wins, as with FUEL CELL: the LED blinks while the switch and the game disagree, and since KSP starts
+  with the wheels on, it blinks until WHEELS is switched on. ELECTRICAL is laid out again around the three switches:
+  SOLAR, FUEL CELL and WHEELS 30 mm apart along the bottom (x 18, 48, 78; 80 put WHEELS on the mounting screw),
+  CHARGE above SOLAR and raised to the displays' middle (y 35), EC and EC/S centred over the two right switches.
+  No authority knob and no saturation lamp: kRPC 0.7 has neither, and stock wheels do not saturate. The mock
+  plant keeps the state but draws no charge for it. Not yet checked in KSP.
 - **The solo pilot's PADs use the game's bodies:** the flight-dynamics planner took stock's Kerbin (600 km, μ 3.53e12)
   and stock's moons, so in JNSQ every PAD was wrong and INJECT aimed at a Mun 12,000 km out instead of 91,000. It now
   takes the body flown from `tlm/orbit` and the moons' orbits from `mcc/bodies` (checked in KSP: the Mun and Minmus

@@ -6,7 +6,7 @@ from ..display_format import fit_number, format_event_time
 from ..messages import PanelOutputs, switch_lamp
 from ..performance import burn_time, life_support_hours, rcs_delta_v, time_to_atmosphere
 
-SWITCHES_WITH_LAMP = ('solar', 'brakes', 'fuel_cell', 'lights')
+SWITCHES_WITH_LAMP = ('solar', 'brakes', 'fuel_cell', 'wheels', 'lights')
 LAMPS = ['lamp_chute', 'lamp_revert', 'lamp_05g', 'lamp_chute_safe', 'lamp_chute_risky', 'lamp_chute_unsafe', 'led_chute_armed', 'led_warp', 'led_evt_run', 'led_pause',
          *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP)]
 DISPLAYS = ['disp_ec', 'disp_ec_rate', 'disp_evt', 'disp_warp', 'disp_outside', 'disp_pressure', 'disp_burn_time',

@@ -74,17 +74,21 @@ within 3° of the set attitude, blinking while it turns there or cannot hold (SA
 
 **SAS MODE** (on the FDAI module, under the ball, on the `eng` bus): ten lit buttons, one per SAS
 mode (STAB, MNVR, PRO, RETRO, NML, A-NML, RAD, A-RAD, TGT, A-TGT), so that going from one mode to another never passes
-through the modes between, as a knob would. The chosen one is lit: steady once SAS holds it (or while SAS is off: the
-mode it will take), blinking while the game refuses it (TGT without a target, MNVR without a node). Before any choice,
-the game's own mode is lit.
+through the modes between, as a knob would. The buttons ask and the game decides: the lamp lit is the game's mode
+(while SAS is off, the one it will take, the last the game held). A button just pressed blinks until the game takes
+its mode; it is asked again a few times, then the game's mode is lit again (TGT without a target, MNVR without a node).
+A mode changed in the game, by KSP's own buttons or a node deleted, is followed, not fought.
 
 **FLIGHT DATA · LANDING** (module LND in MAIN, one 3 × 1 U panel, on the `eng` bus), what a landing needs on the left, where the eye goes first: altitude in m, above the sea or the ground by ALT REF; vertical and horizontal speed against the orbit or the surface by the SPEED REF knob (TGT reading the surface); TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides); four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN; CONTACT; the GEAR switch (its LED lit while the gear is down). On the right, for the climb: total speed, g, dynamic pressure in kPa.
 
 **REENTRY · RECOVERY** (module in MAIN, on the `sys` bus): CHUTE ARM, CHUTE, BRAKES, ablator, the hottest part as a percentage of its limit, time to the atmosphere at the present sink rate, outside temperature and pressure, the 0.05 G light, and KSP's verdict on opening the chutes (SAFE, RISKY, UNSAFE). **SCIENCE** (module in MAIN, `sci` bus): step through the experiments; RUN, SEND, DUMP, RESET the one shown, RUN ALL, with its state, biome and science value.
 
-**ENG** (I/O module): CAUTION & WARNING (the MET is on the camera monitor's panel); ENGINE (ENG ARM, throttle,
-STAGE ARM and STAGE, the stage number, CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
-equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off); an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
+**ENG** (I/O module, 3 × 2): CAUTION & WARNING (the MET is on the camera monitor's panel); ENGINE (ENG ARM, throttle,
+CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
+equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off);
+STAGING · ABORT (1 × 2, right of both), top to bottom: NEXT STAGE, six cells lit for what pressing STAGE does
+(ENGINES and SOLIDS it lights, DECOUPLE, CLAMPS, CHUTES, FAIRING; all dark with no stage left), the stage number,
+STAGE ARM and STAGE, then an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
 flamed out or gone; engines staged away leave the matrix, and so does an engine that ran dry in an earlier stage and
 is still attached) with a count of burning engines; CUTOFF (throttle to 0, held until the lever is back at idle; the lamp blinks while the lever is still up);

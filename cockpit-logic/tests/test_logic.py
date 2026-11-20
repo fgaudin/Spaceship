@@ -437,14 +437,31 @@ def test_sas_mode_is_sent_again_when_the_game_drops_it():
     assert topics(c.tick(1.1))['cmd/sas_mode'] == {'mode': 'maneuver'}
     fed(c, 1.5, vessel={'sas': True, 'sas_mode': 'maneuver'})
     assert 'cmd/sas_mode' not in topics(c.tick(3.0))                    # the game agrees
-    # a mode the game refuses for good is not sent for ever
-    sent = 0
-    for second in range(4, 24):
-        sent += 'cmd/sas_mode' in topics(fed(c, second, vessel={'sas': True, 'sas_mode': 'stability'}))
-    assert sent == 5
-    # with SAS off the game reports no mode: nothing to do
-    fed(c, 30, vessel={'sas': False, 'sas_mode': None})
-    assert 'cmd/sas_mode' not in topics(c.tick(31.5))
+    # then the game changes it (the node deleted, KSP's own buttons): the panel follows, it does not fight
+    sent = sum('cmd/sas_mode' in topics(fed(c, second, vessel={'sas': True, 'sas_mode': 'stability'}))
+               for second in range(4, 10))
+    assert sent == 0 and c.sas_mode_memory == 'stability'
+
+
+def test_a_refused_sas_mode_is_tried_a_few_times_then_the_game_wins():
+    c = Cockpit(); fed(c, 0, vessel={'sas': True, 'sas_mode': 'stability'})
+    c.handle(P + 'sas_tgt', {'v': 1}, 0); c.handle(P + 'sas_tgt', {'v': 0}, 0.1)
+    sent = sum('cmd/sas_mode' in topics(fed(c, second, vessel={'sas': True, 'sas_mode': 'stability'}))
+               for second in range(1, 20))
+    assert sent == 5                                                    # no target: refused for good
+    assert c.published[O + 'lamp_sas_stab'] == {'on': True, 'blink': False}
+    assert c.published[O + 'lamp_sas_tgt'] == {'on': False, 'blink': False}
+
+
+def test_sas_coming_on_again_asks_for_the_last_mode_the_game_held():
+    c = Cockpit(); fed(c, 0, vessel={'sas': True, 'sas_mode': 'prograde'})
+    fed(c, 1, vessel={'sas': False, 'sas_mode': None})
+    assert c.published[O + 'lamp_sas_pro'] == {'on': True, 'blink': False}     # the mode SAS will take
+    fed(c, 3, vessel={'sas': True, 'sas_mode': 'stability'})                   # KSP's fallback
+    assert c.last_commands['cmd/sas_mode'][0] == {'mode': 'prograde'}
+    assert c.published[O + 'lamp_sas_pro']['blink']
+    fed(c, 4, vessel={'sas': True, 'sas_mode': 'prograde'})
+    assert c.published[O + 'lamp_sas_pro'] == {'on': True, 'blink': False}
 
 
 def test_sas_mode_buttons_light_the_chosen_mode():
@@ -456,12 +473,14 @@ def test_sas_mode_buttons_light_the_chosen_mode():
     sent = [topics(c.handle(P + 'sas_pro', {'v': v}, t)).get('cmd/sas_mode') for v, t in ((1, 1), (0, 1.1))]
     sent += [topics(c.handle(P + 'sas_mnvr', {'v': v}, t)).get('cmd/sas_mode') for v, t in ((1, 2), (0, 2.1))]
     assert [command for command in sent if command] == [{'mode': 'prograde'}, {'mode': 'maneuver'}]
-    fed(c, 2.2, vessel={'sas': True, 'sas_mode': 'stability'})         # no node: KSP keeps stability
+    fed(c, 2.2, vessel={'sas': True, 'sas_mode': 'stability'})         # not taken yet
     assert lit() == {'mnvr'} and c.published[O + 'lamp_sas_mnvr']['blink']
     fed(c, 2.5, vessel={'sas': True, 'sas_mode': 'maneuver'})
     assert lit() == {'mnvr'} and not c.published[O + 'lamp_sas_mnvr']['blink']
     fed(c, 3, vessel={'sas': False, 'sas_mode': None})                 # SAS off: the mode it will take, steady
     assert lit() == {'mnvr'} and not c.published[O + 'lamp_sas_mnvr']['blink']
+    fed(c, 4, vessel={'sas': False, 'sas_mode': 'retrograde'})         # the mock reports a mode with SAS off: ignored
+    assert lit() == {'mnvr'}
 
 
 def test_throttle_is_sent_again_when_the_game_disagrees():
@@ -590,6 +609,19 @@ def test_lights_panel():
     assert out['cmd/lights'] == {'on': True} and out[S + 'led_lights'] == {'on': True, 'blink': True}
     fed(c, 4, resources={'stage': {}, 'total': {'ElectricCharge': {'amount': 0.0, 'max': 100}}})
     assert c.published['cockpit/lighting'] == {'cabin': False, 'backlight': False}       # no power, no light
+
+
+def test_wheels_switch():
+    c = Cockpit(); fed(c, vessel={'wheels': True})
+    assert c.published[S + 'led_wheels'] == {'on': True, 'blink': True}     # the game's wheels on, the switch off
+    c.handle('panel/sys/in/wheels', {'v': 1}, 1)
+    assert c.published[S + 'led_wheels'] == {'on': True, 'blink': False}
+    out = topics(c.handle('panel/sys/in/wheels', {'v': 0}, 1))
+    assert out['cmd/wheels'] == {'on': False} and out[S + 'led_wheels'] == {'on': True, 'blink': True}
+    fed(c, 2, vessel={'wheels': False})
+    assert c.published[S + 'led_wheels'] == {'on': False, 'blink': False}
+    fed(c, 3, vessel={'wheels': None})          # no reaction wheel on board: the lamp stays dark
+    assert c.published[S + 'led_wheels'] == {'on': False, 'blink': False}
 
 
 def test_fuel_cell_outside_temperature_and_ablator():
@@ -804,3 +836,15 @@ def test_attitude_hold_holds_the_knobs_attitude_with_sas_off():
     assert topics(c.handle('panel/hc/in/rot_pitch', {'v': 0.0}, 5.5))['cmd/hold']['on']
     assert topics(c.handle(P + 'hold', {'v': 0}, 6))['cmd/hold'] == {'on': False}
     assert c.published[O + 'led_hold'] == {'on': False, 'blink': False}
+
+
+def test_next_stage_lamps_show_what_staging_does():
+    c = Cockpit()
+    fed(c, 0, vessel={'next_stage': {'stage': 3, 'engines': 5, 'solids': 2, 'decouple': False, 'clamps': True,
+                                     'chutes': False, 'fairing': False}})
+    lit = {key for key, lamp in (('engines', 'lamp_ns_engines'), ('solids', 'lamp_ns_solids'), ('decouple', 'lamp_ns_decouple'),
+                                 ('clamps', 'lamp_ns_clamps'), ('chutes', 'lamp_ns_chutes'), ('fairing', 'lamp_ns_fairing'))
+           if c.published[O + lamp]['on']}
+    assert lit == {'engines', 'solids', 'clamps'}
+    fed(c, 1, vessel={'next_stage': None})                              # no stage left: all dark
+    assert not any(c.published[O + f'lamp_ns_{key}']['on'] for key in ('engines', 'solids', 'clamps'))

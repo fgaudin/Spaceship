@@ -123,8 +123,8 @@
           "out": "bar_ec",
           "segments": 10,
           "at": [
-            14,
-            42
+            18,
+            35
           ],
           "vertical": true
         },
@@ -135,7 +135,7 @@
           "out": "disp_ec",
           "digits": 5,
           "at": [
-            60,
+            63,
             27
           ],
           "color": "green"
@@ -148,7 +148,7 @@
           "digits": 5,
           "color": "green",
           "at": [
-            60,
+            63,
             47
           ]
         },
@@ -162,7 +162,7 @@
             "color": "green"
           },
           "at": [
-            42,
+            18,
             76
           ]
         },
@@ -176,7 +176,21 @@
             "color": "green"
           },
           "at": [
-            74,
+            48,
+            76
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "wheels",
+          "label": "WHEELS",
+          "in": "wheels",
+          "led": {
+            "out": "led_wheels",
+            "color": "green"
+          },
+          "at": [
+            78,
             76
           ]
         }

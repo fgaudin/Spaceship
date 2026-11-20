@@ -14,7 +14,8 @@ import vehicle as V
 from vehicle import STAGES
 
 SWITCH_COMMANDS = {'cmd/sas': 'sas', 'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
-                   'cmd/brakes': 'brakes', 'cmd/fuel_cell': 'fuel_cell', 'cmd/precision': 'precision'}
+                   'cmd/brakes': 'brakes', 'cmd/fuel_cell': 'fuel_cell', 'cmd/precision': 'precision',
+                   'cmd/wheels': 'wheels'}
 GROUND_SITUATIONS = ('pre_launch', 'landed', 'crashed')
 ACTION_GROUP_COUNT = 10
 ON_THE_PAD = -1                 # value of `firing_stage` before the first staging
@@ -58,6 +59,7 @@ class Plant:
         self.speed_mode = 'surface'
         self.solar_deployed, self.parachute = False, 'stowed'
         self.fuel_cell = False
+        self.wheels = True              # KSP's reaction wheels start on
         self.antenna_deployed = False
         self.action_groups = [False] * ACTION_GROUP_COUNT
         self.warp_index, self.warp_to_time, self.paused = 0, None, False
@@ -401,6 +403,16 @@ class Plant:
             return len(STAGES) + 1
         return len(STAGES) - self.firing_stage
 
+    def _next_stage(self):
+        """What cmd/stage does next (see _stage): liftoff lights S1 and lets go of the pad, then each staging drops
+        the firing stage and lights the one above; the last only drops."""
+        if self.firing_stage >= len(STAGES):
+            return None
+        lit = STAGES[self.firing_stage + 1] if self.firing_stage + 1 < len(STAGES) else None
+        on_the_pad = self.firing_stage == ON_THE_PAD
+        return {'stage': self.ksp_stage_number() - 1, 'engines': len(lit.engine_positions) if lit else 0, 'solids': 0,
+                'decouple': not on_the_pad, 'clamps': on_the_pad, 'chutes': False, 'fairing': False}
+
     def _vessel_telemetry(self):
         stage = self.firing_stage_or_none()
         available_thrust = 0.0
@@ -411,7 +423,7 @@ class Plant:
                 'situation': self.situation, 'stage': self.ksp_stage_number(), 'throttle': self.throttle,
                 'sas': self.sas, 'rcs': self.rcs, 'gear': self.gear, 'lights': self.lights, 'brakes': self.brakes, 'precision': self.precision,
                 'sas_mode': self.sas_mode, 'speed_mode': self.speed_mode, 'solar': self.solar_deployed, 'chute': self.parachute,
-                'fuel_cell': self.fuel_cell,
+                'fuel_cell': self.fuel_cell, 'wheels': self.wheels, 'next_stage': self._next_stage(),
                 'comm': 'comm_lost' not in self.failures, 'has_gear': False,
                 'contact': self.situation in ('pre_launch', 'landed')}
 

@@ -14,6 +14,7 @@ SCIENCE_ACTIONS = ('run', 'transmit', 'dump', 'reset')
 # KSP puts SAS back to stability when it is switched on, and can drop a mode set in the same moment: the wanted mode
 # is set again this long after either.
 SAS_MODE_SET_AGAIN_AFTER_S = (0.5, 1.5)
+SAS_MODE_SETTLES_S = 0.5           # a mode just set shows in the telemetry after this
 ACTION_GROUP_SWITCHES = {'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'lights',
                          'cmd/brakes': 'brakes', 'cmd/precision': 'precision_mode'}
 
@@ -27,12 +28,13 @@ class CommandHandler:
         self.link = link
         # what the instructor broke (SimSup); outlives a kRPC connection, since the failures arrive only once
         self.failures = failures if failures is not None else PlantFailures()
-        self.wanted_sas_mode = None         # the last mode the cockpit asked for, kept while SAS is off
+        self.wanted_sas_mode = None         # the mode SAS takes when it comes on: asked for, then the game's
+        self.sas_mode_applied_at = 0.0      # when it was last set (monotonic)
         self.sas_mode_set_again_at = []     # times (monotonic) at which to set it again
         self.handlers = {
             'cmd/sas': self.sas,
             'cmd/throttle': self.throttle, 'cmd/stage': self.stage, 'cmd/abort': self.abort,
-            'cmd/solar': self.solar_panels, 'cmd/fuel_cell': self.fuel_cells, 'cmd/chute': self.parachutes, 'cmd/sas_mode': self.sas_mode,
+            'cmd/solar': self.solar_panels, 'cmd/fuel_cell': self.fuel_cells, 'cmd/wheels': self.reaction_wheels, 'cmd/chute': self.parachutes, 'cmd/sas_mode': self.sas_mode,
             'cmd/antenna': self.antennas, 'cmd/action_group': self.action_group, 'cmd/speed_mode': self.speed_mode,
             'cmd/thrust_limit': self.thrust_limit, 'cmd/gimbal': self.gimbal_lock,
             'cmd/target': lambda request: select_target(self.link, request),
@@ -130,6 +132,7 @@ class CommandHandler:
         control = self.link.vessel.control
         if self.wanted_sas_mode is None or not control.sas:
             return
+        self.sas_mode_applied_at = time.monotonic()
         try:
             control.sas_mode = getattr(self.link.space_center.SASMode, SAS_MODE_TO_KRPC[self.wanted_sas_mode])
         except Exception as error:          # e.g. a mode this pilot or probe core cannot hold
@@ -186,6 +189,14 @@ class CommandHandler:
             self.sas_mode_set_again_at.pop(0)
             self._apply_sas_mode()
 
+    def follow_sas_mode(self, vessel):
+        """Called with every tlm/vessel: once nothing is left to set, the game's mode is the one to keep, whatever
+        changed it (KSP's own buttons, a node deleted, a mode refused), so that SAS coming on again does not bring
+        back an old one."""
+        settled = time.monotonic() - self.sas_mode_applied_at > SAS_MODE_SETTLES_S
+        if vessel and vessel.get('sas_mode') and not self.sas_mode_set_again_at and settled:
+            self.wanted_sas_mode = vessel['sas_mode']
+
     def speed_mode(self, request):
         """{'mode': 'orbit' | 'surface' | 'target'}: the navball's speed reference, which PRO and RETRO follow."""
         mode = request.get('mode')
@@ -204,6 +215,11 @@ class CommandHandler:
                 converter.start(index)
             else:
                 converter.stop(index)
+
+    def reaction_wheels(self, request):
+        """Switch every reaction wheel on or off (the pods' own included); SAS then has only RCS to turn with."""
+        for wheel in self.link.parts.reaction_wheels:
+            wheel.active = bool(request.get('on'))
 
     def antennas(self, request):
         for antenna in self.link.parts.antennas:
