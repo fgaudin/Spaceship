@@ -4,21 +4,28 @@
   "boards": {
     "olimex-esp32-poe2": {
       "name": "Olimex ESP32-POE2",
-      "budget_w": 7.5,
-      "base_w": 0.0,
-      "note": "the 5 V rail: 1.5 A (7.5 W) for the display drivers and lamps. The board's 25 W from PoE (802.3at) is split: 5 V 1.5 A, 3.3 V 1 A (the ESP32 and Ethernet, counted apart), and 12 V 1.5 A or 24 V 0.75 A by jumper; logic_w: the ESP32 and Ethernet on the 3.3 V rail, in the PoE total but not against the 5 V limit",
-      "logic_w": 0.75
+      "rails_w": {
+        "5": 7.5,
+        "12": 18.0
+      },
+      "total_w": 25.0,
+      "logic_w": 0.75,
+      "note": "from PoE (802.3at), 25 W in all: 5 V 1.5 A (7.5 W) for the display drivers and 5 V LEDs; 12 V 1.5 A (18 W, the jumper on 12 V, not 24 V) for 12 V lamps; 3.3 V 1 A for the ESP32 and Ethernet (logic_w, about 0.75 W)"
     },
     "olimex-esp32-poe": {
       "name": "Olimex ESP32-POE",
-      "budget_w": 4.0,
-      "base_w": 0.75,
-      "note": "4 W (0.8 A at 5 V, the 3.3 V rail included) from PoE, per Olimex; the ESP32 with Ethernet takes about 0.75 W of it"
+      "rails_w": {
+        "5": 4.0
+      },
+      "total_w": 4.0,
+      "logic_w": 0.75,
+      "note": "4 W (0.8 A at 5 V, the 3.3 V rail taken from it) from PoE, per Olimex; the ESP32 with Ethernet takes about 0.75 W"
     },
     "raspberry-pi": {
       "name": "Raspberry Pi",
-      "budget_w": null,
-      "base_w": null,
+      "rails_w": null,
+      "total_w": null,
+      "logic_w": 0.0,
       "note": "a glass module: the Pi and its screen have their own supply; only the panel's I/O is counted"
     }
   },
@@ -46,13 +53,28 @@
       "channels": 4,
       "bus": "i2c",
       "note": "I2C 16-bit ADC: levers and knobs"
+    },
+    "uln2803": {
+      "channels": 8,
+      "note": "a driver for lamps on a rail above 5 V: the expanders switch it, it switches 8 lamps"
     }
   },
   "lamps": {
-    "led_ma": 10,
-    "lamp_ma": 20,
+    "led": {
+      "ma": 10,
+      "v": 5
+    },
+    "lamp": {
+      "ma": 20,
+      "v": 12
+    },
+    "cell": {
+      "leds": 2,
+      "ma": 15,
+      "v": 5
+    },
     "typical_on": 0.3,
-    "note": "led_ma: a 5 mm indicator LED; lamp_ma: a lit push button or an annunciator cell; typical_on: the share of lamps lit in flight"
+    "note": "led: a 5 mm indicator LED (above a switch, or alone); lamp: a lit push button, 12 V with its resistor built in (as many are sold); cell: an annunciator cell, a light box with plain LEDs behind its legend (leds per cell, ma per LED). typical_on: the share lit in flight. Change a v to move that load to another rail: above 5 V it goes through ULN2803 drivers"
   },
   "pins": {
     "i2c": 2,

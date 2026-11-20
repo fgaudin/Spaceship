@@ -19,7 +19,9 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   `protocol/panels/hardware.json`, sums in `panels/virtual/budget.js`. SimSup and the cut templates now skip JSON
   files in `protocol/panels/` that are not modules. The I/O modules are now ESP32-POE2 boards (on the bench: a PoE
   injector): their 5 V rail gives 7.5 W to the displays and lamps, the ESP32 and Ethernet having a 3.3 V rail of their
-  own. Every module fits in flight; at lamp test only RENDEZVOUS · DOCKING goes over (65 display rows).
+  own. Lit buttons are taken as 12 V lamps on the board's 12 V rail (18 W), through ULN2803 drivers; annunciator
+  cells as light boxes with two plain 15 mA LEDs, on 5 V; each rail is checked against its own limit. Every module fits in flight; at lamp test only RENDEZVOUS ·
+  DOCKING goes over, on the 5 V rail (its 65 display rows).
 - **Left Alt also counts the modules** (top left of the console): the boards to build, the windows (bare glass)
   left out, split into I/O and glass. Today: 13 modules, 11 I/O and 2 glass.
 - **New panel: ATTITUDE HOLD** (1 × 1, `eng` bus): a pitch and a heading on two knobs (whole degrees, shown on PITCH °

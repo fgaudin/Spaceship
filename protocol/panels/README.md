@@ -89,10 +89,12 @@ The firmware never reads this file.
 
 Holding Left Alt on the console shows, under each module's name, what its panels need: inputs (switches, buttons,
 rotary positions, keypad lines), analog inputs (levers, knobs), lamps, 7-segment and bar rows, alphanumeric
-characters; the driver chips that implies (MCP23017 expanders, MAX7219 display drivers, HT16K33 for characters,
-ADS1115 for analog), the ESP32 pins they use (a shared I2C bus, the MAX7219 chain: about 5 whatever the panel), and the
-power in flight and at lamp test (everything lit), against the board's limit (the ESP32-POE2's 5 V rail: 7.5 W). A module whose
-lamp test goes over turns red; the count at the top left adds up the PoE power. The assumptions (chip capacities,
+characters; the driver chips that implies (MCP23017 expanders, ULN2803 for 12 V lamps, MAX7219 display drivers,
+HT16K33 for characters, ADS1115 for analog), the ESP32 pins they use (a shared I2C bus, the MAX7219 chain: about 5
+whatever the panel), and the power on each supply rail in flight and at lamp test (everything lit), against the
+ESP32-POE2's limits: 5 V 7.5 W (displays, indicator LEDs, annunciator cells: light boxes with two plain LEDs behind
+the legend), 12 V 18 W (lit buttons, assumed 12 V lamps), 25 W in all with the ESP32 and Ethernet. A module over a limit at lamp test turns red; the count at the top
+left adds up what the PoE switch must give. The assumptions (chip capacities,
 LED currents, the share of lamps lit) are in `hardware.json`, rough figures to compare groupings
 (`panels/virtual/budget.js` does the sums). With expanders, pins stop being the limit: power and analog inputs are.
 

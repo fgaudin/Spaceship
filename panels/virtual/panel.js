@@ -15,7 +15,7 @@
 
 import { connectBus, parse } from './bus.js';
 import { createElement, createWidgetBuilders } from './widgets.js';
-import { describeBudget, moduleBudget, overBudget } from './budget.js';
+import { describeBudget, moduleBudget, overBudget, overLimits } from './budget.js';
 import { handControllerKey, releaseHandControllers, startHandControllers } from './hand_controllers.js';
 
 const U_MM = 100;                            // a slot; a panel is built smaller by its clearance
@@ -334,12 +334,12 @@ function showModules(on) {
   const modules = [...overview().querySelectorAll('.module:not(.bare)')];
   const glass = modules.filter((module) => module.querySelector('.glass')).length;
   badge.textContent = `${modules.length} MODULES · ${modules.length - glass} I/O, ${glass} glass`;
-  const powered = [...budgets.values()].filter((budget) => budget.board.budget_w);    // on PoE: what the switch must give
+  const powered = [...budgets.values()].filter((budget) => budget.board.rails_w);    // on PoE: what the switch must give
   if (powered.length) {
-    // what the PoE switch gives: the 5 V rail and the logic on its own rail (logic_w)
-    const sum = (key) => powered.reduce((total, budget) => total + budget[key] + (budget.board.logic_w || 0), 0).toFixed(0);
-    const over = [...budgets.entries()].filter(([, budget]) => overBudget(budget)).map(([id]) => id.toUpperCase());
-    badge.textContent += ` · PoE ${sum('typicalW')} W, ${sum('lampTestW')} W lamp test${over.length ? ` · over ${powered[0].board.budget_w} W: ${over.join(', ')}` : ''}`;
+    const sum = (key) => powered.reduce((total, budget) => total + budget[key], 0).toFixed(0);
+    const over = [...budgets.entries()].filter(([, budget]) => overBudget(budget))
+      .map(([id, budget]) => `${id.toUpperCase()} (${overLimits(budget).join(', ')})`);
+    badge.textContent += ` · PoE ${sum('typicalW')} W, ${sum('lampTestW')} W lamp test${over.length ? ` · over at lamp test: ${over.join(', ')}` : ''}`;
   }
   badge.hidden = !on;
 }
