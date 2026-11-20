@@ -46,7 +46,7 @@ instructor (SimSup, a separate page) knows what was injected.
 |---|---|---|
 | FLIGHT | Flight director | Mission phase, vessel, MET, link, telemetry and cockpit health; the crew's alarms; the go/no-go poll board (open, close, each console's answer); the loop. |
 | FIDO | Flight dynamics | Orbit elements and a drawing; time to apsides and to the next SOI change; the target (range, closing speed, line-of-sight rate); latitude, longitude, altitude. |
-| RETRO | Retrofire | Periapsis against Kerbin's entry corridor (25–45 km), the Δv at apoapsis to bring it to 35 km, time to the atmosphere, load, dynamic pressure, heat, and KSP's verdict on opening the chutes. |
+| RETRO | Retrofire | Periapsis against the entry corridor, 36 to 64 % of the atmosphere's height (25–45 km on stock Kerbin, 29–51 km on JNSQ's), the Δv at apoapsis to bring it to the middle, time to the atmosphere, load, dynamic pressure, heat, and KSP's verdict on opening the chutes. |
 | GUIDO | Guidance | The burn computer's PAD and state, time to TIG, burn time at full thrust, a read-up waiting for the crew; how far the nose is from the burn direction; attitude, SAS mode, navball reference. |
 | BOOSTER | Propulsion | Stage, throttle, thrust, TWR, specific impulse, limiter, gimbals, stage propellant; every engine with its state (burning, lit, weak, flameout, off). |
 | EECOM | Electrical, thermal, comms | Charge, its trend and how long it lasts, solar panels, lights; the hottest part; monopropellant, fuel, oxidizer, xenon, ablator; life support (crew, and food, water and oxygen with the hours each lasts, recyclers not counted); science (experiments, ready, holding data, its value, biome); the radio link (signal, first relay, hops, antennas). |
@@ -63,10 +63,47 @@ Every console except FLIGHT has the same footer: GO / NO-GO for the open poll, a
 | `bus.js` | The MCC's store of the last payload per topic and small readers (`vessel()`, `orbit()`, `linkUp()`…), on the connection of the shared `../bus.js`. The top bar and the page navigation come from the shared `../shell.js`. |
 | `roster.js` | The consoles in tab order. Adding one: write `consoles/<id>.js` with `mount(root)` and `update()`, add it here. |
 | `consoles/*.js` | One module per console. |
-| `ui.js`, `bodies.js` | Formatting and DOM helpers (`box()` places a box on the console's tiles); radius, atmosphere and μ of Kerbin, the Mun and Minmus. |
+| `ui.js` | Formatting and DOM helpers (`box()` places a box on the console's tiles). |
+| `bodies.js` | The bodies as the game has them (mcc/bodies, read from KSP by mcc-data: JNSQ's Kerbin is not stock's), stock's figures until then. |
+| `history.js` | The flight so far, one sample a second as columns: the recorder's (mcc/history) when the page connects, then its own samples. |
+| `charts.js`, `consolechart.js` | Strip charts over the mission clock with uPlot (`../vendor/uPlot.*`, MIT); `chartBox()` puts one in a console's box, over the last 15 minutes. |
+| `orbitmath.js` | Two-body orbits (as `flight-dynamics/orbits.py`), the ground track ahead, where a body's sun is overhead. |
+| `../wall.html`, `../wall.js`, `../wall.css` | The wall display (below). |
+
+## The wall display
+
+`http://<cockpit machine>:8650/wall.html`, on the room's TV or projector, for everyone at once (F: full screen,
+without the top bar). It fills the screen at any size.
+
+- **Ground track** on a relief map of the body, sampled from the game by mcc-data (a quarter of a degree a pixel,
+  shaded and coloured by height; made once per body the first time it is flown, its moons too; a plain map until
+  then): the flight so far (amber), the next orbit (cyan) and two more (dashed), night where the body's sun has set,
+  the apsides, the next burn (TIG), the impact point of a suborbital path, the target's track, the launch site.
+  The track ahead comes from the orbit's elements pinned to the ground by the vessel's longitude; checked in KSP
+  against where the vessel was 94 s later: within 0.03° of longitude.
+- **Orbit** from above the pole: the orbit with its apsides, the moons on theirs with their spheres of influence,
+  the target, the sun's direction and the body's night side; the zoom follows the orbit out to the moons.
+- **Figures**: altitude, apsides, inclination, speeds, time to each apsis, period, dynamic pressure, TWR, mass.
+- **Charts**: altitude and apsides, velocities, loads and heat over the whole flight, and the ascent profile
+  (altitude against the distance from the launch site) with the events along it.
+- **Events**: lift-off, staging, engine on and cutoff, max Q, out of the atmosphere and entry, orbit, SOI changes,
+  AOS and LOS, docking, the crew's alarms, from the recorder.
+- **Head**: vessel, phase, sphere of influence, the next burn's countdown and Δv, MET, AOS / LOS, time warp, master
+  caution and alarm.
+
+## Charts on the consoles
+
+RETRO: periapsis and altitude, entry loads and heat. GUIDO: the apsides and the throttle through a burn. BOOSTER:
+throttle and thrust. EECOM: charge and heat. Each over the last 15 minutes, from the same history as the wall.
+
+## mcc-data: the recorder, the bodies, the maps
+
+A service of its own ([mcc-data/](../../../mcc-data/), in Docker as `mcc-data`): it records the flight (one sample a
+second, the events), answers a page's `mcc/history/get`, reads the bodies from KSP (`mcc/bodies`) and samples the
+relief maps into `panels/virtual/maps/`. It keeps the flight on disk (`mcc-data/state/`) across a restart. Without
+KSP (the mock plant) it still records; the pages use stock's bodies and draw the ground track on a plain map.
 
 ## Not done yet
 
 - A voice loop. The text loop stands in.
-- History: plots of altitude, speed or charge over time; every console shows the present only.
-- RETRO's corridor and deorbit target are fixed numbers for a small capsule, not computed for the vehicle.
+- RETRO's corridor and deorbit target are fractions of the atmosphere for a small capsule, not computed for the vehicle.

@@ -41,7 +41,7 @@ def main():
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='flight-dynamics')
 
     def on_connect(client, userdata, flags, reason, properties=None):
-        client.subscribe([('tlm/#', 0), ('panel/solo/in/#', 1), ('cockpit/power', 1)])
+        client.subscribe([('tlm/#', 0), ('mcc/bodies', 1), ('panel/solo/in/#', 1), ('cockpit/power', 1)])
         client.publish('fd/status', json.dumps({'text': 'READY', 'ok': True}), qos=1, retain=True)
         print('connected', flush=True)
 
@@ -50,7 +50,7 @@ def main():
             payload = json.loads(message.payload or b'{}')
         except ValueError:
             return
-        if message.topic.startswith('tlm/'):
+        if message.topic.startswith('tlm/') or message.topic == 'mcc/bodies':     # the bodies: as the game has them
             telemetry[message.topic] = payload
             return
         if message.topic == 'cockpit/power':

@@ -34,6 +34,16 @@ services:
     depends_on: [broker]
     restart: unless-stopped
 
+  mcc-data:                     # Mission Control's flight recorder, the bodies and their relief maps (mcc-data/)
+    build: ./mcc-data
+    network_mode: host          # kRPC listens on 127.0.0.1 only
+    environment: { MQTT_HOST: 127.0.0.1, KRPC_HOST: 127.0.0.1, MAPS_DIR: /maps, STATE_FILE: /state/flight.json }
+    user: "${UID:-1000}:${GID:-1000}"       # the maps belong to you, not root
+    volumes:
+      - ./panels/virtual/maps:/maps       # served to the pages as maps/
+      - ./mcc-data/state:/state           # the flight so far, kept across a restart
+    restart: unless-stopped
+
   simsup:
     build: ./simsup
     environment: { MQTT_HOST: broker, PANELS_DIR: /panels }

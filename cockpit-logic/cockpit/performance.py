@@ -5,12 +5,15 @@ from . import settings as S
 
 
 def local_gravity(cockpit):
-    """m/s² at the vessel's altitude, or None for a body the cockpit does not know."""
-    body = S.BODIES.get(cockpit.orbit.get('body'))
+    """m/s² at the vessel's altitude, or None for a body the cockpit does not know. The body's μ and radius come with
+    tlm/orbit, as the game has them (JNSQ's Kerbin is not stock's); stock's for a plant that does not send them."""
+    orbit = cockpit.orbit
+    gravitational_parameter, radius = orbit.get('mu'), orbit.get('radius')
+    if not (gravitational_parameter and radius):
+        gravitational_parameter, radius = S.BODIES.get(orbit.get('body'), (None, None))
     altitude = cockpit.flight.get('alt')
-    if body is None or altitude is None:
+    if gravitational_parameter is None or altitude is None:
         return None
-    gravitational_parameter, radius = body
     return gravitational_parameter / (radius + altitude) ** 2
 
 

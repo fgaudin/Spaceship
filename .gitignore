@@ -39,3 +39,7 @@ NOTES.md
 
 # generated laser-cut templates (panels/cut/make_templates.py)
 panels/cut/out/
+
+# relief maps sampled from the game by mcc-data (one set per KSP install)
+panels/virtual/maps/
+mcc-data/state/

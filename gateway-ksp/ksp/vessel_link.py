@@ -48,6 +48,11 @@ class VesselLink:
             self.unbind()
             return NO_VESSEL
         if self.vessel is not None and active_vessel == self.vessel:
+            if self.read['body']() != self.streams_body:
+                # a new sphere of influence: the speeds were measured in the old body's frames (at the Mun, against
+                # Kerbin's turning surface: thousands of m/s), so open the streams again in the new body's
+                self.streams.close()
+                self._open_streams(active_vessel)
             return SAME_VESSEL
         self.unbind()
         self.vessel = active_vessel
@@ -57,7 +62,7 @@ class VesselLink:
         self.parts = PartsWatch(self.connection, active_vessel)
         self.station = StationWatch(self.space_center, active_vessel)
         self.body_names = {}
-        self.body_atmospheres = {}          # body → top of its atmosphere (m), None without one
+        self.body_figures = {}              # body → its atm (top of the atmosphere, m, None without), mu, radius
         self.warp_to_universal_time = None
         controlling_part = active_vessel.parts.controlling
         # where CTRL FROM PORT off goes back to
@@ -75,6 +80,7 @@ class VesselLink:
     def _open_streams(self, vessel):
         streams = self.streams
         body = vessel.orbit.body
+        self.streams_body = body            # the frames below are this body's: bind() opens them again on a new one
         over_the_ground = vessel.flight(body.reference_frame)   # speeds relative to the turning surface
         around_the_body = vessel.flight(body.non_rotating_reference_frame)  # the speed along the orbit
         against_the_horizon = vessel.flight()                   # pitch, heading, roll against the local horizon
@@ -256,10 +262,11 @@ class VesselLink:
         body = now['body']
         if body._object_id not in self.body_names:      # the name is a plain read: once per body
             self.body_names[body._object_id] = body.name
-            self.body_atmospheres[body._object_id] = body.atmosphere_depth if body.has_atmosphere else None
+            self.body_figures[body._object_id] = {'atm': body.atmosphere_depth if body.has_atmosphere else None,
+                                                  'mu': body.gravitational_parameter, 'radius': body.equatorial_radius}
         closed_orbit = now['eccentricity'] < 1          # an escape trajectory has no apoapsis and no period
         finite_or_none = lambda value: value if math.isfinite(value) else None
-        return {'body': self.body_names[body._object_id], 'atm': self.body_atmospheres[body._object_id],
+        return {'body': self.body_names[body._object_id], **self.body_figures[body._object_id],
                 'apo': finite_or_none(now['apoapsis_altitude']), 'peri': now['periapsis_altitude'],
                 'a': now['semi_major_axis'], 'e': now['eccentricity'], 'i': math.degrees(now['inclination']),
                 'period': now['period'] if closed_orbit else None,

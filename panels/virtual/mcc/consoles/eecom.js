@@ -2,6 +2,8 @@
    life support, science, the radio link. */
 import { box, figures, fixed } from '../ui.js';
 import { store, vessel, met } from '../bus.js';
+import { chartBox } from '../consolechart.js';
+import { GREEN, RED } from '../charts.js';
 
 // TAC Life Support: units each kerbal uses per second, recyclers not counted
 const LIFE_SUPPORT = [['food', 'Food', 1.6927083333e-05], ['water', 'Water', 1.1188078704e-05], ['oxygen', 'Oxygen', 0.001713537562385]];
@@ -15,6 +17,13 @@ export function mount(root) {
   setLife = figures(box(root, 'LIFE SUPPORT', { at: [0, 1] }), [['crew', 'Crew'], ['station', 'CM · LM'], ...LIFE_SUPPORT.map(([id, name]) => [id, name])]);
   setScience = figures(box(root, 'SCIENCE', { at: [1, 1] }), [['count', 'Experiments'], ['ready', 'Ready'], ['data', 'Holding data'],
     ['value', 'Science held'], ['biome', 'Biome']]);
+  chartBox(root, 'CHARGE · HEAT, % (of capacity, of the limit)', { at: [2, 1] }, {
+    series: [
+      { label: 'CHARGE', color: GREEN, unit: '%', decimals: 0, value: (c, i) => (c.ec[i] == null ? null : c.ec[i] * 100) },
+      { label: 'HEAT', color: RED, unit: '%', decimals: 0, value: (c, i) => (c.heat[i] == null ? null : c.heat[i] * 100) },
+    ],
+    scales: { y: { range: [0, 100] } },
+  });
 }
 
 function updateLifeSupport(totals, crew) {

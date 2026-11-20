@@ -21,7 +21,7 @@ switch on MCC (on NAVIGATION, `panel/solo/in/mcc_mode`), Mission Control is ther
 | CIRC | Circularise | At apoapsis when the periapsis is below the safe altitude (or on an escape path: at periapsis), else at the next apsis. Δv = circular speed − speed there (vis-viva), prograde or retrograde. |
 | PLANE | Change plane | Into the target's plane (a vessel around the same body), or the equator's without a target, at the node where it is cheaper (the farther one). The velocity is turned into the new plane: mostly normal, a little retrograde. |
 | RDV TGT | Rendezvous | A Hohmann transfer to the target's orbit, timed so that both arrive together: when the target leads by π − (the angle it covers during the transfer). Both orbits nearly circular (e < 0.05) and in the same plane (0.5°); otherwise it says CIRC FIRST or PLANE FIRST. |
-| INJECT (knob MUN / MINMUS) | Injection | The same transfer from a parking orbit around Kerbin, with the moon as the target. Minmus is 6° off the equator: the PAD says so (PL 6DEG), to correct on the way. |
+| INJECT (knob MUN / MINMUS) | Injection | The same transfer from a parking orbit around the moon's planet, with the moon as the target. Minmus is off the equator: the PAD says so (PL 6DEG), to correct on the way. |
 
 Every TIG is the ignition time, half the burn before the event, so that the burn is centred on it; the burn time
 comes from the vessel's mass, thrust and specific impulse (rocket equation). An event less than 60 s away is moved to
@@ -32,7 +32,7 @@ its next occurrence (the next orbit, or the next transfer window).
 | File | What it is |
 |---|---|
 | `orbits.py` | Two-body orbits: elements, Kepler's equation, positions, nodes, Hohmann transfers, phase angles. |
-| `planner.py` | The four PADs, from the telemetry; the bodies' constants and the moons' orbits (KSP stock values, checked against the game). |
+| `planner.py` | The four PADs, from the telemetry; the bodies as the game has them: the body flown from `tlm/orbit` (μ, radius, atmosphere), the others and the moons' orbits from `mcc/bodies` (mcc-data); stock's values, checked against the game, for the mock plant. The safe periapsis is the top of the atmosphere, or the highest terrain mcc-data mapped and a tenth more. |
 | `service.py` | The MQTT shell: reads the SOLO buttons and the telemetry, publishes `pad/uplink` and `fd/status`. |
 | `tests/` | The sums, against hand calculations and a position read from KSP. |
 

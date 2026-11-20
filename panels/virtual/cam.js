@@ -18,6 +18,10 @@
    ?fov=), set through JRTI's camera settings and checked again on every camera list, since JRTI does not keep it
    across a reload and its viewer can change it.
 
+   A revert, a quickload or a scene change makes new cameras under the same JRTI ids, and JRTI leaves the old streams
+   open but silent: the picture would freeze on the last frame, with no error to retry on. So the page also listens
+   to tlm/time and opens its stream again when the mission clock goes back, or when the telemetry returns after a gap.
+
    ?rotate=90 (or -90, 180) turns the picture by that many degrees, clockwise: for a window camera rolled on its part
    in the VAB, so that a portrait window gets the whole of JRTI's landscape picture, standing up. */
 
@@ -27,6 +31,9 @@ const CAMERA_LIST_EVERY_MS = 3000;
 const RETRY_AFTER_MS = 3000;
 const WINDOW_FOV_DEG = 50;              // a capsule window seen from the seat
 const FOV_TOLERANCE_DEG = 0.5;
+const CLOCK_BACK_S = 1;                 // the mission clock back by more than this: a revert or a quickload
+const TELEMETRY_GAP_MS = 5000;          // tlm/time silent this long, then back: a scene change (or the gateway)
+const REOPEN_AFTER_MS = 2000;           // the game's time to make the new cameras
 
 const urlParameters = new URLSearchParams(location.search);
 const jrtiUrl = urlParameters.get('jrti') || '/jrti';
@@ -60,6 +67,7 @@ let wantedCameraId = null;              // from cam/select
 let shownCameraId = null;               // the camera whose stream the picture is fed from
 let playing = false;
 let retryTimer = null;
+let lastMet = null, lastClockAt = 0;    // tlm/time: to see a revert, a quickload or a scene change
 
 function publish(topic, payload) {
   if (windowSide) return;               // a window only shows; the monitor speaks for the cameras
@@ -142,7 +150,7 @@ function showWantedCamera() {
   if (shownCameraId === camera.id) return;
   stopPicture();
   shownCameraId = camera.id;
-  picture.src = `${jrtiUrl}/camera/${camera.id}/stream`;
+  picture.src = `${jrtiUrl}/camera/${camera.id}/stream?opened=${Date.now()}`;      // a new connection, never a cached one
   holdWindowFov();
 }
 
@@ -155,17 +163,37 @@ picture.addEventListener('error', () => {
   retryTimer = setTimeout(() => { if (wantedCameraId === cameraId) showWantedCamera(); }, RETRY_AFTER_MS);
 });
 
+/* The game made new cameras behind the same ids: drop the silent stream and open the camera's again. */
+function reopenPicture() {
+  if (shownCameraId === null) return;
+  stopPicture();
+  retryTimer = setTimeout(showWantedCamera, REOPEN_AFTER_MS);
+}
+
+function onClock(clock) {
+  const now = Date.now();
+  const back = lastMet !== null && clock.met != null && clock.met < lastMet - CLOCK_BACK_S;
+  const afterGap = lastClockAt && now - lastClockAt > TELEMETRY_GAP_MS;
+  if (back || afterGap) reopenPicture();
+  lastMet = clock.met ?? lastMet;
+  lastClockAt = now;
+}
+
 function connectToBus() {
   client = connectBus({
     name: windowSide ? `window-${windowSide}` : 'camera-monitor',
     will: windowSide ? undefined : { topic: 'cam/status', payload: { online: false, playing: false } },
     onConnect: (connection) => {
-      connection.subscribe(selectTopic, { qos: 1 });
+      connection.subscribe([selectTopic, 'tlm/time'], { qos: 1 });
       publish('cam/status', { online: true, playing });
       publishedList = '';               // publish the list again on the next refresh
       refreshCameraList();
     },
     onMessage: (topic, text) => {
+      if (topic === 'tlm/time') {
+        try { onClock(JSON.parse(text)); } catch { /* not JSON: ignore */ }
+        return;
+      }
       if (topic !== selectTopic) return;
       try {
         const selection = JSON.parse(text);

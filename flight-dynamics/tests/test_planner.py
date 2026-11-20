@@ -1,7 +1,7 @@
 import math, os, sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from orbits import Elements, hohmann, phase_angle  # noqa: E402
-from planner import BODIES, Pad, Refusal, burn_time, change_plane, circularise, inject, moon_orbit, rendezvous  # noqa: E402
+from planner import BODIES, Pad, Refusal, body_of, burn_time, change_plane, circularise, inject, moon_orbit, rendezvous  # noqa: E402
 
 MU = BODIES['Kerbin']['mu']
 
@@ -99,7 +99,51 @@ def test_a_suborbital_apoapsis_close_ahead_is_kept_not_moved_an_orbit_later():
 
 
 def test_the_service_ignores_requests_in_mcc_mode():
-    from service import answer
+    import importlib.util          # by its path: mcc-data has a service.py too, and pytest may run both
+    path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'service.py')
+    spec = importlib.util.spec_from_file_location('flight_dynamics_service', path)
+    service = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(service)
+    answer = service.answer
     tlm = telemetry(700000.0, e=0.01)
     assert answer('fd_circ', tlm, {'mcc_mode': 1}) == (None, {'text': '', 'ok': False})
     assert answer('fd_circ', tlm, {'mcc_mode': 0})[1]['text'] != ''
+
+
+# JNSQ, as the game gives it (mcc/bodies read from KSP, and tlm/orbit's figures): not stock's
+JNSQ_MU, JNSQ_RADIUS = 2.5105024e13, 1600000.0
+JNSQ_BODIES = {'ut': 0.0, 'bodies': {
+    'Kerbin': {'radius': JNSQ_RADIUS, 'mu': JNSQ_MU, 'atmosphere': 80000.0, 'parent': 'Sun', 'orbit': {}},
+    'Mun': {'radius': 400000.0, 'mu': 2.2751428e11, 'atmosphere': 0.0, 'parent': 'Kerbin', 'highest': 12000.0,
+            'orbit': {'a': 90960000.0, 'e': 0.0, 'i': 0.0, 'lan': 0.0, 'argp': 0.0, 'm0': 1.7, 'epoch': 0.0}},
+}}
+
+
+def jnsq(a, ut=1000.0, **orbit):
+    tlm = telemetry(a, ut=ut, **orbit)
+    tlm['tlm/orbit'].update(mu=JNSQ_MU, radius=JNSQ_RADIUS, atm=80000.0)
+    tlm['mcc/bodies'] = JNSQ_BODIES
+    return tlm
+
+
+def test_the_game_s_bodies_replace_stock_s():
+    tlm = jnsq(1700000.0)
+    assert body_of(tlm, 'Kerbin') == {'mu': JNSQ_MU, 'radius': JNSQ_RADIUS, 'safe_altitude': 80000.0}
+    assert body_of(tlm, 'Mun')['safe_altitude'] == 12000.0 * 1.1          # an airless body: its highest terrain
+    assert body_of({}, 'Kerbin') == BODIES['Kerbin']                      # the mock plant: stock's
+
+
+def test_circularise_in_jnsq_uses_its_kerbin():
+    # 100 km × 30 km around JNSQ's Kerbin: the periapsis is in its 80 km atmosphere, so at apoapsis
+    apoapsis, periapsis = JNSQ_RADIUS + 100000.0, JNSQ_RADIUS + 30000.0
+    pad = circularise(jnsq((apoapsis + periapsis) / 2, e=(apoapsis - periapsis) / (apoapsis + periapsis), nu=120.0))
+    speed_at_apoapsis = math.sqrt(JNSQ_MU * (2 / apoapsis - 2 / (apoapsis + periapsis)))
+    assert pad.text.startswith('CIRC APO')
+    assert abs(pad.dv[0] - (math.sqrt(JNSQ_MU / apoapsis) - speed_at_apoapsis)) < 0.05
+
+
+def test_injection_in_jnsq_aims_at_its_mun():
+    pad = inject(jnsq(JNSQ_RADIUS + 100000.0), 'Mun')
+    first_burn, _ = hohmann(JNSQ_MU, JNSQ_RADIUS + 100000.0, 90960000.0)
+    assert isinstance(pad, Pad) and abs(pad.dv[0] - first_burn) < 0.05
+    assert moon_orbit('Mun', 0.0, jnsq(1700000.0)).a == 90960000.0

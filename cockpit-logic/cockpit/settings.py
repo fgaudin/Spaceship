@@ -69,8 +69,8 @@ ATTITUDE_ERROR_LIMIT_DEG = 5.0      # off the burn attitude by more than this ..
 ATTITUDE_ERROR_WINDOW_S = 30.0      # ... from this long before TIG
 ENTRY_G_FORCE = 0.05                # the 0.05 G light (as on Mercury): drag is felt, the entry has begun
 
-# Gravitational parameter μ (m³/s²) and radius (m) of the bodies a Mun trip visits, for the TWR display.
 SINKING_ABOVE_M_S = 0.1           # slower than this, the vessel is not coming down: no time to impact
+# Stock μ (m³/s²) and radius (m) of a Mun trip's bodies, for a plant whose tlm/orbit does not carry them.
 BODIES = {'Kerbin': (3.5316e12, 600000.0), 'Mun': (6.5138398e10, 200000.0), 'Minmus': (1.7658e9, 60000.0)}
 STANDARD_GRAVITY = 9.80665
 STANDARD_PRESSURE_PA = 101325.0

@@ -322,7 +322,7 @@ class Plant:
             climbing = self.x * self.velocity_x + self.y * self.velocity_y >= 0
             true_anomaly = math.degrees(math.acos(cosine)) * (1 if climbing else -1)
         closed = eccentricity < 1 and semi_major_axis > 0
-        return {'body': 'Kerbin',
+        return {'body': 'Kerbin', 'atm': V.ATMOSPHERE_TOP, 'mu': V.GRAVITATIONAL_PARAMETER, 'radius': V.RADIUS,
                 'apo': apoapsis_radius - V.RADIUS if math.isfinite(apoapsis_radius) else None,
                 'peri': periapsis_radius - V.RADIUS, 'a': semi_major_axis, 'e': eccentricity, 'i': 0.0,
                 'nu': round(true_anomaly, 3), 'ut': round(self.time, 2),

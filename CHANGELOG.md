@@ -3,8 +3,58 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-20 — the game's bodies everywhere (JNSQ), ice and deserts on the wall's maps
+
+- **The solo pilot's PADs use the game's bodies:** the flight-dynamics planner took stock's Kerbin (600 km, μ 3.53e12)
+  and stock's moons, so in JNSQ every PAD was wrong and INJECT aimed at a Mun 12,000 km out instead of 91,000. It now
+  takes the body flown from `tlm/orbit` and the moons' orbits from `mcc/bodies` (checked in KSP: the Mun and Minmus
+  where the game has them, to 0.001°). The safe periapsis is the atmosphere's top, or for an airless body the highest
+  terrain mcc-data mapped plus a tenth (`"highest"` in `mcc/bodies`). INJECT works from whichever planet the moon
+  orbits. Stock's figures stay for the mock plant.
+- **`tlm/orbit` carries the body's `mu` and `radius`** (gateway and mock plant): the cockpit's local gravity, so TWR,
+  hover time and the like, no longer come from stock's table.
+- **Speeds right after a change of sphere of influence:** the gateway measured the vessel's speeds in the frames of
+  the body it was bound at, so once at the Mun they were taken against Kerbin's turning surface (12,000 m/s instead
+  of 750; altitude, latitude and longitude were right). It now opens its streams again when the body changes, by an
+  SOI transition or the debug menu's teleport.
+- **The ascent profile works after a revert:** the recorder's first sample of the new flight took the clock of the
+  new flight and the orbit of the one before (at the Mun), so the lift-off point was put on the Mun and the profile,
+  which draws only the launch body, stayed empty (with a false SOI KERBIN event). A new flight now forgets the
+  telemetry heard before, and the lift-off point is the last sample on the body the climb starts from (recorder and
+  pages alike). A flight saved with a wrong lift-off point is corrected when mcc-data restarts.
+- **Wall display, easier to read:** in the orbit view, the part of an orbit behind the body (south of the equator,
+  over the disc) is thin and dashed, the vessel there a hollow ring, the apsides there dimmed; the target's orbit
+  likewise. On the ascent profile, events at the same place share one label (STAGE 2 · ENGINE CUTOFF), each label
+  goes where it covers no other, on a dark backing, and the atmosphere's label moved to the right, out of the climb's
+  way. The map's legend names the yellow dot: SUN OVERHEAD, the point where the sun is at the zenith.
+- **The camera monitor and the windows recover from a revert:** a revert, a quickload or a scene change makes new
+  cameras under the same JRTI ids, and JRTI leaves the old streams open but silent, so the pictures froze until the
+  page was reloaded. The camera pages now also follow `tlm/time` and open their stream again 2 s after the mission
+  clock goes back, or after the telemetry returns from a gap of more than 5 s.
+- **RETRO's entry corridor scales with the atmosphere:** 36 to 64 % of its height (25–45 km on stock Kerbin, 29–51 km
+  on JNSQ's 80 km), the deorbit target in the middle, on any body with an atmosphere. The range is shown.
+
+- **The relief maps take the game's biomes:** where a biome's name says ice (Kerbin's IceCaps, Duna's polar caps),
+  land and sea alike are white; where it says arid or desert (JNSQ Kerbin's two deserts), the land is sand and
+  ochre; tundra is grey-green. The relief shading stays on top. Biomes are read at half the map's resolution, about
+  40 s more per map. The maps are now `<body>-<radius>-r3.png`: they are made again on the next flight, and the
+  `-r2` files can be deleted.
+
 ## 2026-11-19 — one console, two capsules: STATION and the windows
 
+- **Mission Control's wall display** (`wall.html`, WALL in the top bar), for the room's TV: the ground track on a
+  relief map of the body sampled from the game, with the night side, the next three orbits, apsides, the next burn,
+  the impact point and the target; the orbit from above the pole with the moons and their spheres of influence;
+  figures; charts of altitude and apsides, velocities, loads and heat, and the ascent profile; the flight's events.
+  The ground track was checked in KSP: within 0.03° of longitude of where the vessel was 94 s later.
+- **Charts on the MCC consoles** (RETRO, GUIDO, BOOSTER, EECOM), over the last 15 minutes. Drawn with uPlot
+  (`panels/virtual/vendor/uPlot.*`, MIT).
+- **New service `mcc-data`**: the flight recorder (one sample a second, events: lift-off, staging, engines, max Q,
+  atmosphere, orbit, SOI, AOS/LOS, docking, alarms; kept on disk across a restart), the bodies read from KSP
+  (`mcc/bodies`), and relief maps sampled from the game's terrain (`panels/virtual/maps/`, git-ignored, one set
+  per KSP install). Topics in `protocol/topics.md`.
+- **The MCC uses the game's bodies:** in JNSQ, Kerbin is 1,600 km across and turns in 43,082 s; FIDO, RETRO and
+  BOOSTER drew and computed with stock's figures. They now take `mcc/bodies`, stock's only until it arrives.
 - **No more `lab` bus:** ORBIT and NAVIGATION move to the `solo` bus of their module (`panel/solo/...`), CAMERA and
   ACTION GROUPS to a new `aux` bus (`panel/aux/...`). In the cockpit logic, `lab_panel.py` becomes `aux_panel.py`
   and ORBIT and NAVIGATION join `solo_panel.py`; the tests and KSP scripts read the new topics.

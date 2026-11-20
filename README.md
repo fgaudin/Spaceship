@@ -142,6 +142,12 @@ GUIDO, BOOSTER, EECOM, CAPCOM), meant for one laptop per controller on the same 
 FLIGHT, a text loop, and CAPCOM reads up PADs to the burn computer when the link is up. MCC does not see injected
 failures. How it works: [panels/virtual/mcc/README.md](panels/virtual/mcc/README.md).
 
+**WALL** (Mission Control's front screen, http://localhost:8650/wall.html, for a TV or a projector): the ground
+track on a relief map of the body sampled from the game, with night, the next orbits, apsides, the next burn and
+the impact point; the orbit from above the pole with the moons; live charts of altitude, velocity, loads and the
+ascent profile; the flight's events. The MCC consoles have charts too. Both get the flight's history from the
+`mcc-data` service. How it works: [panels/virtual/mcc/README.md](panels/virtual/mcc/README.md).
+
 **SIMSUP** (instructor station, http://localhost:8650/simsup.html): starts scenarios (a save plus failures),
 injects failures now or arms them on mission time, altitude or stage, freezes the game, and logs the session for a
 debrief with the crew's response times. Vehicle failures act in KSP through the gateway (engines, gimbals, RCS,
@@ -168,6 +174,7 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 | Cockpit logic | [cockpit-logic/cockpit/](cockpit-logic/cockpit/): `core.py` (the `Cockpit` class: messages in, outputs out), `settings.py` (every threshold and table), `alarms.py` (caution and warning), `burn_computer.py`, `node_mirror.py` (PAD ↔ KSP maneuver node), `engines.py` (engine status matrix), `event_timer.py`, `panels/` (one module per panel: its inputs and its outputs), `messages.py` and `display_format.py` (payloads and number formats). [service.py](cockpit-logic/service.py) is the MQTT shell. |
 | KSP gateway | [gateway-ksp/gateway.py](gateway-ksp/gateway.py) (main loop) and [gateway-ksp/ksp/](gateway-ksp/ksp/): `vessel_link.py` (kRPC connection, streams, telemetry payloads), `parts_watch.py` (engines, stage propellant, heat, ground contact, docking ports), `target.py` (rendezvous and docking geometry, target selection, undocking), `commands.py` (`cmd/*` → kRPC), `streams.py`. |
 | Flight dynamics | [flight-dynamics/](flight-dynamics/): `orbits.py` (two-body orbits), `planner.py` (the four PADs), `service.py`. [README](flight-dynamics/README.md). |
+| MCC data | [mcc-data/](mcc-data/): `recorder.py` (the flight's samples and events), `relief.py` (relief maps), `service.py` (the bus, and KSP for the bodies and the terrain). How the MCC uses it: [panels/virtual/mcc/README.md](panels/virtual/mcc/README.md). |
 | Mission Control | [panels/virtual/mcc/](panels/virtual/mcc/): `mcc.js` (tabs, poll, loop), `bus.js`, `roster.js`, one module per console in `consoles/`. Architecture: [mcc/README.md](panels/virtual/mcc/README.md). |
 | SimSup | [simsup/](simsup/): `simsup_core.py` (the logic), `service.py`, `scenarios.json`; the page is `panels/virtual/simsup.*`. Architecture: [simsup/README.md](simsup/README.md). |
 | Laser-cut faceplates | [panels/cut/](panels/cut/): `make_templates.py` (SVG templates for LightBurn from `protocol/panels/`, with layout checks), `footprints.json` (each component's cutout and size, placeholders until the parts are in hand). [README](panels/cut/README.md). |
@@ -201,7 +208,8 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 .venv/bin/python tests/e2e_ksp_docking.py --save lor3-rdv-handover   # docking display signs in KSP (8 checks)
 .venv/bin/python tests/e2e_ksp_undock.py --save lor3-rdv-docked       # UNDOCK from the panel in KSP (5 checks)
 .venv/bin/python -m pytest -q simsup/tests             # SimSup logic (9)
-.venv/bin/python -m pytest -q flight-dynamics/tests    # the PAD sums (8)
+.venv/bin/python -m pytest -q flight-dynamics/tests    # the PAD sums (9)
+.venv/bin/python -m pytest -q mcc-data/tests           # the flight recorder and the relief maps (6)
 .venv/bin/python tests/e2e_ksp_solo.py [circ] [plane] [rdv] [inject]   # each SOLO PAD flown in KSP and its outcome checked
 .venv/bin/python tests/e2e_ksp_simsup.py --save lor3-selftest-pad    # every SimSup failure, freeze and load in KSP (25 checks)
 .venv/bin/python tests/rehearsal_ksp_ascent.py --save lor3-selftest-pad   # pad to orbit from the panels and the stick topics; prints gaps and alarms

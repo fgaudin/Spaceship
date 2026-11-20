@@ -86,3 +86,11 @@ input:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
 .mcc-poll-banner.answered-nogo { border-color: var(--red); background: linear-gradient(160deg, #4a1210, #2b0b09); box-shadow: none; }
 .mcc-poll-banner:is(.answered-go, .answered-nogo) .mcc-big:not(.chosen) { opacity: .35; }
 .mcc-poll-banner:is(.answered-go, .answered-nogo) .mcc-big { font-size: 1.1rem; padding: .6rem 1.2rem; min-width: 7rem; }
+
+/* strip charts in a box (consolechart.js) */
+.mcc-box.mcc-chart-box { overflow: hidden; }
+.mcc-chart { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.mcc-chart .uplot { font-family: ui-monospace, "DejaVu Sans Mono", Menlo, monospace; }
+.mcc-chart .u-legend { font-size: .68rem; letter-spacing: .06em; color: var(--legend); margin-top: 2px; }
+.mcc-chart .u-legend .u-series th { font-weight: 400; }
+.mcc-chart .u-legend .u-marker { width: .7em; height: .7em; }

@@ -3,6 +3,8 @@
 import { create, box, figures, fixed } from '../ui.js';
 import { store, vessel, orbit, flight } from '../bus.js';
 import { bodyOf } from '../bodies.js';
+import { chartBox } from '../consolechart.js';
+import { AMBER, CYAN } from '../charts.js';
 
 let setFigure, engineTable;
 
@@ -15,6 +17,13 @@ export function mount(root) {
   engineTable = create('tbody');
   table.append(engineTable);
   engines.append(table);
+  chartBox(root, 'THROTTLE % · THRUST kN', { at: [0, 1] }, {
+    series: [
+      { label: 'THROTTLE', color: AMBER, unit: '%', decimals: 0, value: (c, i) => (c.thr[i] == null ? null : c.thr[i] * 100) },
+      { label: 'THRUST', color: CYAN, scale: 'kn', unit: 'kN', decimals: 0, value: (c, i) => (c.thrust[i] == null ? null : c.thrust[i] / 1000) },
+    ],
+    scales: { y: { range: [0, 100] }, kn: { range: (u, min, max) => [0, Math.max(max, 1)] } },
+  });
 }
 
 const fraction = (resource) => (resource && resource.max ? `${Math.round((resource.amount / resource.max) * 100)} %` : '—');

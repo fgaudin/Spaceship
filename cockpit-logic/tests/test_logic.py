@@ -663,6 +663,18 @@ def test_twr_follows_the_present_thrust():
     assert c.published[O + 'disp_twr']['text'] == '1.00'
 
 
+def test_twr_uses_the_body_the_game_sends():
+    c = Cockpit()
+    fed(c, 0, vessel={'mass': 1000.0, 'thrust': 9810.0, 'thrust_avail': 20000.0, 'isp': 300.0}, flight={'alt': 0.0})
+    # JNSQ's Kerbin: 1 600 km, μ 2.5105e13, so g = 9.807 m/s² at the surface, as stock's 600 km one
+    c.handle('tlm/orbit', {'body': 'Kerbin', 'mu': 2.5105024e13, 'radius': 1600000.0, 'apo': 80000.0, 'peri': -100000.0}, 0)
+    assert c.published[O + 'disp_twr']['text'] == '1.00'
+    # its Mun, 400 km: g = 1.42 m/s², where stock's table would say 1.63
+    fed(c, 1, vessel={'mass': 1000.0, 'thrust': 1422.0, 'thrust_avail': 20000.0, 'isp': 300.0}, flight={'alt': 0.0})
+    c.handle('tlm/orbit', {'body': 'Mun', 'mu': 2.2751428e11, 'radius': 400000.0, 'apo': 80000.0, 'peri': -100000.0}, 1)
+    assert c.published[O + 'disp_twr']['text'] == '1.00'
+
+
 def test_revert_to_launch_needs_its_arm_switch():
     c = Cockpit(); fed(c)
     SYS_IN = 'panel/sys/in/'

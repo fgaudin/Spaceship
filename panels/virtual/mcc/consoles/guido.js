@@ -1,6 +1,8 @@
 /* GUIDO, guidance officer: the burn computer, the maneuver node and how far the nose is from it, the attitude. */
 import { box, figures, fixed, formatMet } from '../ui.js';
 import { store, met, vessel } from '../bus.js';
+import { chartBox } from '../consolechart.js';
+import { AMBER, CYAN, GREEN } from '../charts.js';
 
 const STANDARD_GRAVITY = 9.80665;
 let setPad, setAttitude;
@@ -10,6 +12,14 @@ export function mount(root) {
     ['total', 'Δv total'], ['burn', 'Burn time (full thrust)'], ['uplink', 'Uplink waiting']]);
   setAttitude = figures(box(root, 'ATTITUDE', { at: [1, 0] }), [['att_err', 'Off the burn'], ['pitch', 'Pitch'], ['heading', 'Heading'], ['roll', 'Roll'],
     ['sas', 'SAS'], ['ref', 'Navball reference']]);
+  chartBox(root, 'THE BURN: APSIDES (km) AND THROTTLE (%), last 15 min', { at: [0, 1], size: [3, 1] }, {
+    series: [
+      { label: 'APOAPSIS', color: CYAN, unit: 'km', value: (c, i) => c.apo[i] / 1000 },
+      { label: 'PERIAPSIS', color: GREEN, unit: 'km', value: (c, i) => c.peri[i] / 1000 },
+      { label: 'THROTTLE', color: AMBER, scale: 'pct', unit: '%', decimals: 0, value: (c, i) => (c.thr[i] == null ? null : c.thr[i] * 100) },
+    ],
+    scales: { y: { range: (u, min, max) => [Math.max(min, -100), Math.max(max, 1)] }, pct: { range: [0, 100] } },
+  });
 }
 
 export function update() {

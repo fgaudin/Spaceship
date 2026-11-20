@@ -16,7 +16,8 @@ NEARLY_CIRCULAR = 0.05              # eccentricity under which rendezvous and in
 SAME_PLANE_DEG = 0.05               # PLANE: nothing to do under this
 COPLANAR_DEG = 0.5                  # RDV, INJECT: match planes first above this
 
-# KSP stock values (checked against the game): μ (m³/s²), radius (m), lowest safe periapsis altitude (m).
+# KSP stock values (checked against the game), used only when the game's own are not there (the mock plant, or before
+# mcc-data has read the bodies): μ (m³/s²), radius (m), lowest safe periapsis altitude (m).
 BODIES = {
     'Kerbin': {'mu': 3.5316e12, 'radius': 600000.0, 'safe_altitude': 70000.0},
     'Mun': {'mu': 6.5138398e10, 'radius': 200000.0, 'safe_altitude': 7100.0},
@@ -27,6 +28,8 @@ MOONS = {
     'Mun': (12000000.0, 0.0, 0.0, 0.0, 0.0, 1.7),
     'Minmus': (47000000.0, 0.0, 6.0, 78.0, 38.0, 0.9),
 }
+TERRAIN_MARGIN = 1.1                # an airless body's safe periapsis: its highest terrain and a tenth more
+UNKNOWN_TERRAIN = 0.05              # ... or this fraction of its radius when nobody has measured the terrain
 
 
 @dataclass
@@ -42,9 +45,38 @@ class Refusal:
 
 
 # ---------- reading the telemetry ----------
+def body_of(telemetry, name):
+    """{'mu', 'radius', 'safe_altitude'} of a body as the game has it: the body flown from tlm/orbit (the gateway
+    sends its μ, radius and atmosphere), the others from mcc/bodies (mcc-data reads them from KSP; JNSQ's Kerbin is
+    2.7 times stock's). Stock's when neither has it; None for a body nobody knows."""
+    orbit = telemetry.get('tlm/orbit', {})
+    here = orbit if orbit.get('body') == name else {}
+    live = ((telemetry.get('mcc/bodies') or {}).get('bodies') or {}).get(name) or {}
+    stock = BODIES.get(name, {})
+    mu = here.get('mu') or live.get('mu') or stock.get('mu')
+    radius = here.get('radius') or live.get('radius') or stock.get('radius')
+    if not (mu and radius):
+        return None
+    if 'atm' in here:
+        atmosphere = here['atm'] or 0.0
+    elif live:
+        atmosphere = live.get('atmosphere') or 0.0
+    else:
+        return dict(stock)
+    if atmosphere:
+        safe = atmosphere
+    elif live.get('highest'):
+        safe = live['highest'] * TERRAIN_MARGIN
+    elif stock:
+        safe = stock['safe_altitude'] * radius / stock['radius']        # the terrain grows with the body
+    else:
+        safe = UNKNOWN_TERRAIN * radius
+    return {'mu': mu, 'radius': radius, 'safe_altitude': safe}
+
+
 def own_orbit(telemetry):
     orbit = telemetry.get('tlm/orbit', {})
-    body = BODIES.get(orbit.get('body'))
+    body = body_of(telemetry, orbit.get('body'))
     if body is None or orbit.get('a') is None or orbit.get('lan') is None:
         return None
     return elements_from(orbit, body['mu'])
@@ -55,12 +87,30 @@ def elements_from(orbit, mu):
                     argp=math.radians(orbit['argp']), nu=math.radians(orbit['nu']), ut=orbit['ut'], mu=mu)
 
 
-def moon_orbit(name, ut):
-    a, e, i, lan, argp, mean_at_epoch = MOONS[name]
-    mu = BODIES['Kerbin']['mu']
-    at_epoch = Elements(a=a, e=e, i=math.radians(i), lan=math.radians(lan), argp=math.radians(argp), nu=0.0, ut=0.0, mu=mu)
-    # mean anomaly 0 at true anomaly 0: shift the epoch so that the mean anomaly at UT 0 is the stock one
-    return Elements(**{**at_epoch.__dict__, 'ut': -mean_at_epoch / at_epoch.mean_motion}).at(ut)
+def moon_parent(telemetry, name):
+    """The body `name` orbits: from mcc/bodies, else Kerbin for stock's moons. None for one nobody knows."""
+    live = ((telemetry.get('mcc/bodies') or {}).get('bodies') or {}).get(name) or {}
+    if live.get('orbit') and live.get('parent'):
+        return live['parent']
+    return 'Kerbin' if name in MOONS else None
+
+
+def moon_orbit(name, ut, telemetry=None):
+    """The moon's orbit at `ut`: the game's (mcc/bodies) when there, else stock's."""
+    telemetry = telemetry or {}
+    live = ((telemetry.get('mcc/bodies') or {}).get('bodies') or {}).get(name) or {}
+    parent = moon_parent(telemetry, name)
+    mu = (body_of(telemetry, parent) or {}).get('mu')
+    if live.get('orbit') and mu:
+        rails = live['orbit']
+        a, e, i, lan, argp = rails['a'], rails['e'], rails['i'], rails['lan'], rails['argp']
+        mean_at_epoch, epoch = rails['m0'], rails['epoch']
+    else:
+        (a, e, i, lan, argp, mean_at_epoch), epoch, mu = MOONS[name], 0.0, BODIES['Kerbin']['mu']
+    at_periapsis = Elements(a=a, e=e, i=math.radians(i), lan=math.radians(lan), argp=math.radians(argp), nu=0.0,
+                            ut=0.0, mu=mu)
+    # true anomaly 0 is mean anomaly 0: the moon was at periapsis mean_at_epoch / n before the epoch
+    return Elements(**{**at_periapsis.__dict__, 'ut': epoch - mean_at_epoch / at_periapsis.mean_motion}).at(ut)
 
 
 def burn_time(telemetry, delta_v):
@@ -98,7 +148,7 @@ def circularise(telemetry):
     """At apoapsis if the periapsis is below the safe altitude (or open orbit: at periapsis), else at the next apsis."""
     if not usable(telemetry):
         return Refusal('NO ORBIT DATA')
-    orbit, body = own_orbit(telemetry), BODIES[telemetry['tlm/orbit']['body']]
+    orbit, body = own_orbit(telemetry), body_of(telemetry, telemetry['tlm/orbit']['body'])
     if not orbit.closed:
         at, nu = 'PERI', 0.0
     elif orbit.periapsis_radius - body['radius'] < body['safe_altitude']:
@@ -169,13 +219,16 @@ def rendezvous(telemetry):
 
 
 def inject(telemetry, moon):
-    """A Hohmann transfer from a parking orbit around Kerbin to `moon`'s orbit, timed to meet the moon."""
+    """A Hohmann transfer from a parking orbit around the moon's planet to `moon`'s orbit, timed to meet the moon."""
     if not usable(telemetry):
         return Refusal('NO ORBIT DATA')
-    if telemetry['tlm/orbit']['body'] != 'Kerbin':
-        return Refusal('INJECT: NOT AT KERBIN')
+    parent = moon_parent(telemetry, moon)
+    if parent is None:
+        return Refusal(f'INJECT: NO {moon.upper()}')
+    if telemetry['tlm/orbit']['body'] != parent:
+        return Refusal(f'INJECT: NOT AT {parent.upper()}')
     orbit = own_orbit(telemetry)
-    return _transfer(telemetry, orbit, moon_orbit(moon, orbit.ut), f'INJ {moon.upper()}')
+    return _transfer(telemetry, orbit, moon_orbit(moon, orbit.ut, telemetry), f'INJ {moon.upper()}')
 
 
 def _transfer(telemetry, orbit, target, label):
