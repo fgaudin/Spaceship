@@ -2,7 +2,7 @@
   "id": "rnt",
   "title": "REENTRY · RECOVERY",
   "fw": "virtual-0.1",
-  "board": "olimex-esp32-poe",
+  "board": "olimex-esp32-poe2",
   "panels": [
     {
       "id": "reentry",

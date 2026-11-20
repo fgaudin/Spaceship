@@ -8,7 +8,7 @@ firmware can be generated from the same files.
 - **U**: the grid unit, **100 mm**: the slot. Every panel is a whole number of U wide and high, and its faceplate
   is built 0.5 mm smaller on each side for clearance (a 1×1 U panel is 99 × 99 mm). Modules fill their slots exactly.
 - **Panel**: one plate of acrylic, W×H U (mostly 1×1, a few 2×1 or 1×2), with its controls at fixed places.
-- **Module**: one board (an Olimex ESP32-POE), one PoE cable, one definition file. It carries one or more panels,
+- **Module**: one board (an Olimex ESP32-POE2), one PoE cable (on the bench: a PoE injector), one definition file. It carries one or more panels,
   held side by side by a frame adapter, so the same panels can make a 3×1, a 1×3 or an L. It is the unit that is
   plugged in, swapped, or taken to the bench. Two modules of the same shape can trade places.
 - **Console**: where the modules sit in the capsule, in zones (overhead, main).
@@ -21,7 +21,7 @@ does not notice. A module's heartbeat is `panel/<module>/status`.
 
 ```json
 {
-  "id": "eng", "title": "PROPULSION · FLIGHT CONTROL", "fw": "virtual-0.1", "board": "olimex-esp32-poe",
+  "id": "eng", "title": "PROPULSION · FLIGHT CONTROL", "fw": "virtual-0.1", "board": "olimex-esp32-poe2",
   "panels": [
     { "id": "engines_abort", "title": "ENGINES · ABORT", "size": [1, 1], "at": [2, 1], "bus": "eng",
       "items": [ { "type": "guarded_toggle", "id": "abort_arm", "label": "ABORT ARM", "in": "abort_arm", "at": [56, 78] } ] }
@@ -84,6 +84,17 @@ draws a riveted metal ring that wide around its glass, rivets along its middle a
 corners rounded to `corner`. `outline` (corners in U, clockwise) gives a zone a shape of its own: its grid is
 cut to that shape and the outline drawn around it, as MAIN's taper down to the burn computer. A module's `at` may be fractional.
 The firmware never reads this file.
+
+## What a module asks of its board
+
+Holding Left Alt on the console shows, under each module's name, what its panels need: inputs (switches, buttons,
+rotary positions, keypad lines), analog inputs (levers, knobs), lamps, 7-segment and bar rows, alphanumeric
+characters; the driver chips that implies (MCP23017 expanders, MAX7219 display drivers, HT16K33 for characters,
+ADS1115 for analog), the ESP32 pins they use (a shared I2C bus, the MAX7219 chain: about 5 whatever the panel), and the
+power in flight and at lamp test (everything lit), against the board's limit (the ESP32-POE2's 5 V rail: 7.5 W). A module whose
+lamp test goes over turns red; the count at the top left adds up the PoE power. The assumptions (chip capacities,
+LED currents, the share of lamps lit) are in `hardware.json`, rough figures to compare groupings
+(`panels/virtual/budget.js` does the sums). With expanders, pins stop being the limit: power and analog inputs are.
 
 ## Changing the layout
 

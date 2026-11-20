@@ -2,7 +2,7 @@
   "id": "eng",
   "title": "PROPULSION · FLIGHT CONTROL",
   "fw": "virtual-0.1",
-  "board": "olimex-esp32-poe",
+  "board": "olimex-esp32-poe2",
   "panels": [
     {
       "id": "caution_warning",

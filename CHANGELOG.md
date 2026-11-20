@@ -13,6 +13,15 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   orbits. Stock's figures stay for the mock plant.
 - **`tlm/orbit` carries the body's `mu` and `radius`** (gateway and mock plant): the cockpit's local gravity, so TWR,
   hover time and the like, no longer come from stock's table.
+- **Left Alt shows what each module asks of its board**: inputs, analog inputs, lamps, display rows and characters,
+  the driver chips (MCP23017, MAX7219, HT16K33, ADS1115), the ESP32 pins and the power in flight and at lamp test,
+  against the ESP32-POE's 4 W (red when over); the total PoE power at the top left. Assumptions in
+  `protocol/panels/hardware.json`, sums in `panels/virtual/budget.js`. SimSup and the cut templates now skip JSON
+  files in `protocol/panels/` that are not modules. The I/O modules are now ESP32-POE2 boards (on the bench: a PoE
+  injector): their 5 V rail gives 7.5 W to the displays and lamps, the ESP32 and Ethernet having a 3.3 V rail of their
+  own. Every module fits in flight; at lamp test only RENDEZVOUS · DOCKING goes over (65 display rows).
+- **Left Alt also counts the modules** (top left of the console): the boards to build, the windows (bare glass)
+  left out, split into I/O and glass. Today: 13 modules, 11 I/O and 2 glass.
 - **New panel: ATTITUDE HOLD** (1 × 1, `eng` bus): a pitch and a heading on two knobs (whole degrees, shown on PITCH °
   and HDG °) and a HOLD switch; with HOLD on, kRPC's autopilot holds that attitude, roll free (`cmd/hold`, new; the
   gateway reports `hold` in `tlm/vessel`, and the cockpit sends the command again if a restarted gateway forgot it).

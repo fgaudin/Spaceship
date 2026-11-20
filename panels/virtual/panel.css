@@ -61,6 +61,11 @@ body { margin: 0; background: radial-gradient(ellipse at top, #1b1e21, var(--bg)
   padding: .3em .7em; border-radius: 3px; background: var(--amber); color: #111; font-size: calc(14px / var(--view-zoom, 1)); font-weight: 700;
   letter-spacing: .06em; line-height: 1.25; text-align: center; pointer-events: none; }
 .show-modules .module-tag { display: block; }
+.module-budget { font-size: .72em; font-weight: 600; letter-spacing: .02em; opacity: .85; margin-top: .15em; }
+.module-tag.over-budget { background: var(--red); color: #fff; }
+.module-count { position: fixed; top: 58px; left: 16px; z-index: 20; padding: .4em .9em; border-radius: 3px; background: var(--amber);
+  color: #111; font-size: 15px; font-weight: 700; letter-spacing: .06em; pointer-events: none; }
+.module-count[hidden] { display: none; }
 .show-modules .plate { filter: brightness(.5); }
 .show-modules .module::after { z-index: 5; border: calc(3px / var(--view-zoom, 1)) solid var(--amber); }
 .zoom { display: inline-flex; gap: 2px; }

@@ -15,6 +15,7 @@
 
 import { connectBus, parse } from './bus.js';
 import { createElement, createWidgetBuilders } from './widgets.js';
+import { describeBudget, moduleBudget, overBudget } from './budget.js';
 import { handControllerKey, releaseHandControllers, startHandControllers } from './hand_controllers.js';
 
 const U_MM = 100;                            // a slot; a panel is built smaller by its clearance
@@ -198,7 +199,14 @@ function buildModule(module) {
   modules.set(module.id, { definition: module, element, sizeU, client: null, restoring: true });
   for (const panel of module.panels) element.appendChild(buildPanel(module, panel));
   const code = module.id.toUpperCase();
-  element.appendChild(createElement('div', 'module-tag', { textContent: module.title.startsWith(code) ? module.title : `${code} · ${module.title}` }));
+  const tag = createElement('div', 'module-tag', { textContent: module.title.startsWith(code) ? module.title : `${code} · ${module.title}` });
+  if (hardware && !bare) {                  // what the panels ask of the board (budget.js), under the name
+    const budget = moduleBudget(module, hardware);
+    budgets.set(module.id, budget);
+    for (const line of describeBudget(budget)) tag.appendChild(createElement('div', 'module-budget', { textContent: line }));
+    tag.classList.toggle('over-budget', overBudget(budget));
+  }
+  element.appendChild(tag);
   element.title = `${module.id.toUpperCase()} · ${module.title} · ${sizeU[0]}×${sizeU[1]} U · ${module.board} (double-click: fit)`;
   checkGrid(module.panels, (panel) => panel.size, (panel) => panel.id, `module ${module.id}`);
   return element;
@@ -314,9 +322,26 @@ function showZoom() {
   overview().style.setProperty('--view-zoom', view.zoom);    // keeps the module names one size at any zoom
 }
 
-/* While Left Alt is held: every module's name and boundary. */
+/* While Left Alt is held: every module's name and boundary, and how many modules there are (boards to build: the
+   windows, bare glass with no board, do not count). */
 function showModules(on) {
   overview().classList.toggle('show-modules', on);
+  let badge = document.getElementById('module-count');
+  if (!badge) {
+    badge = createElement('div', 'module-count', { id: 'module-count' });
+    document.body.appendChild(badge);
+  }
+  const modules = [...overview().querySelectorAll('.module:not(.bare)')];
+  const glass = modules.filter((module) => module.querySelector('.glass')).length;
+  badge.textContent = `${modules.length} MODULES · ${modules.length - glass} I/O, ${glass} glass`;
+  const powered = [...budgets.values()].filter((budget) => budget.board.budget_w);    // on PoE: what the switch must give
+  if (powered.length) {
+    // what the PoE switch gives: the 5 V rail and the logic on its own rail (logic_w)
+    const sum = (key) => powered.reduce((total, budget) => total + budget[key] + (budget.board.logic_w || 0), 0).toFixed(0);
+    const over = [...budgets.entries()].filter(([, budget]) => overBudget(budget)).map(([id]) => id.toUpperCase());
+    badge.textContent += ` · PoE ${sum('typicalW')} W, ${sum('lampTestW')} W lamp test${over.length ? ` · over ${powered[0].board.budget_w} W: ${over.join(', ')}` : ''}`;
+  }
+  badge.hidden = !on;
 }
 
 /* The console and the side column (help, sniffer) fill the window under the top bar: nothing is below them. */
@@ -640,6 +665,9 @@ async function fetchJson(path) {
 }
 
 const consoleLayout = await fetchJson('panels/console.json');
+let hardware = null;                        // the I/O and power assumptions (budget.js); the console works without them
+try { hardware = await fetchJson('panels/hardware.json'); } catch { /* no estimate */ }
+const budgets = new Map();                  // module id → its estimate
 const ids = [...new Set(consoleLayout.zones.flatMap((zone) => zone.modules.map((entry) => entry.module)))];
 const definitions = new Map((await Promise.all(ids.map(async (id) => {
   try { return [id, await fetchJson(`panels/${id}.json`)]; } catch { return null; }

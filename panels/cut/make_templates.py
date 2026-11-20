@@ -451,7 +451,7 @@ def main():
 
     settings = json.loads(args.footprints.read_text())
     files = sorted(path for path in DEFINITIONS.glob('*.json') if path.stem != 'console')
-    modules = [json.loads(path.read_text()) for path in files]
+    modules = [definition for definition in (json.loads(path.read_text()) for path in files) if 'panels' in definition]
     if args.modules:
         unknown = set(args.modules) - {module['id'] for module in modules}
         if unknown:

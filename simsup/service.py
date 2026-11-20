@@ -27,7 +27,9 @@ def load_modules():
     modules = []
     for path in glob.glob(os.path.join(PANELS_DIR, '*.json')):
         with open(path, encoding='utf-8') as file:
-            modules.append(json.load(file))
+            definition = json.load(file)
+        if 'panels' in definition:          # a module (not console.json, nor hardware.json's assumptions)
+            modules.append(definition)
     return modules
 
 
