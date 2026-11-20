@@ -35,7 +35,7 @@ does not notice. A module's heartbeat is `panel/<module>/status`.
 | panel `at` | where the panel sits on the module, in U from the module's top-left corner (`[column, row]`) |
 | panel `bus` | the topic namespace of its controls |
 | item `at` | the centre of the control block (indicator LED, component and legend), in mm from the faceplate's top-left corner. The panel title takes the top 12 mm. |
-| item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot` (a lever), `knob` (a continuous knob, 0 to 1 over 270°), `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`). `toggle`, `guarded_toggle` and `rotary` take an indicator LED above them: `"led": {"out", "color"}`. A `toggle` can name its positions, `"positions": ["RADAR", "SEA"]` (up, down); a `bar` can stand up with `"vertical": true` |
+| item `type`, `in`, `out`, … | the control: `toggle`, `guarded_toggle`, `button`, `lamp_button`, `led`, `annunciator`, `seg7`, `bar`, `rotary`, `pot` (a lever), `knob` (a continuous knob, 0 to 1 over 270°; optional `scale` labels spread over the sweep, `steps` its resolution, `nudge` a wheel notch, `readout: false` without the percentage), `keypad`, `matrix`, `alpha`, `buzzer` (see `panels/virtual/widgets.js`). `toggle`, `guarded_toggle` and `rotary` take an indicator LED above them: `"led": {"out", "color"}`. A `toggle` can name its positions, `"positions": ["RADAR", "SEA"]` (up, down); a `bar` can stand up with `"vertical": true` |
 
 Not there yet: a `pin` per control, for when the boards are designed.
 
@@ -56,7 +56,7 @@ the page act on the console, as everywhere else on it.
 
 A glass panel may also carry controls (`items`, with the panel's `bus`), placed around the screen like on any panel:
 the FDAI module's ATTITUDE panel has pitch, heading, roll and their rates beside the ball, the FDAI's own controls (NEEDLES, ERROR SCALE, MARKERS) in
-the corners around it, and SAS, SAS MODE, SPEED REF, RCS and RCS FINE under it, on the `eng` bus. Optional
+the corners around it, and SAS, RCS, RCS FINE and SPEED REF under it (the SAS modes are the SAS MODE module's buttons), on the `eng` bus. Optional
 `screen` fields: `at` (its centre on the faceplate, in mm; by default centred under the title), `round` (a circular
 window) and `module_mm` (the display's body behind the plate, a circle on a round screen, for the cut templates' collision check). A glass page has no keys of its own:
 what it would set on its bezel comes from panel controls through the cockpit.

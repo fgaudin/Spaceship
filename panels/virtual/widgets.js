@@ -220,12 +220,15 @@ export function createWidgetBuilders(registry, publishInput) {
 
     /* A continuous knob, 0 to 1 over 270° (thrust limiter): drag up or down, the wheel, or the arrow keys. */
     knob(item) {
-      const SWEEP_DEGREES = 270, STEP = 0.05, DRAG_PX_FOR_FULL_TURN = 160, MIN_MS_BETWEEN_PUBLISHES = 50;
+      // optional: "scale" (labels spread evenly over the sweep), "steps" (the resolution: 100 by default), "nudge" (a
+      // wheel notch or an arrow key, as a fraction), "readout": false (no percentage under it: a display shows the value)
+      const SWEEP_DEGREES = 270, STEP = item.nudge ?? 0.05, DRAG_PX_FOR_FULL_TURN = 160, MIN_MS_BETWEEN_PUBLISHES = 50;
+      const steps = item.steps || 100, scale = item.scale || ['0', '50', '100'];
       const wrapper = createElement('div', 'knob-wrap');
       const knob = createElement('button', 'rotary knob', { type: 'button', title: `${item.label} (drag up or down, wheel, arrows)` });
       const pointer = createElement('span', 'ptr');
       knob.appendChild(pointer);
-      for (const [fraction, text] of [[0, '0'], [0.5, '50'], [1, '100']]) {
+      for (const [fraction, text] of scale.map((text, index) => [index / Math.max(1, scale.length - 1), text])) {
         const radians = (-SWEEP_DEGREES / 2 + SWEEP_DEGREES * fraction) * Math.PI / 180;
         const tick = createElement('span', 'tick', { textContent: text });
         tick.style.left = `${50 + 44 * Math.sin(radians)}%`;
@@ -234,6 +237,7 @@ export function createWidgetBuilders(registry, publishInput) {
       }
       wrapper.appendChild(knob);
       const readout = createElement('div', 'pot-val');
+      if (item.readout === false) readout.style.display = 'none';
       let value = item.default ?? 0, lastPublished = 0;
       const show = () => {
         pointer.style.transform = `rotate(${-SWEEP_DEGREES / 2 + SWEEP_DEGREES * value}deg)`;
@@ -241,7 +245,7 @@ export function createWidgetBuilders(registry, publishInput) {
       };
       const publish = () => publishInput(item.in, value, true);
       const set = (next, final) => {
-        value = Math.round(Math.max(0, Math.min(1, next)) * 100) / 100;
+        value = Math.round(Math.max(0, Math.min(1, next)) * steps) / steps;
         show();
         const now = performance.now();
         if (final || now - lastPublished > MIN_MS_BETWEEN_PUBLISHES) { lastPublished = now; publish(); }

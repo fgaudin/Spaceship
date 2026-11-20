@@ -67,7 +67,7 @@ v = sc.active_vessel
 v.control.throttle = 0.0
 print(f'loaded {SAVE}: {v.name}, {v.situation.name}, {v.orbit.body.name}', flush=True)
 for p, c, val in (('eng', 'cb_main', 1), ('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0), ('eng', 'abort_arm', 0),
-                  ('eng', 'throttle', 0), ('eng', 'sas', 0), ('eng', 'rcs', 0), ('sys', 'lights', 0), ('eng', 'sas_mode', 0),
+                  ('eng', 'throttle', 0), ('eng', 'sas', 0), ('eng', 'rcs', 0), ('sys', 'lights', 0),
                   ('sys', 'solar', 0), ('sys', 'brakes', 0), ('sys', 'evt_src', 0), ('sys', 'chute_arm', 0),
                   ('eng', 'thrust_lim', 1), ('eng', 'gimbal_lock', 0), ('cmp', 'burn_arm', 0),
                   ('rdv', 'ctrl_port', 0), ('sys', 'pause', 0)):
@@ -96,10 +96,10 @@ check('solar and chute state published', 'solar' in ve and ve.get('chute') in ('
 inp('eng', 'sas', 1)
 check('SAS switch → KSP SAS on', wait(lambda: v.control.sas))
 check('SAS LED shows the game', wait(lambda: out('eng', 'led_sas') == {'on': True, 'blink': False}))
-inp('eng', 'sas_mode', 1)
-check('SAS mode rotary → prograde', wait(lambda: v.control.sas_mode == sc.SASMode.prograde), v.control.sas_mode)
+press('eng', 'sas_pro')
+check('SAS MODE button PRO → prograde', wait(lambda: v.control.sas_mode == sc.SASMode.prograde), v.control.sas_mode)
 check('tlm sas_mode prograde', wait(lambda: seen['tlm/vessel']['sas_mode'] == 'prograde'))
-inp('eng', 'sas_mode', 0)
+press('eng', 'sas_stab')
 v.control.sas = False                                   # the game disagrees with the switch → panel wins
 check('panel wins: SAS re-commanded on', wait(lambda: v.control.sas, 5))
 inp('eng', 'sas', 0)
@@ -224,7 +224,7 @@ if lit:
     inp('cmp', 'burn_arm', 0)
     inp('eng', 'thrust_lim', 1)
 press('cmp', 'pad_clr')
-inp('eng', 'sas_mode', 0)
+press('eng', 'sas_stab')
 inp('eng', 'sas', 0)
 
 # ---------- a node made in the game (map view) shows up as the PAD ----------

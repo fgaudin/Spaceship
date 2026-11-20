@@ -38,6 +38,7 @@ class VesselLink:
         self.has_target = False
         self.target_facts = None            # target.SlowFacts, read on the slow cycle
         self.vessel_name = None             # read on the slow cycle only (a plain kRPC read)
+        self.hold_engaged = False           # ATTITUDE HOLD: the autopilot holds the cockpit's pitch and heading (commands.py)
 
     # ---------- binding to the active vessel ----------
     def bind(self):
@@ -251,7 +252,7 @@ class VesselLink:
                 'thrust_avail': round(now['available_thrust'], 1), 'isp': round(now['specific_impulse'], 1),
                 'situation': situation, 'crew': now['crew_count'], 'stage': now['stage'], 'throttle': round(now['throttle'], 3),
                 'sas': now['sas'], 'rcs': now['rcs'], 'gear': now['gear'], 'lights': now['lights'],
-                'brakes': now['brakes'], 'precision': now['precision'], 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
+                'brakes': now['brakes'], 'precision': now['precision'], 'hold': self.hold_engaged, 'sas_mode': sas_mode, 'speed_mode': now['speed_mode'].name,
                 'solar': self.parts.solar_deployed_state(), 'chute': self.parts.parachute_state(),
                 'chute_safe': self.parts.parachute_safety_state(),
                 'fuel_cell': self.parts.fuel_cell_state(),

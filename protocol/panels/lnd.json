@@ -1,14 +1,14 @@
 {
   "id": "lnd",
-  "title": "LANDING AID",
+  "title": "FLIGHT DATA · LANDING",
   "fw": "virtual-0.1",
   "board": "olimex-esp32-poe",
   "panels": [
     {
-      "id": "landing_aid",
-      "title": "LANDING AID",
+      "id": "landing",
+      "title": "FLIGHT DATA · LANDING",
       "size": [
-        1,
+        3,
         1
       ],
       "at": [
@@ -19,13 +19,87 @@
       "items": [
         {
           "type": "seg7",
+          "id": "disp_alt",
+          "label": "ALT M",
+          "digits": 8,
+          "out": "disp_alt",
+          "at": [
+            36,
+            30
+          ],
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_vs",
+          "label": "V SPEED M/S",
+          "digits": 5,
+          "out": "disp_vs",
+          "at": [
+            36,
+            54
+          ],
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_hs",
+          "label": "H SPEED M/S",
+          "digits": 5,
+          "out": "disp_hs",
+          "at": [
+            36,
+            78
+          ],
+          "color": "green"
+        },
+        {
+          "type": "toggle",
+          "id": "alt_ref",
+          "label": "ALT REF",
+          "in": "alt_ref",
+          "positions": [
+            "RADAR",
+            "SEA"
+          ],
+          "at": [
+            92,
+            29
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_impact",
+          "label": "TIME TO IMPACT S",
+          "digits": 5,
+          "out": "disp_impact",
+          "at": [
+            92,
+            54
+          ],
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_hover",
+          "label": "HOVER TIME S",
+          "digits": 4,
+          "out": "disp_hover",
+          "color": "green",
+          "at": [
+            92,
+            78
+          ]
+        },
+        {
+          "type": "seg7",
           "id": "disp_drift_right",
           "label": "DRIFT M/S + R",
           "out": "disp_drift_right",
           "digits": 5,
           "at": [
-            26,
-            31
+            146,
+            30
           ],
           "color": "green"
         },
@@ -36,10 +110,26 @@
           "out": "disp_drift_up",
           "digits": 5,
           "at": [
-            73,
-            31
+            146,
+            54
           ],
           "color": "green"
+        },
+        {
+          "type": "annunciator",
+          "id": "contact",
+          "cols": 1,
+          "cells": [
+            {
+              "out": "lamp_contact",
+              "label": "CONTACT",
+              "color": "blue"
+            }
+          ],
+          "at": [
+            146,
+            80
+          ]
         },
         {
           "type": "annunciator",
@@ -68,24 +158,58 @@
             }
           ],
           "at": [
-            50,
-            59
+            204,
+            38
           ]
         },
         {
-          "type": "annunciator",
-          "id": "contact",
-          "cols": 1,
-          "cells": [
-            {
-              "out": "lamp_contact",
-              "label": "CONTACT",
-              "color": "blue"
-            }
-          ],
+          "type": "toggle",
+          "id": "gear",
+          "label": "GEAR",
+          "in": "gear",
+          "led": {
+            "out": "led_gear",
+            "color": "green"
+          },
           "at": [
-            50,
-            83
+            204,
+            76
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_speed",
+          "label": "SPEED M/S",
+          "digits": 5,
+          "out": "disp_speed",
+          "at": [
+            266,
+            30
+          ],
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_g",
+          "label": "G",
+          "digits": 4,
+          "out": "disp_g",
+          "color": "green",
+          "at": [
+            266,
+            54
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_q",
+          "label": "Q KPA",
+          "digits": 4,
+          "out": "disp_q",
+          "color": "green",
+          "at": [
+            266,
+            78
           ]
         }
       ]

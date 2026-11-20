@@ -1,6 +1,6 @@
 {
   "id": "fdai",
-  "title": "ATTITUDE · FDAI",
+  "title": "ATTITUDE · FDAI · SAS · HOLD",
   "fw": "fdai-0.2",
   "board": "raspberry-pi",
   "panels": [
@@ -166,28 +166,6 @@
         },
         {
           "type": "rotary",
-          "id": "sas_mode",
-          "label": "SAS MODE",
-          "in": "sas_mode",
-          "positions": [
-            "STAB",
-            "PRO",
-            "RETRO",
-            "NML",
-            "ANTI",
-            "RAD",
-            "A-RAD",
-            "TGT",
-            "A-TGT",
-            "MNVR"
-          ],
-          "at": [
-            62,
-            151
-          ]
-        },
-        {
-          "type": "rotary",
           "id": "speed_ref",
           "label": "SPEED REF",
           "in": "speed_ref",
@@ -197,7 +175,7 @@
             "TGT"
           ],
           "at": [
-            105,
+            150,
             170
           ],
           "led": {
@@ -215,7 +193,7 @@
             "color": "green"
           },
           "at": [
-            145,
+            57,
             170
           ]
         },
@@ -229,8 +207,236 @@
             "color": "amber"
           },
           "at": [
-            172,
+            89,
             170
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sas_mode",
+      "title": "SAS MODE",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        2
+      ],
+      "bus": "eng",
+      "items": [
+        {
+          "type": "lamp_button",
+          "id": "sas_stab",
+          "label": "STAB",
+          "color": "green",
+          "in": "sas_stab",
+          "out": "lamp_sas_stab",
+          "at": [
+            36,
+            22
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_mnvr",
+          "label": "MNVR",
+          "color": "green",
+          "in": "sas_mnvr",
+          "out": "lamp_sas_mnvr",
+          "at": [
+            63,
+            22
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_pro",
+          "label": "PRO",
+          "color": "green",
+          "in": "sas_pro",
+          "out": "lamp_sas_pro",
+          "at": [
+            36,
+            38
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_retro",
+          "label": "RETRO",
+          "color": "green",
+          "in": "sas_retro",
+          "out": "lamp_sas_retro",
+          "at": [
+            63,
+            38
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_nml",
+          "label": "NML",
+          "color": "green",
+          "in": "sas_nml",
+          "out": "lamp_sas_nml",
+          "at": [
+            36,
+            54
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_anml",
+          "label": "A-NML",
+          "color": "green",
+          "in": "sas_anml",
+          "out": "lamp_sas_anml",
+          "at": [
+            63,
+            54
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_rad",
+          "label": "RAD",
+          "color": "green",
+          "in": "sas_rad",
+          "out": "lamp_sas_rad",
+          "at": [
+            36,
+            70
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_arad",
+          "label": "A-RAD",
+          "color": "green",
+          "in": "sas_arad",
+          "out": "lamp_sas_arad",
+          "at": [
+            63,
+            70
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_tgt",
+          "label": "TGT",
+          "color": "green",
+          "in": "sas_tgt",
+          "out": "lamp_sas_tgt",
+          "at": [
+            36,
+            86
+          ]
+        },
+        {
+          "type": "lamp_button",
+          "id": "sas_atgt",
+          "label": "A-TGT",
+          "color": "green",
+          "in": "sas_atgt",
+          "out": "lamp_sas_atgt",
+          "at": [
+            63,
+            86
+          ]
+        }
+      ]
+    },
+    {
+      "id": "attitude_hold",
+      "title": "ATTITUDE HOLD",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        1,
+        2
+      ],
+      "bus": "eng",
+      "items": [
+        {
+          "type": "seg7",
+          "id": "disp_hold_pitch",
+          "label": "PITCH °",
+          "digits": 4,
+          "out": "disp_hold_pitch",
+          "color": "green",
+          "at": [
+            27,
+            26
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_hold_hdg",
+          "label": "HDG °",
+          "digits": 4,
+          "out": "disp_hold_hdg",
+          "color": "green",
+          "at": [
+            72,
+            26
+          ]
+        },
+        {
+          "type": "knob",
+          "id": "hold_pitch",
+          "label": "PITCH",
+          "in": "hold_pitch",
+          "default": 1.0,
+          "steps": 180,
+          "nudge": 0.027777777777777776,
+          "scale": [
+            "-90",
+            "0",
+            "+90"
+          ],
+          "readout": false,
+          "at": [
+            22,
+            62
+          ]
+        },
+        {
+          "type": "knob",
+          "id": "hold_hdg",
+          "label": "HEADING",
+          "in": "hold_hdg",
+          "default": 0.25,
+          "steps": 360,
+          "nudge": 0.013888888888888888,
+          "scale": [
+            "0",
+            "90",
+            "180",
+            "270",
+            "360"
+          ],
+          "readout": false,
+          "at": [
+            77,
+            62
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "hold",
+          "label": "HOLD",
+          "in": "hold",
+          "led": {
+            "out": "led_hold",
+            "color": "green"
+          },
+          "at": [
+            50,
+            76
           ]
         }
       ]

@@ -31,7 +31,16 @@ SWITCH_TELEMETRY = {'rcs_fine': 'precision'}
 # ---------- rotary selectors (position index → meaning) ----------
 SAS_MODES = ['stability', 'prograde', 'retrograde', 'normal', 'antinormal', 'radial', 'antiradial', 'target',
              'antitarget', 'maneuver']
+# the SAS MODE panel's ten lit buttons (sas_<key>, lamp lamp_sas_<key>): one per mode, the one chosen lit. Buttons, not
+# a knob: turning a knob from PRO to MNVR would go through every mode between.
+SAS_MODE_BUTTONS = {'stab': 'stability', 'pro': 'prograde', 'retro': 'retrograde', 'nml': 'normal', 'anml': 'antinormal',
+                    'rad': 'radial', 'arad': 'antiradial', 'tgt': 'target', 'atgt': 'antitarget', 'mnvr': 'maneuver'}
 EVENT_TIMER_SOURCES = ['MAN', 'TIG', 'APO', 'PERI', 'SOI']
+# ATTITUDE HOLD: the knobs' positions before they are first turned (pitch +90°, straight up; heading 90°, east), and
+# how close to the set attitude its LED stops blinking
+HOLD_DEFAULT_PITCH_KNOB = 1.0
+HOLD_DEFAULT_HEADING_KNOB = 0.25
+HOLD_ON_TARGET_DEG = 3.0
 SPEED_MODES = ['orbit', 'surface', 'target']    # the navball's speed reference: what PRO and RETRO follow
 # FDAI controls (ATTITUDE panel): what the error needles point at, and their full scale
 FDAI_NEEDLES = ['prograde', 'retrograde', 'off']
@@ -60,7 +69,7 @@ OVERHEAT_FRACTION = 0.80            # hottest part, as a fraction of its tempera
 SINK_RATE_BELOW_ALTITUDE_M = 1000.0
 SINK_RATE_BASE_M_S, SINK_RATE_PER_ALTITUDE = 8.0, 0.1   # allowed descent rate: 8 m/s + 10 % of the radar altitude
 GEAR_UP_BELOW_ALTITUDE_M = 300.0
-# LANDING AID: the touchdown lamps work below SINK_RATE_BELOW_ALTITUDE_M, and each lights inside its limit
+# LANDING: the touchdown lamps work below SINK_RATE_BELOW_ALTITUDE_M, and each lights inside its limit
 TOUCHDOWN_SINK_BASE_M_S, TOUCHDOWN_SINK_PER_ALTITUDE = 2.0, 0.1     # 2 m/s + 10 % of the radar altitude
 TOUCHDOWN_DRIFT_M_S = 1.0
 TOUCHDOWN_TILT_DEG = 10.0

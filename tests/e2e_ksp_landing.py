@@ -13,7 +13,7 @@ import krpc
 import paho.mqtt.client as mqtt
 
 SAVE = sys.argv[sys.argv.index('--save') + 1]
-SAS_MODE = {'stability': 0, 'retrograde': 2}      # positions of the SAS MODE selector
+SAS_MODE = {'stability': 'sas_stab', 'retrograde': 'sas_retro'}     # the SAS MODE panel's buttons
 seen = {}
 cli = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id='e2e-landing')
 cli.on_message = lambda c, u, m: seen.__setitem__(m.topic, json.loads(m.payload or b'{}'))
@@ -78,7 +78,7 @@ def off_retrograde():
 
 # ---------- setup ----------
 for panel, control, value in (('eng', 'cb_main', 1), ('eng', 'throttle', 0), ('eng', 'eng_arm', 0), ('eng', 'rcs', 0),
-                              ('eng', 'gear', 0), ('eng', 'sas', 0), ('eng', 'sas_mode', 0)):
+                              ('eng', 'gear', 0), ('eng', 'sas', 0)):
     pin(panel, control, value)
 pin('eng', 'sas', 1)
 check('telemetry from the lander', wait(lambda: seen['tlm/vessel']['name'] == vessel.name and 'v_right' in flight(), 15))
@@ -87,7 +87,7 @@ check('telemetry from the lander', wait(lambda: seen['tlm/vessel']['name'] == ve
 pin('eng', 'speed_ref', 0); pin('eng', 'speed_ref', 1)     # SPEED REF knob to SURF
 check('SPEED REF knob → navball on surface', wait(lambda: vessel.control.speed_mode.name == 'surface', 5),
       vessel.control.speed_mode.name)
-pin('eng', 'sas_mode', SAS_MODE['retrograde'])
+press('eng', SAS_MODE['retrograde'])
 aligned = wait(lambda: off_retrograde() < ALIGNED_WITHIN_DEG, 60)
 check('HOVER TIME shown', number('eng', 'disp_hover') is not None, eng('disp_hover'))
 if not aligned:
@@ -163,7 +163,7 @@ while time.time() < deadline:
     time.sleep(0.1)
 hover_end = (seen['tlm/time']['ut'], number('eng', 'disp_hover'))
 pin('eng', 'throttle', 0); pin('eng', 'eng_arm', 0)
-pin('eng', 'sas_mode', SAS_MODE['stability'])
+press('eng', SAS_MODE['stability'])
 if None not in (hover_start[1], hover_end[1]) and hover_end[0] - hover_start[0] > 10:
     spent, elapsed = hover_start[1] - hover_end[1], hover_end[0] - hover_start[0]
     note(f'HOVER TIME {hover_start[1]:.0f} s → {hover_end[1]:.0f} s over {elapsed:.0f} s of descent near the hover')

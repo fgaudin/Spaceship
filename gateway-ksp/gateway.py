@@ -103,6 +103,7 @@ def fly(link, client, command_queue, publish_status, failures):
             continue
         commands.continue_warp_to()
         commands.continue_sas_mode()
+        commands.continue_hold()
         cycle += 1
         include_slow = cycle % SLOW_TELEMETRY_EVERY == 1
         started = time.monotonic()

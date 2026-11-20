@@ -20,10 +20,10 @@ from .event_timer import EventTimer
 from .injected_failures import InjectedFailures
 from .messages import Message
 from .node_mirror import NodeMirror
-from .panels import (aux_panel, comm_panel, computer_panel, engine_panel, hand_controller, rendezvous_panel,
+from .panels import (attitude_hold, aux_panel, comm_panel, computer_panel, engine_panel, hand_controller, rendezvous_panel,
                      science_panel, solo_panel, station_panel, systems_panel)
 
-PANELS_WITH_INPUTS = (engine_panel, systems_panel, computer_panel, rendezvous_panel, comm_panel, aux_panel,
+PANELS_WITH_INPUTS = (attitude_hold, engine_panel, systems_panel, computer_panel, rendezvous_panel, comm_panel, aux_panel,
                       science_panel, station_panel, hand_controller)
 NEVER = -1e9
 
@@ -230,7 +230,7 @@ class Cockpit:
         powered, was_powered = self.powered(), self.was_powered
         self.was_powered = powered
         if was_powered and not powered:
-            return self.command('cmd/throttle', {'v': 0.0}) + hand_controller.release(self)
+            return self.command('cmd/throttle', {'v': 0.0}) + hand_controller.release(self) + attitude_hold.sync(self)
         return []
 
     def _on_panel_input(self, panel, control, value):
@@ -289,7 +289,7 @@ class Cockpit:
     def tick(self, now):
         """Periodic work: mirror the PAD to the game, and re-command "panel wins" switches the game disagrees with."""
         self.now = now
-        commands = station_panel.tick(self) + self._on_power_change()
+        commands = station_panel.tick(self) + self._on_power_change() + attitude_hold.tick(self)
         if self.powered() and self.telemetry_is_fresh():
             commands += self.node_mirror.pad_to_node(self)
             for switch in S.PANEL_WINS:
@@ -353,6 +353,7 @@ class Cockpit:
 
         wanted = {}
         engine_panel.render(self, wanted, active, unacknowledged)
+        attitude_hold.render(self, wanted)
         systems_panel.render(self, wanted)
         rendezvous_panel.render(self, wanted)
         computer_panel.render(self, wanted)

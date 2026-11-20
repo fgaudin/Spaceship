@@ -25,7 +25,7 @@ Priority: **A** = cannot fly the mission without it, **B** = needed to fly it by
   SOI CHANGE, ABORT MODE (ABORT fires the craft's abort group), the NAVBALL lamps, CB MAIN BUS (power now follows the
   electric charge), SAVE ARM, the rendezvous plate (GATE, OVERSPEED, LOS RATE), ALIGNED and the landing predictions
   (TO GROUND, BRAKE HEIGHT, BRAKE) are gone. New: HOVER TIME, the docking rates, fuel cells, ablator, outside
-  temperature, a LIGHTS panel (cabin, backlight, external). ASCENT and LANDING then merged into ASCENT · DESCENT.
+  temperature, a LIGHTS panel (cabin, backlight, external). ASCENT and LANDING then merged into ASCENT · DESCENT, later split again (LANDING AID) and merged once more into FLIGHT DATA · LANDING.
   The current list is the README's; the sections below
   are the original plan.
 

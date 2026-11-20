@@ -13,6 +13,41 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   orbits. Stock's figures stay for the mock plant.
 - **`tlm/orbit` carries the body's `mu` and `radius`** (gateway and mock plant): the cockpit's local gravity, so TWR,
   hover time and the like, no longer come from stock's table.
+- **New panel: ATTITUDE HOLD** (1 × 1, `eng` bus): a pitch and a heading on two knobs (whole degrees, shown on PITCH °
+  and HDG °) and a HOLD switch; with HOLD on, kRPC's autopilot holds that attitude, roll free (`cmd/hold`, new; the
+  gateway reports `hold` in `tlm/vessel`, and the cockpit sends the command again if a restarted gateway forgot it).
+  It holds only with SAS off and lets go while the rotation stick is off centre. HOLD's LED is steady within 3° of the
+  set attitude, blinking while turning there or unable to hold. Knobs take new options (`scale`, `steps`, `nudge`,
+  `readout`), in the virtual console and the cut templates. Checked in KSP on the pad (engaged, targets set, LED
+  blinking 5° off target); not yet flown. A hold the game refuses is logged and reported, never a lost link (the first
+  version called `engage()`, which kRPC 0.7 does not have: `engaged` is a property, and the error dropped the link).
+- **FDAI, SAS MODE and ATTITUDE HOLD are one module** (FDAI, 2 × 3): ATTITUDE on top, SAS MODE and ATTITUDE HOLD under
+  it, at MAIN [0, 4] and [1, 4]. FLIGHT DATA · LANDING moves one place right, to [2, 4]. MAIN's free places: [4, 2]
+  and [0, 5].
+- **ACTION GROUPS moves right of SCIENCE**, onto its module (SCI: SCIENCE · ACTION GROUPS, 3 × 1). MAIN's sides now
+  go straight down to row 6 before the taper. ENG is an L (C&W, ENGINE, ENGINES · ABORT). MAIN's free places:
+  [4, 2] right of C&W, [4, 4] right of FLIGHT DATA · LANDING, [0, 5] left of REENTRY · RECOVERY.
+- **FLIGHT DATA · LANDING: one 3 × 1 panel on its own module** (`lnd`, at MAIN [1, 4], panel id `landing`), merging
+  LANDING and ASCENT · DESCENT. What a landing needs is on the left (ALT and ALT REF, V and H SPEED, TIME TO IMPACT,
+  HOVER TIME, the drifts, the touchdown lamps, CONTACT, GEAR), the climb's figures on the right (SPEED, G, Q). ENG is
+  now a plain 3 × 2 (C&W, ENGINE, ACTION GROUPS, ENGINES · ABORT). Same inputs and outputs on the `eng` bus; SimSup's
+  "panel dark" takes `landing` for the merged panel.
+- **LANDING AID is now LANDING, and GEAR moves there**, from ASCENT · DESCENT, on its right beside the touchdown lamps, which now stand
+  over CONTACT on the left. Same input and LED (`eng` bus).
+- **ASCENT · DESCENT regrouped** without GEAR, as a 3 × 3 grid: ALT, TIME TO IMPACT and HOVER TIME on the left;
+  ALT REF, G and Q in the middle; H SPEED, V SPEED and SPEED on the right.
+- **MAIN's right side rearranged:** the right column is now CAMERA, LINK · ANTENNA, LIFE SUPPORT, ELECTRICAL and
+  PROPELLANT, top to bottom; ACTION GROUPS and ENGINES · ABORT sit right of C&W and ENGINE. Modules: AUX is CAMERA
+  and LINK · ANTENNA, RES is LIFE SUPPORT, ELECTRICAL and PROPELLANT (1 × 3), ENG holds ACTION GROUPS instead of the
+  link and propellant (an L, with MAIN's free place at [4, 4] in its corner). Every panel keeps its bus, so no topic
+  changes.
+- **SAS MODE: ten lit buttons instead of a knob** (new module `sas`, 1 × 1 U, in MAIN left of LANDING AID, under the
+  FDAI; `eng` bus, inputs `sas_stab` … `sas_mnvr`, lamps `lamp_sas_*`): turning the knob from PRO to MNVR sent every
+  mode in between to the game. The chosen mode is lit, steady once SAS holds it or while SAS is off, blinking while
+  the game refuses it; before any choice the game's own mode is lit. The knob leaves the ATTITUDE panel, whose bottom row
+  is regrouped: SAS, RCS and RCS FINE together on the left, SPEED REF on the right. MAIN's taper
+  now starts a row lower (its sides straight down to row 5), which also leaves a free place at [5, 4]. The KSP
+  end-to-end scripts press the buttons (not run).
 - **Speeds right after a change of sphere of influence:** the gateway measured the vessel's speeds in the frames of
   the body it was bound at, so once at the Mun they were taken against Kerbin's turning surface (12,000 m/s instead
   of 750; altitude, latitude and longitude were right). It now opens its streams again when the body changes, by an

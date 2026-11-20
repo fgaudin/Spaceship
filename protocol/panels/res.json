@@ -1,88 +1,9 @@
 {
   "id": "res",
-  "title": "ELECTRICAL · LIFE SUPPORT",
+  "title": "LIFE SUPPORT · ELECTRICAL · PROPELLANT",
   "fw": "virtual-0.1",
   "board": "olimex-esp32-poe",
   "panels": [
-    {
-      "id": "electrical",
-      "title": "ELECTRICAL",
-      "size": [
-        1,
-        1
-      ],
-      "at": [
-        0,
-        0
-      ],
-      "bus": "sys",
-      "items": [
-        {
-          "type": "bar",
-          "id": "bar_ec",
-          "label": "CHARGE",
-          "out": "bar_ec",
-          "segments": 10,
-          "at": [
-            14,
-            42
-          ],
-          "vertical": true
-        },
-        {
-          "type": "seg7",
-          "id": "disp_ec",
-          "label": "EC",
-          "out": "disp_ec",
-          "digits": 5,
-          "at": [
-            60,
-            27
-          ],
-          "color": "green"
-        },
-        {
-          "type": "seg7",
-          "id": "disp_ec_rate",
-          "label": "EC/S",
-          "out": "disp_ec_rate",
-          "digits": 5,
-          "color": "green",
-          "at": [
-            60,
-            47
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "solar",
-          "label": "SOLAR",
-          "in": "solar",
-          "led": {
-            "out": "led_solar",
-            "color": "green"
-          },
-          "at": [
-            42,
-            76
-          ]
-        },
-        {
-          "type": "toggle",
-          "id": "fuel_cell",
-          "label": "FUEL CELL",
-          "in": "fuel_cell",
-          "led": {
-            "out": "led_fuel_cell",
-            "color": "green"
-          },
-          "at": [
-            74,
-            76
-          ]
-        }
-      ]
-    },
     {
       "id": "life_support",
       "title": "LIFE SUPPORT",
@@ -92,7 +13,7 @@
       ],
       "at": [
         0,
-        1
+        0
       ],
       "bus": "sys",
       "items": [
@@ -179,6 +100,172 @@
             80
           ],
           "color": "green"
+        }
+      ]
+    },
+    {
+      "id": "electrical",
+      "title": "ELECTRICAL",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        1
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "bar",
+          "id": "bar_ec",
+          "label": "CHARGE",
+          "out": "bar_ec",
+          "segments": 10,
+          "at": [
+            14,
+            42
+          ],
+          "vertical": true
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ec",
+          "label": "EC",
+          "out": "disp_ec",
+          "digits": 5,
+          "at": [
+            60,
+            27
+          ],
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_ec_rate",
+          "label": "EC/S",
+          "out": "disp_ec_rate",
+          "digits": 5,
+          "color": "green",
+          "at": [
+            60,
+            47
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "solar",
+          "label": "SOLAR",
+          "in": "solar",
+          "led": {
+            "out": "led_solar",
+            "color": "green"
+          },
+          "at": [
+            42,
+            76
+          ]
+        },
+        {
+          "type": "toggle",
+          "id": "fuel_cell",
+          "label": "FUEL CELL",
+          "in": "fuel_cell",
+          "led": {
+            "out": "led_fuel_cell",
+            "color": "green"
+          },
+          "at": [
+            74,
+            76
+          ]
+        }
+      ]
+    },
+    {
+      "id": "propellant",
+      "title": "PROPELLANT",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        2
+      ],
+      "bus": "sys",
+      "items": [
+        {
+          "type": "bar",
+          "id": "bar_lf",
+          "label": "FUEL",
+          "out": "bar_lf",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            20,
+            40
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_ox",
+          "label": "OXID",
+          "out": "bar_ox",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            40,
+            40
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_mono",
+          "label": "MONO",
+          "out": "bar_mono",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            60,
+            40
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_xenon",
+          "label": "XENON",
+          "out": "bar_xenon",
+          "segments": 10,
+          "vertical": true,
+          "at": [
+            80,
+            40
+          ]
+        },
+        {
+          "type": "seg7",
+          "id": "disp_burn_time",
+          "label": "BURN TIME S",
+          "out": "disp_burn_time",
+          "digits": 5,
+          "at": [
+            30,
+            78
+          ],
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_rcs_dv",
+          "label": "RCS ΔV M/S",
+          "out": "disp_rcs_dv",
+          "digits": 4,
+          "color": "green",
+          "at": [
+            74,
+            78
+          ]
         }
       ]
     }

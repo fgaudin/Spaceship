@@ -56,7 +56,7 @@ The crew's panels never see a failure as such; they see its consequences, throug
 | `telemetry_freeze` | All telemetry stops | gateway (and mock) | Nothing published: NO LINK, dashed displays. |
 | `battery_short`, `overheat` | — | mock only | KSP has no way through kRPC to drain a battery or heat a part. |
 | `false_alarm` | A caution or warning with no cause | cockpit | Parameter `alarm`: its id (`cw_low_fuel`) or its legend (`LOW FUEL`). |
-| `panel_dark` | A panel loses power | cockpit | Parameter `panel`: a panel's id in `protocol/panels` (`electrical`, `landing_aid`…). SimSup reads that panel's outputs and inputs from the definitions and sends them with the failure: every output dark, every input ignored, the other panels on its bus untouched. A glass screen keeps its picture. |
+| `panel_dark` | A panel loses power | cockpit | Parameter `panel`: a panel's id in `protocol/panels` (`electrical`, `landing`…). SimSup reads that panel's outputs and inputs from the definitions and sends them with the failure: every output dark, every input ignored, the other panels on its bus untouched. A glass screen keeps its picture. |
 | `display_frozen` | A display freezes | cockpit | Parameter `output` (`eng/disp_alt`): keeps the value shown at that moment. |
 | `switch_stuck` | A switch or button does nothing | cockpit | Parameter `control` (`sas`, `stage`…): its input is ignored. |
 | `ls_gauge` | A life support gauge reads wrong | cockpit | Parameters `resource` (`Food`, `Water`, `Oxygen`) and `reads` (fraction of full): the bar, the hours, LS LOW and LS OUT follow it. TAC's real supplies do not change. |

@@ -188,7 +188,7 @@ def component(item, footprint, settings):
 
     elif kind in ('rotary', 'knob'):
         # a selector's positions, or a continuous knob's scale over 270° (as the virtual console, widgets.js)
-        positions = item['positions'] if kind == 'rotary' else fp['scale']
+        positions = item['positions'] if kind == 'rotary' else item.get('scale', fp['scale'])
         count = len(positions)
         sweep = min(270, 45 * (count - 1)) if kind == 'rotary' else 270
         for index, position in enumerate(positions):

@@ -1,5 +1,6 @@
-"""The eng bus: caution and warning, ascent and descent displays, the landing aid, engine and staging, engine status matrix and abort, and the
-ATTITUDE panel (on the FDAI module): its switches, attitude and rate displays, and the settings of the ball."""
+"""The eng bus: caution and warning, the flight data and landing panel, engine and staging, engine status matrix and abort, and the
+ATTITUDE panel (on the FDAI module): its switches, attitude and rate displays, and the settings of the ball; and the
+SAS MODE panel's ten buttons."""
 import math
 
 from .. import settings as S
@@ -12,6 +13,7 @@ from ..performance import current_thrust_to_weight, hover_time, speeds_in_refere
 SWITCHES_WITH_LAMP = ('sas', 'rcs')
 LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_abort', 'lamp_cutoff', 'led_gimbal',
          'lamp_contact', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
+         *(f'lamp_sas_{key}' for key in S.SAS_MODE_BUTTONS),
          'led_rcs_fine', 'led_gear', 'lamp_td_sink', 'lamp_td_drift', 'lamp_td_upright', 'lamp_td_gear', *ALARMS]
 # display → (digits, the dashes shown without telemetry)
 DISPLAYS = {'disp_alt': 8, 'disp_hs': 5, 'disp_vs': 5, 'disp_speed': 5, 'disp_g': 4, 'disp_q': 4, 'disp_hover': 4,
@@ -49,15 +51,36 @@ def handle_input(cockpit, change):
         if not change.moved:
             return []
         return cockpit.command('cmd/speed_mode', {'mode': cockpit.selected('speed_ref', S.SPEED_MODES)})
-    if control == 'sas_mode':
-        if change.value is None:
+    if control.startswith('sas_') and control[4:] in S.SAS_MODE_BUTTONS:
+        if not change.pressed:
             return []
         cockpit.sas_mode_retries = 0
-        return cockpit.command('cmd/sas_mode', {'mode': S.SAS_MODES[int(change.value) % len(S.SAS_MODES)]})
+        return cockpit.command('cmd/sas_mode', {'mode': S.SAS_MODE_BUTTONS[control[4:]]})
     return None
 
 
 # ---------- outputs ----------
+def sas_mode_lamps(chosen, sas_on, game_mode):
+    """{button key: (lit, blink)}. The mode chosen on the panel is lit, steady once the game holds it (or while SAS
+    is off: it is the mode SAS will take), blinking while SAS is on in another mode (KSP refused it: no target, no
+    node). Before any choice, the game's own mode is lit while SAS is on."""
+    lamps = {}
+    for key, mode in S.SAS_MODE_BUTTONS.items():
+        if chosen is not None:
+            lit = mode == chosen
+            lamps[key] = (lit, lit and bool(sas_on) and game_mode is not None and game_mode != chosen)
+        else:
+            lamps[key] = (bool(sas_on) and game_mode == mode, False)
+    return lamps
+
+
+def _render_sas_mode_lamps(cockpit, outputs, fresh):
+    last = cockpit.last_commands.get('cmd/sas_mode')
+    vessel = cockpit.vessel if fresh else {}
+    for key, (lit, blink) in sas_mode_lamps(last and last[0]['mode'], vessel.get('sas'), vessel.get('sas_mode')).items():
+        outputs.lamp(f'lamp_sas_{key}', lit, blink=blink)
+
+
 def render(cockpit, wanted, active_alarms, unacknowledged_alarms):
     outputs = PanelOutputs(wanted, S.ENGINE_PANEL)
     warning_waiting = any(ALARMS[name].is_warning for name in unacknowledged_alarms)
@@ -128,6 +151,7 @@ def _render_lamps(cockpit, outputs):
     knob_mode = cockpit.selected('speed_ref', S.SPEED_MODES)
     outputs.lamp('led_speed_ref', game_mode is not None, blink=game_mode is not None and game_mode != knob_mode)
 
+    _render_sas_mode_lamps(cockpit, outputs, fresh)
     _render_touchdown_lamps(cockpit, outputs, fresh)
 
     # event lights
@@ -136,7 +160,7 @@ def _render_lamps(cockpit, outputs):
 
 
 def _render_touchdown_lamps(cockpit, outputs, fresh):
-    """LANDING AID: near the ground, each lamp lights while that condition is good for touching down."""
+    """LANDING: near the ground, each lamp lights while that condition is good for touching down."""
     flight, vessel = cockpit.flight, cockpit.vessel
     radar, sink = flight.get('radar'), -(flight.get('vs') or 0.0)
     right, down, pitch = flight.get('v_right'), flight.get('v_down'), cockpit.telemetry.get('tlm/attitude', {}).get('pitch')

@@ -1,6 +1,6 @@
 {
   "id": "aux",
-  "title": "CAMERA · ACTION GROUPS",
+  "title": "CAMERA · LINK",
   "fw": "virtual-0.1",
   "board": "olimex-esp32-poe",
   "panels": [
@@ -85,8 +85,8 @@
       ]
     },
     {
-      "id": "action_groups",
-      "title": "ACTION GROUPS",
+      "id": "link_antenna",
+      "title": "LINK · ANTENNA",
       "size": [
         1,
         1
@@ -95,126 +95,88 @@
         0,
         1
       ],
-      "bus": "aux",
+      "bus": "com",
       "items": [
         {
-          "type": "lamp_button",
-          "id": "ag_1",
-          "label": "AG 1",
-          "color": "amber",
-          "in": "ag_1",
-          "out": "lamp_ag_1",
+          "type": "annunciator",
+          "id": "link",
+          "label": "LINK",
+          "cols": 2,
+          "cells": [
+            {
+              "out": "lamp_aos",
+              "label": "AOS",
+              "color": "green"
+            },
+            {
+              "out": "lamp_los",
+              "label": "LOS",
+              "color": "red"
+            }
+          ],
+          "at": [
+            34,
+            24
+          ]
+        },
+        {
+          "type": "bar",
+          "id": "bar_signal",
+          "label": "SIGNAL",
+          "segments": 10,
+          "out": "bar_signal",
+          "at": [
+            78,
+            24
+          ]
+        },
+        {
+          "type": "alpha",
+          "id": "txt_via",
+          "label": "VIA",
+          "out": "txt_via",
+          "chars": 12,
           "at": [
             38,
-            20
+            45
           ]
         },
         {
-          "type": "lamp_button",
-          "id": "ag_2",
-          "label": "AG 2",
-          "color": "amber",
-          "in": "ag_2",
-          "out": "lamp_ag_2",
+          "type": "seg7",
+          "id": "disp_hops",
+          "label": "HOPS",
+          "digits": 1,
+          "out": "disp_hops",
           "at": [
-            62,
-            20
+            76,
+            45
+          ],
+          "color": "green"
+        },
+        {
+          "type": "seg7",
+          "id": "disp_link_time",
+          "label": "IN THIS STATE MIN.SEC",
+          "digits": 5,
+          "out": "disp_link_time",
+          "color": "green",
+          "at": [
+            33,
+            73
           ]
         },
         {
-          "type": "lamp_button",
-          "id": "ag_3",
-          "label": "AG 3",
-          "color": "amber",
-          "in": "ag_3",
-          "out": "lamp_ag_3",
+          "type": "toggle",
+          "id": "antenna",
+          "label": "ANTENNA DEPLOY",
+          "in": "antenna",
+          "led": {
+            "out": "led_antenna",
+            "color": "green"
+          },
           "at": [
-            38,
-            36
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "ag_4",
-          "label": "AG 4",
-          "color": "amber",
-          "in": "ag_4",
-          "out": "lamp_ag_4",
-          "at": [
-            62,
-            36
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "ag_5",
-          "label": "AG 5",
-          "color": "amber",
-          "in": "ag_5",
-          "out": "lamp_ag_5",
-          "at": [
-            38,
-            52
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "ag_6",
-          "label": "AG 6",
-          "color": "amber",
-          "in": "ag_6",
-          "out": "lamp_ag_6",
-          "at": [
-            62,
-            52
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "ag_7",
-          "label": "AG 7",
-          "color": "amber",
-          "in": "ag_7",
-          "out": "lamp_ag_7",
-          "at": [
-            38,
-            68
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "ag_8",
-          "label": "AG 8",
-          "color": "amber",
-          "in": "ag_8",
-          "out": "lamp_ag_8",
-          "at": [
-            62,
-            68
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "ag_9",
-          "label": "AG 9",
-          "color": "amber",
-          "in": "ag_9",
-          "out": "lamp_ag_9",
-          "at": [
-            38,
-            84
-          ]
-        },
-        {
-          "type": "lamp_button",
-          "id": "ag_10",
-          "label": "AG 10",
-          "color": "amber",
-          "in": "ag_10",
-          "out": "lamp_ag_10",
-          "at": [
-            62,
-            84
+            71,
+            73
           ]
         }
       ]

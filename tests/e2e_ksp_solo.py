@@ -15,7 +15,7 @@ CASES = {
     'rdv': 'lor3-rdv-pre-transfer',         # chaser and target in the same plane, apart
     'inject': 'lor3-selftest-pre-tmi',      # parking orbit, before the Mun injection
 }
-SAS_MANEUVER = 9
+SAS_MANEUVER = 'sas_mnvr'               # the SAS MODE panel's MNVR button
 MIN_BURN_S = 10.0
 EVENT_SOURCE_TIG = 1
 seen = {}
@@ -65,7 +65,7 @@ def load(save, needs_target=False):
     time.sleep(8)
     vessel = sc.active_vessel
     for panel, control, value in (('eng', 'cb_main', 1), ('eng', 'throttle', 0), ('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0),
-                                  ('eng', 'sas', 0), ('eng', 'sas_mode', 0), ('cmp', 'burn_arm', 0), ('sys', 'evt_src', 0),
+                                  ('eng', 'sas', 0), ('cmp', 'burn_arm', 0), ('sys', 'evt_src', 0),
                                   ('eng', 'thrust_lim', 1.0)):
         pin(panel, control, value)
     pin('eng', 'sas', 1)
@@ -112,7 +112,7 @@ def fly_pad():
         note(f'  {full_thrust_seconds:.1f} s at full thrust: THRUST LIMIT {limit * 100:.0f} %')
         pin('eng', 'thrust_lim', limit)
     pin('cmp', 'burn_arm', 1)
-    pin('eng', 'sas_mode', SAS_MANEUVER)
+    press('eng', SAS_MANEUVER)
     wait(lambda: float(out('cmp', 'disp_att').get('text', '99')) < 3, 120)
     pin('sys', 'evt_src', EVENT_SOURCE_TIG)
     # Warp until the TIG is close (WARP TO EVT stops a minute before; KSP may stop it earlier, near a body).

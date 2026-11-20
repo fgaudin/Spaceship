@@ -40,8 +40,11 @@ class CommandHandler:
             'cmd/control_from': lambda request: control_from_port(self.link, bool(request.get('port'))),
             'cmd/node': self.maneuver_node, 'cmd/pause': self.pause, 'cmd/game': self.save_or_load,
             'cmd/science': self.science, 'cmd/warp': self.warp, 'cmd/rotate': self.rotate, 'cmd/translate': self.translate,
-            'cmd/station': self.station,
+            'cmd/station': self.station, 'cmd/hold': self.hold,
         }
+        self.wanted_hold = None             # (pitch, heading) in degrees while ATTITUDE HOLD is on, else None
+        self.hold_vessel = None             # the vessel whose autopilot holds it
+        self.hold_refused = False           # the game refused the last hold: wait for the next cmd/hold
 
     def run(self, topic, request):
         if topic.startswith('sim/'):
@@ -131,6 +134,50 @@ class CommandHandler:
             control.sas_mode = getattr(self.link.space_center.SASMode, SAS_MODE_TO_KRPC[self.wanted_sas_mode])
         except Exception as error:          # e.g. a mode this pilot or probe core cannot hold
             print('sas_mode refused:', self.wanted_sas_mode, str(error).splitlines()[0], flush=True)
+
+    # ---------- ATTITUDE HOLD: kRPC's autopilot ----------
+    def hold(self, request):
+        """{'on', 'pitch', 'heading'}: hold that pitch and heading against the horizon, with kRPC's autopilot (the
+        cockpit sends it only with SAS off: the two would fight). Roll is left free."""
+        self.wanted_hold = (float(request['pitch']), float(request['heading'])) if request.get('on') else None
+        self.hold_refused = False
+        self._apply_hold_safely()
+
+    def _apply_hold_safely(self):
+        """A hold the game refuses is reported (tlm/vessel hold false, so HOLD's LED blinks), never a lost link."""
+        try:
+            self._apply_hold()
+        except Exception as error:
+            print('hold refused:', repr(error)[:200], flush=True)
+            self.hold_vessel, self.link.hold_engaged = None, False
+            self.hold_refused = True        # not tried again until the cockpit asks again (once a second at most)
+
+    def _apply_hold(self):
+        vessel = self.link.vessel
+        if self.wanted_hold is None:
+            if self.hold_vessel is not None:
+                try:
+                    self.hold_vessel.auto_pilot.engaged = False
+                except Exception:           # the vessel is gone (staged away, scene changed)
+                    pass
+            self.hold_vessel = None
+            self.link.hold_engaged = False
+            return
+        if vessel is None:                  # unbound for a moment (an undocking): continue_hold() applies it
+            return
+        autopilot = vessel.auto_pilot
+        if self.hold_vessel != vessel:      # first time, or a new active vessel: set it up and engage
+            autopilot.reference_frame = vessel.surface_reference_frame
+            autopilot.target_roll = float('nan')
+            autopilot.engaged = True       # kRPC 0.7: a property, not engage()
+            self.hold_vessel = vessel
+        autopilot.target_pitch_and_heading(*self.wanted_hold)
+        self.link.hold_engaged = True
+
+    def continue_hold(self):
+        """Called on every loop: a new active vessel (undocking, a vessel switch) takes the hold over."""
+        if self.wanted_hold is not None and not self.hold_refused and self.hold_vessel != self.link.vessel:
+            self._apply_hold_safely()
 
     def continue_sas_mode(self):
         """Called on every loop: set the wanted SAS mode again when it is due."""

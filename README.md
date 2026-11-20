@@ -38,12 +38,12 @@ selectors (click / shift-click / wheel), 7-segment displays, LED bar graphs, an 
 Keys: Space = STAGE (when armed), Left Shift / Left Ctrl (held) = throttle up / down, KSP's WSADQE = rotation and IJKLHN = translation (the hand controllers, below), T = lamp test, Left Alt (held) = every module's name and boundary. The **bus** checkbox shows a live sniffer. Resetting
 the simulation and injecting failures are on the SIMSUP page.
 
-**Modules** (on the CONSOLE page): ENG (C&W, engine and staging, ascent and descent displays, propellant, radio link, abort), SYS (time warp, lights and fan, event timer, save), RES (electrical, life support), AUX (camera, action groups), LND (landing aid), RNT (reentry and recovery), SCI (science), CMP (burn
-computer), RDV (target and docking), SOLO (PAD requests, the orbit and navigation), STN (the STATION selector, overhead), and the glass modules FDAI (attitude), CAM
+**Modules** (on the CONSOLE page): ENG (C&W, engine and staging, abort), SYS (time warp, lights and fan, event timer, save), RES (life support, electrical, propellant), AUX (camera, radio link), LND (flight data and landing), RNT (reentry and recovery), SCI (science, action groups), CMP (burn
+computer), RDV (target and docking), SOLO (PAD requests, the orbit and navigation), STN (the STATION selector, overhead), and the glass modules FDAI (attitude, with SAS MODE and ATTITUDE HOLD), CAM
 (camera monitor) and the two windows WNL and WNR, drawn as screens with the live page in them. FDAI and CAM are also pages of their own (for a
 Pi's kiosk browser), next to SIMSUP and MCC in the top bar. The modules are drawn from `protocol/panels/<id>.json`; their rules live in `cockpit-logic/`.
 
-**SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with ELECTRICAL and LIFE SUPPORT; PROPELLANT on the ENG module): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
+**SYS** (I/O modules on the `sys` bus: SYS overhead; RES in MAIN's right column with LIFE SUPPORT, ELECTRICAL and PROPELLANT, one under the other): electrical (charge bar, EC and EC/s, solar panels, fuel cells), propellant for the
 whole vessel (fuel, oxidizer, monoprop and xenon bars) with BURN TIME (the stage's propellant at the present thrust, or at full thrust) and RCS ΔV (an estimate, from the stock thrusters' 240 s), life support (TAC Life Support: food, water and oxygen bars, the hours each lasts for the crew aboard, recyclers not counted, and CREW; LS LOW and LS OUT on the annunciator), event timer (manual,
 or counting down to TIG / apoapsis / periapsis / SOI change; with COUNT DOWN on, the manual timer counts down from a
 value set with MIN + and SEC +10 and blinks at zero), time warp (slower / faster / stop, and WARP TO EVT: warp until 60 to 80 s before the
@@ -66,11 +66,23 @@ right ones the other: the left window turns its picture −90° (counter-clockwi
 landscape picture. The gateway finds a capsule as the crewed part its window cameras are attached to, and JRTI
 streams them under those names.
 
-**LANDING AID** (module in MAIN, on the `eng` bus): DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides), and four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN; CONTACT under them.
+**ATTITUDE HOLD** (on the FDAI module, under the ball, between SAS MODE and FLIGHT DATA · LANDING, on the `eng` bus): a
+pitch (−90° to +90°) and a heading set on two knobs and shown on PITCH ° and HDG °; with HOLD on, kRPC's autopilot holds
+that attitude (roll free), so that a gravity turn can be flown by the numbers. It holds only with SAS off (the two
+would fight) and lets go while the rotation stick is off centre, then takes the attitude back. HOLD's LED: steady
+within 3° of the set attitude, blinking while it turns there or cannot hold (SAS on, the stick).
+
+**SAS MODE** (on the FDAI module, under the ball, on the `eng` bus): ten lit buttons, one per SAS
+mode (STAB, MNVR, PRO, RETRO, NML, A-NML, RAD, A-RAD, TGT, A-TGT), so that going from one mode to another never passes
+through the modes between, as a knob would. The chosen one is lit: steady once SAS holds it (or while SAS is off: the
+mode it will take), blinking while the game refuses it (TGT without a target, MNVR without a node). Before any choice,
+the game's own mode is lit.
+
+**FLIGHT DATA · LANDING** (module LND in MAIN, one 3 × 1 U panel, on the `eng` bus), what a landing needs on the left, where the eye goes first: altitude in m, above the sea or the ground by ALT REF; vertical and horizontal speed against the orbit or the surface by the SPEED REF knob (TGT reading the surface); TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides); four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN; CONTACT; the GEAR switch (its LED lit while the gear is down). On the right, for the climb: total speed, g, dynamic pressure in kPa.
 
 **REENTRY · RECOVERY** (module in MAIN, on the `sys` bus): CHUTE ARM, CHUTE, BRAKES, ablator, the hottest part as a percentage of its limit, time to the atmosphere at the present sink rate, outside temperature and pressure, the 0.05 G light, and KSP's verdict on opening the chutes (SAFE, RISKY, UNSAFE). **SCIENCE** (module in MAIN, `sci` bus): step through the experiments; RUN, SEND, DUMP, RESET the one shown, RUN ALL, with its state, biome and science value.
 
-**ENG** (I/O module): CAUTION & WARNING (the MET is on the camera monitor's panel); ASCENT · DESCENT (altitude in m, above the sea or the ground by ALT REF; horizontal, vertical and total speed against the orbit or the surface by the SPEED REF knob, TGT reading the surface; g, dynamic pressure in kPa, TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; GEAR); ENGINE (ENG ARM, throttle,
+**ENG** (I/O module): CAUTION & WARNING (the MET is on the camera monitor's panel); ENGINE (ENG ARM, throttle,
 STAGE ARM and STAGE, the stage number, CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
 equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off); an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
@@ -113,12 +125,12 @@ docking procedures). DOCKING: range and closing speed to the target vessel (KM L
 100 km), CAPTURE inside the capture envelope, DOCKED, and UNDOCK behind a guarded UNDOCK ARM. The
 CLOSING caution still watches the course's ρ/400 s braking gate. Signs checked in KSP by `tests/e2e_ksp_docking.py`.
 
-**COM** (the LINK · ANTENNA panel, on the ENG module, on the `com` bus): the radio link to the ground. AOS and LOS lamps (acquisition and loss of signal; the one that
+**COM** (the LINK · ANTENNA panel, on the AUX module under CAMERA, on the `com` bus): the radio link to the ground. AOS and LOS lamps (acquisition and loss of signal; the one that
 just came on blinks for 10 s), signal strength bar, the first station or relay on the way and the number of hops, how
 long the link has been in its present state, and ANTENNA DEPLOY (acts only when moved, so a restart cannot retract
 the antennas).
 
-**AUX** (I/O module in MAIN, `aux` bus):
+**AUX** (`aux` bus; CAMERA on the AUX module, top right of MAIN, ACTION GROUPS on the SCI module, right of SCIENCE):
 - ACTION GROUPS: the craft's ten custom groups, each button lit while its group is on.
 - CAMERA: CAM ◂ ▸ pick the camera shown on the monitor (not the windows' cameras), with its name and number, a LIVE LED, and a MONITOR switch that turns the monitor off.
 
@@ -154,11 +166,11 @@ debrief with the crew's response times. Vehicle failures act in KSP through the 
 reaction wheels, parachutes, comms, telemetry); instrument failures in the cockpit (false alarm, dark panel, frozen
 display, stuck switch). How it works: [simsup/README.md](simsup/README.md).
 
-**FDAI** (glass module, 2 × 2 U, its panel ATTITUDE: the ball on a 4" round screen, pitch, heading and roll with their
+**FDAI** (glass module, 2 × 3 U: ATTITUDE 2 × 2 on top, SAS MODE and ATTITUDE HOLD under it; ATTITUDE: the ball on a 4" round screen, pitch, heading and roll with their
 rates on 7-segment displays beside it, the FDAI controls in the corners around it (MARKERS top left, NEEDLES and ERROR
-SCALE at the bottom), and under them SAS, SAS MODE with TGT, A-TGT and MNVR,
-SPEED REF (the navball's speed reference, which SAS PRO and RETRO follow: orbit, surface or target; it acts only when
-turned, and its LED blinks while the game's reference is another one, since KSP changes it by itself), RCS, RCS FINE.
+SCALE at the bottom), and under them SAS, RCS and RCS FINE on the left, SPEED REF on the right (the navball's speed
+reference, which SAS PRO and RETRO follow: orbit, surface or target; it acts only when turned, and its LED blinks while
+the game's reference is another one, since KSP changes it by itself). The SAS modes are on the SAS MODE module below.
 The page alone: http://localhost:8650/fdai.html, also linked from the panel's top bar): an attitude ball drawn
 from `tlm/attitude` (pitch, heading, roll against the local horizon), with a roll index, prograde and retrograde markers,
 three fly-to error needles (to prograde or retrograde, ±5° or ±50° full scale), three rate scales and a NO ATT flag when
@@ -214,6 +226,6 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 .venv/bin/python tests/e2e_ksp_simsup.py --save lor3-selftest-pad    # every SimSup failure, freeze and load in KSP (25 checks)
 .venv/bin/python tests/rehearsal_ksp_ascent.py --save lor3-selftest-pad   # pad to orbit from the panels and the stick topics; prints gaps and alarms
 .venv/bin/python tests/e2e_ksp_boosters.py --save lor3-selftest-pad   # engine matrix through booster flameouts and staging (9 checks; launches)
-.venv/bin/python tests/e2e_ksp_landing.py --save lor3-selftest-pdi    # a Mun landing on the ASCENT · DESCENT figures
+.venv/bin/python tests/e2e_ksp_landing.py --save lor3-selftest-pdi    # a Mun landing on the FLIGHT DATA · LANDING figures
 ```
 (`.venv`: `python3 -m venv .venv && .venv/bin/pip install pytest paho-mqtt==2.1.0 krpc==0.7.0`.)

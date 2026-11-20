@@ -46,7 +46,8 @@ def handle_input(cockpit, change):
         if steering(cockpit) != was_steering and cockpit.is_on('sas'):
             # release SAS for the stick, or take it back (the gateway puts the panel's SAS mode back)
             commands += cockpit.command('cmd/sas', {'on': not steering(cockpit)})
-        return commands
+        from . import attitude_hold         # (imported here: attitude_hold imports this module)
+        return commands + attitude_hold.sync(cockpit)
     if change.control in TRANSLATION_AXES:
         return cockpit.command_once('cmd/translate', translation(cockpit))
     if change.control == 'rcs_fine':

@@ -20,7 +20,7 @@ KERBIN_MU, KERBIN_RADIUS_KM = 3.5316e12, 600.0
 TARGET_APOAPSIS_KM = 80.0
 # where the pilot reads each figure: ASCENT (eng) for the altitude and the surface speed, ORBIT (solo bus) for the apsides
 DISPLAYS = {'ALT': ('eng', 'disp_alt'), 'VEL': ('eng', 'disp_speed'), 'APO': ('solo', 'disp_apo'), 'PERI': ('solo', 'disp_peri')}
-SAS_MODE = {'stability': 0, 'prograde': 1, 'maneuver': 9}
+SAS_MODE = {'stability': 'sas_stab', 'prograde': 'sas_pro', 'maneuver': 'sas_mnvr'}   # SAS MODE buttons
 EVENT_SOURCE = {'MAN': 0, 'TIG': 1, 'APO': 2}
 
 seen = {}
@@ -125,7 +125,7 @@ def stage_on_flameout():
 
 # ---------- before launch ----------
 for panel, control, value in (('eng', 'cb_main', 1), ('eng', 'throttle', 0), ('eng', 'eng_arm', 0), ('eng', 'stage_arm', 0),
-                              ('eng', 'sas', 0), ('eng', 'rcs', 0), ('eng', 'sas_mode', 0), ('eng', 'abort_arm', 0),
+                              ('eng', 'sas', 0), ('eng', 'rcs', 0), ('eng', 'abort_arm', 0),
                               ('sys', 'evt_src', EVENT_SOURCE['MAN']),
                               ('cmp', 'burn_arm', 0), ('sys', 'evt_down', 0)):
     pin(panel, control, value)
@@ -200,7 +200,7 @@ read_alt = lambda: seen['tlm/flight']['alt']
 threading.Thread(target=attitude_log, args=(50,), daemon=True).start()
 # SAS (stability) holds the kicked attitude; follow the velocity vector once it has come down to the nose
 wait(lambda: (seen['tlm/attitude']['prograde'] or {}).get('pitch', 90) <= seen['tlm/attitude']['pitch'] + 0.5, 30)
-pin('eng', 'sas_mode', SAS_MODE['prograde'])
+press('eng', SAS_MODE['prograde'])
 if not wait(lambda: seen['tlm/vessel']['sas'] and seen['tlm/vessel']['sas_mode'] == 'prograde', 6):
     problem(f"SAS did not go to prograde after the stick was released: {seen['tlm/vessel'].get('sas')}, {seen['tlm/vessel'].get('sas_mode')}")
 log('gravity turn: SAS MODE PRO')
@@ -244,7 +244,7 @@ log(f"PAD keyed: Δv {out('cmp', 'disp_pro').get('text')} m/s, TIG {out('cmp', '
     f"burn {burn_time} s, time to apoapsis {to_apoapsis} s; entry error lamp {out('cmp', 'lamp_err').get('on')}")
 
 # ---------- the burn ----------
-pin('eng', 'sas_mode', SAS_MODE['maneuver'])
+press('eng', SAS_MODE['maneuver'])
 pin('sys', 'evt_src', EVENT_SOURCE['TIG'])
 if not wait(lambda: (number('cmp', 'disp_att') or 99) < 3, 90):
     problem(f"not on the burn attitude: ATT ERR {out('cmp', 'disp_att').get('text')}, SAS mode {seen['tlm/vessel'].get('sas_mode')}")
@@ -271,7 +271,7 @@ log(f'PARKING ORBIT on the panel: apoapsis {apoapsis} km, periapsis {periapsis} 
     f'in KSP: {orbit.apoapsis_altitude / 1000:.2f} / {orbit.periapsis_altitude / 1000:.2f} km, e {orbit.eccentricity:.4f}')
 if periapsis is None or periapsis < 70:
     problem('not in orbit: periapsis under 70 km')
-pin('eng', 'eng_arm', 0); pin('eng', 'stage_arm', 0); pin('eng', 'sas_mode', SAS_MODE['stability'])
+pin('eng', 'eng_arm', 0); pin('eng', 'stage_arm', 0); press('eng', SAS_MODE['stability'])
 pin('sys', 'evt_src', EVENT_SOURCE['MAN'])
 press('cmp', 'pad_clr')
 

@@ -40,7 +40,7 @@ def test_landing_hover_time_gear_and_orbit():
     # an engine that cannot lift the lander: no hover time
     over_the_mun(1, thrust_avail=5000.0)
     assert c.published[ENG + 'disp_hover']['text'] == '----'
-    # GEAR is on ASCENT · DESCENT: the switch commands it, the LED blinks until the game agrees
+    # GEAR is on FLIGHT DATA · LANDING: the switch commands it, the LED blinks until the game agrees
     assert c.published[ENG + 'led_gear'] == {'on': False, 'blink': False}
     out = topics(c.handle(ENG_IN + 'gear', {'v': 1}, 2))
     assert out['cmd/gear'] == {'on': True} and out[ENG + 'led_gear'] == {'on': True, 'blink': True}

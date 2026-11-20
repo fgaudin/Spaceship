@@ -430,7 +430,8 @@ def test_undock_needs_arm_and_docked_lamp():
 
 def test_sas_mode_is_sent_again_when_the_game_drops_it():
     c = Cockpit(); fed(c)
-    assert topics(c.handle(P + 'sas_mode', {'v': 9}, 0))['cmd/sas_mode'] == {'mode': 'maneuver'}
+    assert topics(c.handle(P + 'sas_mnvr', {'v': 1}, 0))['cmd/sas_mode'] == {'mode': 'maneuver'}
+    c.handle(P + 'sas_mnvr', {'v': 0}, 0.1)
     fed(c, 0.5, vessel={'sas': True, 'sas_mode': 'stability'})
     assert 'cmd/sas_mode' not in topics(c.tick(0.6))                    # not within a second of the command
     assert topics(c.tick(1.1))['cmd/sas_mode'] == {'mode': 'maneuver'}
@@ -444,6 +445,23 @@ def test_sas_mode_is_sent_again_when_the_game_drops_it():
     # with SAS off the game reports no mode: nothing to do
     fed(c, 30, vessel={'sas': False, 'sas_mode': None})
     assert 'cmd/sas_mode' not in topics(c.tick(31.5))
+
+
+def test_sas_mode_buttons_light_the_chosen_mode():
+    c = Cockpit(); fed(c, 0, vessel={'sas': True, 'sas_mode': 'stability'})
+    keys = ('stab', 'pro', 'retro', 'nml', 'anml', 'rad', 'arad', 'tgt', 'atgt', 'mnvr')
+    lit = lambda: {key for key in keys if c.published[O + f'lamp_sas_{key}']['on']}
+    assert lit() == {'stab'}                                            # nothing chosen yet: the game's mode
+    # PRO, then MNVR: nothing in between is sent, as a knob turned from one to the other would
+    sent = [topics(c.handle(P + 'sas_pro', {'v': v}, t)).get('cmd/sas_mode') for v, t in ((1, 1), (0, 1.1))]
+    sent += [topics(c.handle(P + 'sas_mnvr', {'v': v}, t)).get('cmd/sas_mode') for v, t in ((1, 2), (0, 2.1))]
+    assert [command for command in sent if command] == [{'mode': 'prograde'}, {'mode': 'maneuver'}]
+    fed(c, 2.2, vessel={'sas': True, 'sas_mode': 'stability'})         # no node: KSP keeps stability
+    assert lit() == {'mnvr'} and c.published[O + 'lamp_sas_mnvr']['blink']
+    fed(c, 2.5, vessel={'sas': True, 'sas_mode': 'maneuver'})
+    assert lit() == {'mnvr'} and not c.published[O + 'lamp_sas_mnvr']['blink']
+    fed(c, 3, vessel={'sas': False, 'sas_mode': None})                 # SAS off: the mode it will take, steady
+    assert lit() == {'mnvr'} and not c.published[O + 'lamp_sas_mnvr']['blink']
 
 
 def test_throttle_is_sent_again_when_the_game_disagrees():
@@ -762,3 +780,27 @@ def test_attitude_displays_and_rates():
     at(100.5, 61.0, 1.0, -179.0)                                          # heading and roll cross their wrap
     assert c.published[O + 'disp_rate_pitch']['text'] == '+2.0' and c.published[O + 'disp_rate_roll']['text'] == '+4.0'
     assert c.published[O + 'disp_rate_yaw']['text'] == '+1.9'             # 4 °/s of heading × cos 61°
+
+
+def test_attitude_hold_holds_the_knobs_attitude_with_sas_off():
+    c = Cockpit(); fed(c)
+    c.handle(P + 'hold_pitch', {'v': 0.75}, 0.1)                       # +45°
+    c.handle(P + 'hold_hdg', {'v': 0.25}, 0.2)                         # 90°, east
+    assert c.published[O + 'disp_hold_pitch']['text'].strip() == '+45'
+    assert topics(c.handle(P + 'hold', {'v': 1}, 1))['cmd/hold'] == {'on': True, 'pitch': 45, 'heading': 90}
+    assert c.published[O + 'led_hold'] == {'on': True, 'blink': True}  # not there yet
+    c.handle('tlm/attitude', {'pitch': 44.0, 'heading': 91.0}, 1.5)
+    c.handle('tlm/vessel', {**c.vessel, 'hold': True}, 1.5)
+    assert c.published[O + 'led_hold'] == {'on': True, 'blink': False}
+    assert topics(c.handle(P + 'hold_hdg', {'v': 0.5}, 2))['cmd/hold']['heading'] == 180   # a new heading, at once
+    # SAS on: the two would fight, so the hold lets go and its LED blinks
+    c.handle(P + 'sas', {'v': 1}, 3)
+    assert topics(c.tick(3.1))['cmd/hold'] == {'on': False}
+    assert c.published[O + 'led_hold']['blink']
+    c.handle(P + 'sas', {'v': 0}, 4)
+    assert topics(c.tick(4.1))['cmd/hold']['on']
+    # the stick takes over while off centre
+    assert topics(c.handle('panel/hc/in/rot_pitch', {'v': 0.5}, 5))['cmd/hold'] == {'on': False}
+    assert topics(c.handle('panel/hc/in/rot_pitch', {'v': 0.0}, 5.5))['cmd/hold']['on']
+    assert topics(c.handle(P + 'hold', {'v': 0}, 6))['cmd/hold'] == {'on': False}
+    assert c.published[O + 'led_hold'] == {'on': False, 'blink': False}
