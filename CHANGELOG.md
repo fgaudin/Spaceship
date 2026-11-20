@@ -13,6 +13,14 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   orbits. Stock's figures stay for the mock plant.
 - **`tlm/orbit` carries the body's `mu` and `radius`** (gateway and mock plant): the cockpit's local gravity, so TWR,
   hover time and the like, no longer come from stock's table.
+- **GAME in the console's side column:** how fast KSP runs, game seconds per real second with the warp taken out,
+  over the last 3 s of `tlm/time`: green from 0.95×, amber from 0.8×, red under (KSP's frame rate itself is not
+  available through kRPC). Checked against kRPC's own clock: 0.67× and 0.68× with the two windows streaming.
+- **The console page takes half the CPU it did:** the FDAI ball, drawn pixel by pixel, was redrawn on every screen
+  refresh whenever the smoothed attitude moved by a hundredth of a degree, most of a core on its own. It is now
+  redrawn at most 20 times a second and for a change of a tenth of a degree (a third of a pixel), and what never
+  changes per pixel (its place on the ball, shading, edge) is computed once. Measured in Chromium over 10 s with the
+  ship turning: 9.1 s of work before, 4.8 s after.
 - **Left Alt shows what each module asks of its board**: inputs, analog inputs, lamps, display rows and characters,
   the driver chips (MCP23017, MAX7219, HT16K33, ADS1115), the ESP32 pins and the power in flight and at lamp test,
   against the ESP32-POE's 4 W (red when over); the total PoE power at the top left. Assumptions in

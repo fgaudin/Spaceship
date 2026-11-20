@@ -63,6 +63,8 @@ body { margin: 0; background: radial-gradient(ellipse at top, #1b1e21, var(--bg)
 .show-modules .module-tag { display: block; }
 .module-budget { font-size: .72em; font-weight: 600; letter-spacing: .02em; opacity: .85; margin-top: .15em; }
 .module-tag.over-budget { background: var(--red); color: #fff; }
+.game-speed { margin: 0 0 .6rem; font-variant-numeric: tabular-nums; font-weight: 600; }
+.game-speed.good { color: var(--green); } .game-speed.warn { color: var(--amber); } .game-speed.bad { color: var(--red); }
 .module-count { position: fixed; top: 58px; left: 16px; z-index: 20; padding: .4em .9em; border-radius: 3px; background: var(--amber);
   color: #111; font-size: 15px; font-weight: 700; letter-spacing: .06em; pointer-events: none; }
 .module-count[hidden] { display: none; }

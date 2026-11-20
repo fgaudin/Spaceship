@@ -534,19 +534,42 @@ function createSniffer() {
 }
 
 /* The console's own connection: plant and cockpit status in the top bar, the sniffer. */
+/* GAME in the side column: how fast KSP runs, game seconds per real second with the warp taken out, over the last few
+   seconds of tlm/time. Under 1, the game cannot keep up (its frame rate itself is not available through kRPC). */
+const GAME_SPEED_WINDOW_MS = 3000;
+const gameClock = [];
+function showGameSpeed() {
+  const now = performance.now();
+  while (gameClock.length && now - gameClock[0].at > GAME_SPEED_WINDOW_MS) gameClock.shift();
+  const element = document.getElementById('game-speed');
+  const first = gameClock[0], last = gameClock[gameClock.length - 1];
+  let text = 'no telemetry', tone = '';
+  if (last?.paused) text = 'paused';
+  else if (first && last && last.at - first.at > 1000 && last.ut != null && first.ut != null) {
+    const speed = (last.ut - first.ut) / ((last.at - first.at) / 1000) / last.warp;
+    text = `${speed.toFixed(2)}× real time · warp ${last.warp}×`;
+    tone = speed >= 0.95 ? 'good' : speed >= 0.8 ? 'warn' : 'bad';
+  }
+  element.textContent = text;
+  element.className = `game-speed ${tone}`;
+}
+setInterval(showGameSpeed, 1000);
+
 function connectConsole() {
   const sniffer = createSniffer();
   const client = connectBus({
     name: 'console',
     onConnect(connected) {
-      connected.subscribe(['gateway/status', 'cockpit/status', 'cockpit/lighting'], { qos: 1 });
+      connected.subscribe(['gateway/status', 'cockpit/status', 'cockpit/lighting', 'tlm/time'], { qos: 1 });
       if (!sniffer.box.hidden) connected.subscribe(SNIFFER_TOPICS, { qos: 1 });
     },
     onMessage(topic, payloadText) {
       sniffer.sniff(topic, payloadText);
       const payload = parse(payloadText);
       if (payload === undefined) return;
-      if (topic === 'gateway/status') {
+      if (topic === 'tlm/time') {
+        gameClock.push({ at: performance.now(), ut: payload.ut, warp: payload.warp || 1, paused: payload.paused });
+      } else if (topic === 'gateway/status') {
         const vessel = payload.vessel ? ` · ${payload.vessel}` : '';
         document.getElementById('plant').textContent = `plant: ${payload.plant || '?'} ${payload.connected ? '✓' : '✗'}${vessel}`;
       } else if (topic === 'cockpit/status') {

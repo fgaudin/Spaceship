@@ -57,44 +57,51 @@ import { connectBus, parse, showDemo } from './bus.js';
   const N = 2 * RB, img = g.createImageData(N, N);
   const SKY = [208, 214, 220], GND = [40, 42, 46], HOR = [255, 176, 0];
   const LSKY = [30, 34, 40], LGND = [226, 222, 208];
+  // what never changes from frame to frame, per pixel of the disc: where it is on the ball (x, y, z), its shading and
+  // its edge fade; the pixels outside the disc are left transparent once and for all
+  const inside = [], PX = [], PY = [], PZ = [], SHADE = [], ALPHA = [];
+  for (let j = 0, k = 0; j < N; j++) {
+    const y = (RB - j - 0.5) / RB;
+    for (let i = 0; i < N; i++, k += 4) {
+      const x = (i + 0.5 - RB) / RB, q = x * x + y * y;
+      if (q >= 1) { img.data[k + 3] = 0; continue; }
+      const z = Math.sqrt(1 - q);
+      inside.push(k); PX.push(x); PY.push(y); PZ.push(z);
+      SHADE.push(0.42 + 0.58 * z); ALPHA.push(q > 0.985 ? 255 * (1 - q) / 0.015 : 255);
+    }
+  }
+  const SKY_LINE_POLE = [53, 224, 111], GROUND_LINE_POLE = [255, 59, 47];
   function renderBall(A, dim) {
-    const d = img.data, { f, r, u } = A;
-    let k = 0;
-    for (let j = 0; j < N; j++) {
-      const y = (RB - j - 0.5) / RB;
-      for (let i = 0; i < N; i++, k += 4) {
-        const x = (i + 0.5 - RB) / RB, q = x * x + y * y;
-        if (q >= 1) { d[k + 3] = 0; continue; }
-        const z = Math.sqrt(1 - q);
-        const wn = x * r[0] + y * u[0] + z * f[0], we = x * r[1] + y * u[1] + z * f[1], wu = x * r[2] + y * u[2] + z * f[2];
-        const el = Math.asin(clamp(wu, -1, 1)) * R2D, az = Math.atan2(we, wn) * R2D;
-        const sky = el >= 0;
-        let c = sky ? SKY : GND;
-        const lc = sky ? LSKY : LGND;
-        // line coverage: horizon, parallels every 10° (30° heavier), meridians every 30° (90° heavier)
-        const aa = 0.3 / Math.max(z, 0.25);
-        let cov = 0, col = lc;
-        const ae = Math.abs(el);
-        const hz = 1 - (ae - 0.55) / aa;
-        if (hz > 0) { cov = Math.min(1, hz); col = HOR; }
-        else {
-          const m10 = Math.abs(ae - Math.round(ae / 10) * 10), heavy = Math.round(ae / 10) % 3 === 0;
-          let a = 1 - (m10 - (heavy ? 0.42 : 0.22)) / aa;
-          if (ae < 85) {
-            const ce = Math.cos(el * D2R);
-            const m30 = Math.abs(az - Math.round(az / 30) * 30) * ce, card = Math.round(az / 30) % 3 === 0;
-            // minor meridians are dashed between the parallels so the ball does not look like a cage
-            const show = card || (ae % 10) < 5;
-            if (show) a = Math.max(a, 1 - (m30 - (card ? 0.42 : 0.2)) / aa);
-          } else if (ae > 88.2) { a = 1; col = sky ? [53, 224, 111] : [255, 59, 47]; }
-          cov = clamp(a, 0, 1);
-        }
-        const sh = (0.42 + 0.58 * z) * (dim ? 0.45 : 1);
-        d[k] = (c[0] + (col[0] - c[0]) * cov) * sh;
-        d[k + 1] = (c[1] + (col[1] - c[1]) * cov) * sh;
-        d[k + 2] = (c[2] + (col[2] - c[2]) * cov) * sh;
-        d[k + 3] = q > 0.985 ? 255 * (1 - q) / 0.015 : 255;
+    const d = img.data, { f, r, u } = A, dimming = dim ? 0.45 : 1;
+    for (let p = 0; p < inside.length; p++) {
+      const k = inside[p], x = PX[p], y = PY[p], z = PZ[p];
+      const wn = x * r[0] + y * u[0] + z * f[0], we = x * r[1] + y * u[1] + z * f[1], wu = x * r[2] + y * u[2] + z * f[2];
+      const el = Math.asin(wu > 1 ? 1 : wu < -1 ? -1 : wu) * R2D;
+      const sky = el >= 0;
+      const c = sky ? SKY : GND;
+      // line coverage: horizon, parallels every 10° (30° heavier), meridians every 30° (90° heavier)
+      const aa = 0.3 / (z > 0.25 ? z : 0.25);
+      let cov, col = sky ? LSKY : LGND;
+      const ae = el < 0 ? -el : el;
+      const hz = 1 - (ae - 0.55) / aa;
+      if (hz > 0) { cov = hz < 1 ? hz : 1; col = HOR; }
+      else {
+        const m10 = Math.abs(ae - Math.round(ae / 10) * 10), heavy = Math.round(ae / 10) % 3 === 0;
+        let a = 1 - (m10 - (heavy ? 0.42 : 0.22)) / aa;
+        if (ae < 85) {
+          // minor meridians are dashed between the parallels so the ball does not look like a cage
+          const show = (ae % 10) < 5;
+          const az = Math.atan2(we, wn) * R2D, ce = Math.cos(el * D2R);
+          const m30 = Math.abs(az - Math.round(az / 30) * 30) * ce, card = Math.round(az / 30) % 3 === 0;
+          if (card || show) a = Math.max(a, 1 - (m30 - (card ? 0.42 : 0.2)) / aa);
+        } else if (ae > 88.2) { a = 1; col = sky ? SKY_LINE_POLE : GROUND_LINE_POLE; }
+        cov = a < 0 ? 0 : a > 1 ? 1 : a;
       }
+      const sh = SHADE[p] * dimming;
+      d[k] = (c[0] + (col[0] - c[0]) * cov) * sh;
+      d[k + 1] = (c[1] + (col[1] - c[1]) * cov) * sh;
+      d[k + 2] = (c[2] + (col[2] - c[2]) * cov) * sh;
+      d[k + 3] = ALPHA[p];
     }
   }
   const off = document.createElement('canvas');
@@ -240,7 +247,11 @@ import { connectBus, parse, showDemo } from './bus.js';
   }
 
   // ---------- frame ----------
-  let lastDraw = null, lastT = performance.now();
+  // The ball is drawn pixel by pixel (renderBall): redraw it at most MAX_DRAWS_PER_S times a second, and only when it
+  // changed by a tenth of a degree (a third of a pixel on the ball). Telemetry comes 10 times a second; drawing on every
+  // screen refresh took most of a CPU core.
+  const MAX_DRAWS_PER_S = 20;
+  let lastDraw = null, lastT = performance.now(), lastDrawAt = -Infinity;
   const fmt = (x, signed) => (x == null || !isFinite(x)) ? '---.-' : (signed && x >= 0 ? '+' : '') + x.toFixed(1);
   function frame(now) {
     const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
@@ -255,10 +266,11 @@ import { connectBus, parse, showDemo } from './bus.js';
       shown.prograde = target.prograde;
     }
     const a = shown || { pitch: 0, heading: 0, roll: 0, prograde: null };
-    const key = `${a.pitch.toFixed(2)}|${a.heading.toFixed(2)}|${a.roll.toFixed(2)}|${stale}|${ui.ref}${ui.scale}${ui.rate}${ui.markers}|` +
-      `${rates.p.toFixed(2)}${rates.y.toFixed(2)}${rates.r.toFixed(2)}|${a.prograde ? a.prograde.pitch + ',' + a.prograde.heading : ''}`;
-    if (key !== lastDraw) {
+    const key = `${a.pitch.toFixed(1)}|${a.heading.toFixed(1)}|${a.roll.toFixed(1)}|${stale}|${ui.ref}${ui.scale}${ui.rate}${ui.markers}|` +
+      `${rates.p.toFixed(1)}${rates.y.toFixed(1)}${rates.r.toFixed(1)}|${a.prograde ? a.prograde.pitch.toFixed(1) + ',' + a.prograde.heading.toFixed(1) : ''}`;
+    if (key !== lastDraw && now - lastDrawAt >= 1000 / MAX_DRAWS_PER_S) {
       lastDraw = key;
+      lastDrawAt = now;
       const A = axes(a);
       drawCase();
       renderBall(A, stale);
