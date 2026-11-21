@@ -55,7 +55,6 @@ THROTTLE_DISAGREE_ABOVE = 0.005     # game throttle this far from the one comman
 # left after a save load gave 1 kN for minutes, and KSP will not time-warp then)
 THROTTLE_UP_ABOVE = 0.02            # lever position that counts as "throttle up"
 THRUST_LIMIT_STEP = 0.05            # the limiter knob moves the engines in steps of 5 %
-ENGINE_GRID_SIZE = 9                # engine status matrix: 9 × 9 LEDs
 ENGINE_WEAK_BELOW = 0.5             # an engine giving under half the thrust commanded shows amber
 ENGINE_FAIL_AFTER_S = 1.0           # ... and raises ENG FAIL when it lasts this long
 

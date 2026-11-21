@@ -165,7 +165,7 @@ if others:
 # ---------- engines: status matrix, limiter, gimbal, cutoff ----------
 v = sc.active_vessel
 lit = [e for e in v.parts.engines if e.active]
-grid = lambda: ''.join(out('eng', 'mx_eng').get('rows', []))
+grid = lambda: out('eng', 'eng_rosette').get('leds', '')
 check('tlm/engines lists every engine', wait(lambda: len(seen['tlm/engines']['engines']) == len(v.parts.engines)), seen.get('tlm/engines'))
 check('matrix: one white LED per lit, idle engine', wait(lambda: grid().count('w') == len(lit) and grid().count('g') == 0), grid())
 if lit:

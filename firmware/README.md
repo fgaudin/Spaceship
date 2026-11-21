@@ -37,7 +37,8 @@ the windows) and the throttle stand-in are not ESP32 boards and are skipped.
 | Lamp, LED, annunciator cell | MCP23017 output (through a ULN2803 for 12 V lamps); blink drawn locally, 0.5 s | `panel/<bus>/out/<id>` `{"on", "blink"}` |
 | 7-segment display | MAX7219 digits (raw segments, the console's glyphs, right-aligned, the point on the digit before); blink 1 s | `{"text", "blank", "blink"}` |
 | Bar | MAX7219 rows, 8 segments a row | `{"v": 0..1}` |
-| LED matrix | MAX7219 rows, LEDs in reading order (one colour in this draft) | `{"rows": [...]}` |
+| LED matrix | MAX7219 rows, LEDs in reading order (one colour) | `{"rows": [...]}` |
+| Engine rosette | 9 addressable RGB LEDs (WS2812B / SK6812) on GPIO 33, the centre first, brightness 64 / 255 | `{"leds": "g.w......"}` |
 | Alphanumeric | HT16K33, 8 characters a chip, left-aligned | `{"text", "blank", "blink"}` |
 | Buzzer | GPIO 4, a 760 / 600 Hz warble through a transistor | `{"on"}` |
 
@@ -62,6 +63,8 @@ shows up against the console (checked: `eng` and `rdv` give the same hash as the
 - Inputs QoS 1, retained, as the console's; whether the 5 ms scan of up to 8 expanders on I2C keeps up.
 - Several modules (lnd, rdv) need 9 to 11 MAX7219 on one chain: fine for the SPI, worth checking for the 5 V rail
   (the console's budget, Left Alt).
-- The engine matrix is one colour here; the console's has green, amber, red and white (two planes of LEDs, or RGB).
+- The rosette's colours and brightness against the other lamps (white at full glares; 64 / 255 is a guess), and the
+  data line's level: WS2812B wants 5 V logic, the ESP32 gives 3.3 V (often fine at short range; SK6812 or a level
+  shifter otherwise).
 - The ADS1115's reference: a potentiometer on 3.3 V read against GAIN_ONE (4.096 V full scale).
 - No over-the-air update yet: flashing is over USB.

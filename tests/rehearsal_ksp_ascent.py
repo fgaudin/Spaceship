@@ -119,7 +119,7 @@ def stage_on_flameout():
     """FLAMEOUT caution → STAGE, then give the new engine list a moment."""
     if out('eng', 'cw_flameout').get('on'):
         press('eng', 'stage')
-        log(f"FLAMEOUT → STAGE (stage display {out('eng', 'disp_stage').get('text')}, burning {out('eng', 'disp_eng_on').get('text')})")
+        log(f"FLAMEOUT → STAGE (stage display {out('eng', 'disp_stage').get('text')}, burning {out('eng', 'eng_rosette').get('leds', '').count('g')})")
         time.sleep(1.5)
 
 
@@ -132,7 +132,7 @@ for panel, control, value in (('eng', 'cb_main', 1), ('eng', 'throttle', 0), ('e
 press('cmp', 'pad_clr')
 if not wait(lambda: seen['tlm/vessel']['name'] == vessel.name and read_display('ALT') is not None, 15):
     problem('no telemetry on the panels after loading the save')
-log(f"on the pad: stage {out('eng', 'disp_stage').get('text')}, engines to ignite {''.join(out('eng', 'mx_eng').get('rows', [])).count('w')}, "
+log(f"on the pad: stage {out('eng', 'disp_stage').get('text')}, engines to ignite {out('eng', 'eng_rosette').get('leds', '').count('w')}, "
     f"TWR {out('eng', 'disp_twr').get('text')}, stage Δv {out('eng', 'disp_dv').get('text')}")
 before_launch_alarms = list(seen.get('cw/state', {}).get('active', []))
 alarms_seen.clear()                 # what came on during the save load is not this flight's

@@ -12,6 +12,8 @@ static const uint8_t MCP_COUNT = 1;
 static const uint8_t ADS_COUNT = 0;
 static const uint8_t MAX7219_COUNT = 9;
 static const uint8_t HT16K33_COUNT = 0;
+static const uint8_t RGB_LED_COUNT = 0;
+static const uint8_t RGB_GPIO = 33;
 
 static const SwitchConfig SWITCHES[] = {
   {"panel/eng/in/alt_ref", 0, false},
@@ -77,3 +79,8 @@ static const BuzzerConfig BUZZERS[] = {
   {}
 };
 static const uint8_t BUZZERS_COUNT = 0;
+
+static const RosetteConfig ROSETTES[] = {
+  {}
+};
+static const uint8_t ROSETTES_COUNT = 0;

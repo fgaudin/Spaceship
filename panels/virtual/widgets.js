@@ -336,6 +336,29 @@ export function createWidgetBuilders(registry, publishInput) {
       return [matrix];
     },
 
+    /* The engine rosette: RGB lamps behind frosted acrylic, one in the centre and a ring of 8 clockwise from the top.
+       Payload {leds: "g.w..."}, one character per lamp, the centre first: g, a, r, w, or . for dark. */
+    rosette(item) {
+      const COLOR_CLASSES = { g: 'green', a: 'amber', r: 'red', w: 'white' };
+      const lampMm = item.lamp_mm || 10, radiusMm = item.radius_mm || 17;
+      const sizeMm = 2 * radiusMm + lampMm;
+      const rosette = createElement('div', 'rosette');
+      Object.assign(rosette.style, { width: `${sizeMm}mm`, height: `${sizeMm}mm` });
+      const lamps = [0, 1, 2, 3, 4, 5, 6, 7, 8].map((index) => {
+        const lamp = createElement('i');
+        const angle = (index - 1) * Math.PI / 4;             // clockwise from the top
+        const [dx, dy] = index === 0 ? [0, 0] : [radiusMm * Math.sin(angle), -radiusMm * Math.cos(angle)];
+        Object.assign(lamp.style, { width: `${lampMm}mm`, height: `${lampMm}mm`,
+          left: `${sizeMm / 2 + dx - lampMm / 2}mm`, top: `${sizeMm / 2 + dy - lampMm / 2}mm` });
+        rosette.appendChild(lamp);
+        return lamp;
+      });
+      outputs.set(item.out, (payload) => lamps.forEach((lamp, index) => {
+        lamp.className = COLOR_CLASSES[String(payload.leds || '')[index]] || '';
+      }));
+      return [rosette];
+    },
+
     /* An alphanumeric LED display (a row of 14-segment or dot-matrix characters): payload {text, blank}. */
     alpha(item) {
       const CHARACTER_WIDTH_REM = 0.86, PADDING_REM = 1;

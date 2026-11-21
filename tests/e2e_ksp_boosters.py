@@ -52,7 +52,7 @@ def press(ctl):
 
 
 out = lambda n: seen.get(f'panel/eng/out/{n}') or {}
-matrix = lambda: ''.join(out('mx_eng').get('rows') or [])
+matrix = lambda: out('eng_rosette').get('leds') or ''
 engines = lambda: seen['tlm/engines']['engines']
 dry = lambda: [engine for engine in engines() if engine['on'] and not engine['fuel']]
 burning = lambda: [engine for engine in engines() if engine['on'] and engine['fuel']]

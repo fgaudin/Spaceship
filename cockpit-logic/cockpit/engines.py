@@ -1,29 +1,36 @@
-"""Engine status matrix: one LED per engine, placed as the engines sit across the vessel, so any number and layout of
-engines fits without a screen.
+"""Engine status rosette: nine RGB lamps, one in the centre and a ring of eight, the engines placed by where they sit
+across the vessel: an engine on the axis lights the centre, the others the ring lamp nearest their angle (clockwise
+from the top, as seen on the panel). Engines that share a lamp show the worst of their states. It replaced a 9 × 9
+LED matrix: hard to source, and not pretty.
 
-Colours: g = giving thrust, w = lit but idle (or next to ignite, before any engine is lit), a = has fuel but gives
-well under the thrust commanded, r = flamed out, or gone (it was burning in this stage and is no longer listed).
+Colours: g = giving thrust, w = lit but idle (or next to ignite, before any engine is lit): white shows how many
+engines the stage has; a = has fuel but gives well under the thrust commanded; r = flamed out, or gone (it was
+burning in this stage and is no longer listed); . = no engine there, dark.
 """
+import math
 from dataclasses import dataclass, field
 
-from .settings import ENGINE_GRID_SIZE, ENGINE_WEAK_BELOW, STANDARD_PRESSURE_PA, THROTTLE_UP_ABOVE
+from .settings import ENGINE_WEAK_BELOW, STANDARD_PRESSURE_PA, THROTTLE_UP_ABOVE
 
 THRUSTING, IDLE, WEAK, DEAD, OFF = 'g', 'w', 'a', 'r', '.'
 SAME_PLACE_M = 0.05         # a layout narrower than this is a single engine on the axis
+ON_AXIS_SHARE = 0.3         # an engine this close to the axis, as a share of the outermost one's distance: the centre
+LAMPS = 9                   # the centre, then the ring of 8 clockwise from the top
+WORST_FIRST = (DEAD, WEAK, THRUSTING, IDLE)
 
 
 @dataclass
 class EngineSurvey:
-    cells: dict = field(default_factory=dict)       # (row, column) → colour
+    lamps: dict = field(default_factory=dict)       # lamp index → colour
     engine_lost: bool = False
+    colours: list = field(default_factory=list)     # every engine's colour (lamps may share engines: the alarms count these)
 
     def count(self, colour):
-        return sum(1 for cell_colour in self.cells.values() if cell_colour == colour)
+        return self.colours.count(colour)
 
-    def rows(self):
-        """The matrix as the protocol wants it: one string per row, one character per LED."""
-        size = ENGINE_GRID_SIZE
-        return [''.join(self.cells.get((row, column), OFF) for column in range(size)) for row in range(size)]
+    def leds(self):
+        """The rosette as the protocol wants it: one character per lamp, the centre first."""
+        return ''.join(self.lamps.get(index, OFF) for index in range(LAMPS))
 
 
 class EngineMonitor:
@@ -35,7 +42,9 @@ class EngineMonitor:
 
     def survey(self, engine_telemetry, vessel):
         """`engine_telemetry`: tlm/engines; `vessel`: tlm/vessel."""
-        engines = engine_telemetry.get('engines') or []
+        # an engine held shut down because its capsule is not the one flown (docked) is not this capsule's: left out,
+        # or it would show as lost once it had burned in the same stage (a red lamp and ENG FAIL in the docked stack)
+        engines = [engine for engine in engine_telemetry.get('engines') or [] if not engine.get('held')]
         # The stage the engine list was read in. tlm/vessel has the stage number sooner than tlm/engines has the new
         # list: just after staging, the vessel's number with the old list would make the dropped engines look lost.
         stage = engine_telemetry.get('stage', vessel.get('stage'))
@@ -54,7 +63,7 @@ class EngineMonitor:
 
         points = [(position_of(engine), colour_of(engine, throttle)) for engine in shown]
         points += [(position, DEAD) for position in lost_positions]
-        return EngineSurvey(lay_out(points), bool(lost_positions))
+        return EngineSurvey(lay_out(points), bool(lost_positions), [colour for _, colour in points])
 
 
 def still_in_use(lit_engines):
@@ -84,21 +93,26 @@ def colour_of(engine, throttle):
     return THRUSTING if thrust > 0 else IDLE
 
 
+def lamp_of(x, z, widest):
+    """The rosette lamp for an engine at (x right, z down) across the vessel: 0 on the axis, else 1..8 clockwise from
+    the top by its angle."""
+    distance = math.hypot(x, z)
+    if widest <= SAME_PLACE_M or distance <= ON_AXIS_SHARE * widest:
+        return 0
+    angle = math.degrees(math.atan2(x, -z)) % 360             # 0 at the top, clockwise
+    return 1 + round(angle / 45) % 8
+
+
 def lay_out(points):
-    """Place each ((x, z), colour) on the grid, scaled so the outermost engine is on the edge. Engines that would
-    share a cell take the nearest free one; inner engines are placed first."""
-    size, centre = ENGINE_GRID_SIZE, ENGINE_GRID_SIZE // 2
-    widest = max([max(abs(x), abs(z)) for (x, z), _ in points] or [0.0])
-    cells = {}
-    inner_first = sorted(points, key=lambda point: (abs(point[0][0]) + abs(point[0][1]), point[0]))
-    for (x, z), colour in inner_first:
-        row = centre + (round(z / widest * centre) if widest > SAME_PLACE_M else 0)
-        column = centre + (round(x / widest * centre) if widest > SAME_PLACE_M else 0)
-        free_cells = [(r, c) for r in range(size) for c in range(size) if (r, c) not in cells]
-        if free_cells:
-            nearest = min(free_cells, key=lambda cell: ((cell[0] - row) ** 2 + (cell[1] - column) ** 2, cell))
-            cells[nearest] = colour
-    return cells
+    """{lamp: colour} for each ((x, z), colour); a lamp with several engines shows the worst of them."""
+    widest = max([math.hypot(x, z) for (x, z), _ in points] or [0.0])
+    lamps = {}
+    for (x, z), colour in points:
+        lamp = lamp_of(x, z, widest)
+        shown = lamps.get(lamp)
+        if shown is None or WORST_FIRST.index(colour) < WORST_FIRST.index(shown):
+            lamps[lamp] = colour
+    return lamps
 
 
 def propulsion(engine_telemetry, vessel, flight):

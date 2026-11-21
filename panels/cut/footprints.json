@@ -69,6 +69,11 @@
       "mode": "holes", "hole": 3.1, "pitch": 4.5, "pad": 2,
       "note": "mode 'window' cuts one window over the whole grid instead (an LED matrix module behind)"
     },
+    "rosette": {
+      "part": "engine rosette: 9 addressable RGB LEDs behind frosted acrylic discs, a centre and a ring of 8",
+      "pad": 2,
+      "note": "hole size and ring radius come from the item (lamp_mm, radius_mm); behind: an opaque spacer with the same holes keeps each disc's light to itself"
+    },
     "alpha": {
       "part": "small character display (OLED or LCD), size from the virtual console",
       "char_pitch": 3.65, "height": 9.5, "pad": 2, "corner_radius": 0.5,

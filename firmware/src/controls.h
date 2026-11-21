@@ -58,3 +58,8 @@ struct BuzzerConfig {
   const char *topic;
   uint8_t gpio;
 };
+
+struct RosetteConfig {      // the engine rosette: addressable RGB LEDs on the RGB chain, the centre first, then the ring
+  const char *topic;
+  uint8_t firstLed, leds;
+};

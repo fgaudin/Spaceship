@@ -74,7 +74,13 @@
       "v": 5
     },
     "typical_on": 0.3,
-    "note": "led: a 5 mm indicator LED (above a switch, or alone); lamp: a lit push button, 12 V with its resistor built in (as many are sold); cell: an annunciator cell, a light box with plain LEDs behind its legend (leds per cell, ma per LED). typical_on: the share lit in flight. Change a v to move that load to another rail: above 5 V it goes through ULN2803 drivers"
+    "note": "led: a 5 mm indicator LED (above a switch, or alone); lamp: a lit push button, 12 V with its resistor built in (as many are sold); cell: an annunciator cell, a light box with plain LEDs behind its legend (leds per cell, ma per LED). typical_on: the share lit in flight. Change a v to move that load to another rail: above 5 V it goes through ULN2803 drivers",
+    "rgb": {
+      "ma": 20,
+      "max_ma": 60,
+      "v": 5,
+      "note": "an addressable RGB LED (WS2812B / SK6812): about 20 mA for one colour at full, 60 mA white (all three); one data pin drives the chain"
+    }
   },
   "pins": {
     "i2c": 2,

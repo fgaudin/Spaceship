@@ -5,6 +5,26 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-21 — STATION moves the whole crew; the engines follow STATION; one mission clock
 
+- **Engine rosette: no false ENG FAIL docked, and engines placed in the right frame** (gateway `parts_watch.py`, cockpit
+  `engines.py`). Found in the docked stack (`full-extracted`, flown from the CM): the centre lamp red and ENG FAIL on,
+  and the Cheetah on the ring's bottom lamp. The lander's Terrier, held shut down by engine sharing, had burned under
+  the same vessel name and stage number, so the cockpit took it for an engine lost: `tlm/engines` now marks such an
+  engine `held`, and the cockpit leaves it out (not shown, not lost). The positions were read once, when the part
+  streams were built, in the frame of the part flown then; after a STATION switch they were in the wrong frame (the
+  Cheetah 32 m off an axis it sits on): they are streamed now. Checked in KSP: the Cheetah white in the centre, no
+  ENG FAIL.
+
+- **The engine matrix became a rosette; BURNING is gone; STAGE and STAGE ARM swapped** (`protocol/panels/eng.json`,
+  cockpit `engines.py`, `panels/engine_panel.py`; `eng_rosette` replaces `mx_eng` and `disp_eng_on`). A 9 × 9 matrix
+  was hard to source and not pretty; one lamp per engine does not fit every rocket. Now 9 RGB lamps behind 10 mm
+  frosted discs, a centre and a ring of 8: an engine on the axis (within 30 % of the outermost one's distance) lights
+  the centre, the others the ring lamp nearest their angle; lamps shared by several engines show the worst state
+  (red, amber, green, white). White, lit but idle or next to ignite, shows how many engines the stage has. The
+  alarms count the engines themselves, not the lamps. BURNING was the count of green lamps. The faceplate tool
+  (real part sizes, `panels/cut/`) needed the rows spread: STAGE at 73 mm, the rosette at 126, ABORT at 176. The
+  console's budget counts addressable RGB LEDs (one GPIO; 20 mA a colour, 60 mA white), the firmware drives them
+  with Adafruit NeoPixel (GPIO 33).
+
 - **One command for the stack: `./capsule start [ksp|mock]`, `stop`, `restart`, `rebuild`, `status`, `logs`.** Starting
   a plant stops the other (both write `tlm/*`); the mock plant moved to a compose profile of its own (`mock`), so
   a plain `docker compose up` no longer starts it beside the KSP gateway.

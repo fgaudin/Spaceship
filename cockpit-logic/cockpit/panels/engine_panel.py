@@ -6,7 +6,7 @@ import math
 from .. import settings as S
 from ..alarms import ALARMS, stage_fuel_fraction
 from ..display_format import fit_number, format_mission_time
-from ..engines import IDLE, OFF, THRUSTING
+from ..engines import IDLE, LAMPS as ROSETTE_LAMPS, OFF
 from ..messages import PanelOutputs, switch_lamp
 from ..performance import (current_thrust_to_weight, hover_time, speeds_in_reference, stage_delta_v, thrust_to_weight,
                            time_to_impact)
@@ -22,7 +22,7 @@ SPEED_REF_SAS_BUTTONS = ('sas_pro', 'sas_retro')     # the SAS modes that follow
 # display → (digits, the dashes shown without telemetry)
 DISPLAYS = {'disp_alt': 8, 'disp_hs': 5, 'disp_vs': 5, 'disp_speed': 5, 'disp_g': 4, 'disp_q': 4, 'disp_hover': 4,
             'disp_impact': 5, 'disp_drift_right': 5, 'disp_drift_up': 5, 'disp_met': 7,
-            'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5, 'disp_twr': 4, 'disp_twr_max': 4, 'disp_thrust_pct': 3, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
+            'disp_stage': 2, 'disp_dv': 5, 'disp_twr': 4, 'disp_twr_max': 4, 'disp_thrust_pct': 3, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
             'disp_rate_yaw': 4, 'disp_rate_roll': 4}
 BARS = ['bar_fuel', 'bar_thrust']
 
@@ -117,11 +117,11 @@ def render(cockpit, wanted, active_alarms, unacknowledged_alarms):
 
     if not powered:
         outputs.all_dark(LAMPS, DISPLAYS, BARS)
-        outputs.raw('mx_eng', {'rows': [OFF * S.ENGINE_GRID_SIZE] * S.ENGINE_GRID_SIZE})
+        outputs.raw('eng_rosette', {'leds': OFF * ROSETTE_LAMPS})
         return
     if lamp_test:
         outputs.all_lit(LAMPS, DISPLAYS, BARS)
-        outputs.raw('mx_eng', {'rows': [IDLE * S.ENGINE_GRID_SIZE] * S.ENGINE_GRID_SIZE})
+        outputs.raw('eng_rosette', {'leds': IDLE * ROSETTE_LAMPS})
         return
 
     # caution and warning: an alarm blinks until its master button is pressed, then stays steady while it lasts
@@ -232,7 +232,7 @@ def _render_displays(cockpit, outputs):
             outputs.text(display, '--.--.--' if display == 'disp_met' else '-' * digits)
         outputs.bar('bar_fuel', 0.0)
         outputs.bar('bar_thrust', 0.0)
-        outputs.raw('mx_eng', {'rows': [OFF * S.ENGINE_GRID_SIZE] * S.ENGINE_GRID_SIZE})
+        outputs.raw('eng_rosette', {'leds': OFF * ROSETTE_LAMPS})
         return
     _render_ascent_descent(cockpit, outputs)
     outputs.text('disp_dv', fit_number(stage_delta_v(cockpit), 0, DISPLAYS['disp_dv']))
@@ -252,8 +252,5 @@ def _render_displays(cockpit, outputs):
     thrust_available = vessel.get('thrust_avail') or 0
     outputs.bar('bar_thrust', vessel.get('thrust', 0) / thrust_available if thrust_available > 0 else 0.0)
 
-    survey = cockpit.survey_engines()
-    outputs.raw('mx_eng', {'rows': survey.rows()})
-    engines_reported = 'tlm/engines' in cockpit.telemetry
-    outputs.text('disp_eng_on', f'{survey.count(THRUSTING):2d}' if engines_reported else '--')
+    outputs.raw('eng_rosette', {'leds': cockpit.survey_engines().leds()})
 

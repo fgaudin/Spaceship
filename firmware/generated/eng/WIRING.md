@@ -1,6 +1,6 @@
 # eng: PROPULSION · FLIGHT CONTROL
 
-Generated from `protocol/panels/eng.json` by `firmware/tools/gen_module.py`. Chips: 3 MCP23017, 1 ADS1115, 5 MAX7219, 0 HT16K33.
+Generated from `protocol/panels/eng.json` by `firmware/tools/gen_module.py`. Chips: 3 MCP23017, 1 ADS1115, 3 MAX7219, 0 HT16K33, 9 addressable RGB LEDs.
 
 | Panel | Control | Kind | Where |
 |---|---|---|---|
@@ -52,9 +52,8 @@ Generated from `protocol/panels/eng.json` by `firmware/tools/gen_module.py`. Chi
 | STAGING · ABORT | STAGE ARM | switch | MCP 2 (0x22) GPA5 to GND |
 | STAGING · ABORT | STAGE | button | MCP 2 (0x22) GPA6 to GND |
 | STAGING · ABORT | STAGE (lamp) | lamp | MCP 2 (0x22) GPA7 → ULN2803 if 12 V |
-| STAGING · ABORT | ENGINE STATUS | LED matrix | MAX7219 3.. rows from 0, 81 LEDs in reading order |
-| STAGING · ABORT | BURNING | 7-segment | MAX7219 2 digits 4..5 |
-| STAGING · ABORT | THRUST | bar | MAX7219 2 rows 6..7 |
+| STAGING · ABORT | ENGINES | RGB rosette | GPIO 33 data → LEDs 0..8 of the chain: centre, then the ring clockwise from the top |
+| STAGING · ABORT | THRUST | bar | MAX7219 2 rows 4..5 |
 | STAGING · ABORT | ABORT ARM | switch | MCP 2 (0x22) GPB0 to GND |
 | STAGING · ABORT | ABORT | button | MCP 2 (0x22) GPB1 to GND |
 | STAGING · ABORT | ABORT (lamp) | lamp | MCP 2 (0x22) GPB2 → ULN2803 if 12 V |

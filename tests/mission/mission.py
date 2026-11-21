@@ -54,7 +54,7 @@ def launch():
     c.stage(['ENGINES', 'CLAMPS'], 'liftoff')
     if not c.wait(lambda: (c.num('eng', 'disp_speed') or 0) > 5, 15):
         raise Abort('no liftoff')
-    c.log(f'LIFTOFF: TWR {c.text("eng", "disp_twr")}, engines burning {c.text("eng", "disp_eng_on")}')
+    c.log(f'LIFTOFF: TWR {c.text("eng", "disp_twr")}, engines burning {c.burning()}')
 
     def pitch_for(alt_m):
         return max(3.0, 90.0 - 87.0 * math.sqrt(max(0.0, alt_m - 1000) / 55000.0))
@@ -71,7 +71,7 @@ def launch():
             c.stand_in('prograde marker read from tlm/attitude (the FDAI ball shows it; no figure on a panel)')
             target_pitch = max(prograde['pitch'] - 4.0, min(prograde['pitch'] + 4.0, target_pitch))
         c.hold(target_pitch, 90)
-        if c.lit('eng', 'cw_flameout') or (c.num('eng', 'disp_eng_on') or 0) == 0:
+        if c.lit('eng', 'cw_flameout') or c.burning() == 0:
             c.stage(why='flameout on the ascent')
             time.sleep(1.0)
         # the tower and the fairing go once out of the thick air, when NEXT STAGE says that is what STAGE does
@@ -353,8 +353,8 @@ def td():
             break
         c.log(f'NEXT STAGE {preview or "dark"} at stage {c.text("eng", "disp_stage")}: nothing of ours, stage past it')
         c.stage(preview, 'an empty stage')
-    c.check('the Cheetah is lit (white on the engine matrix)', 'w' in ''.join(c.out('eng', 'mx_eng').get('rows', [])),
-            c.out('eng', 'mx_eng'))
+    c.check('the Cheetah is lit (white on the engine rosette)', 'w' in c.out('eng', 'eng_rosette').get('leds', ''),
+            c.out('eng', 'eng_rosette'))
     c.pin('eng', 'rcs', 1)
     c.check('RCS LED on', c.wait(lambda: c.lit('eng', 'led_rcs'), 5), c.out('eng', 'led_rcs'))
     # target the stack, then back away along the nose to about 25 m
@@ -561,8 +561,8 @@ def undock_lm():
     c.pin('eng', 'rcs', 0)
     if 'ENGINES' in c.next_stage():
         c.stage(c.next_stage(), 'the lander\'s Terrier')
-    c.check('the Terrier is lit (white on the matrix)', 'w' in ''.join(c.out('eng', 'mx_eng').get('rows', [])),
-            c.out('eng', 'mx_eng'))
+    c.check('the Terrier is lit (white on the rosette)', 'w' in c.out('eng', 'eng_rosette').get('leds', ''),
+            c.out('eng', 'eng_rosette'))
     c.log(f'lander stage Δv {c.text("eng", "disp_dv")}, HOVER TIME {c.text("eng", "disp_hover")} s, '
           f'RCS ΔV {c.text("sys", "disp_rcs_dv")}, EC {c.text("sys", "disp_ec")} ({c.text("sys", "disp_ec_rate")}/s)')
     c.wait(lambda: (c.num('rdv', 'disp_range') or 0) > 200 or True, 1)

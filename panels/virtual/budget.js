@@ -6,7 +6,7 @@ const ceil = (value, per) => Math.ceil(value / per);
 
 /* The counts of one module. */
 export function moduleNeeds(module) {
-  const needs = { inputs: 0, analog: 0, leds: 0, lamps: 0, cells: 0, rows: 0, chars: 0, buzzer: 0 };
+  const needs = { inputs: 0, analog: 0, leds: 0, lamps: 0, cells: 0, rows: 0, chars: 0, buzzer: 0, rgb: 0 };
   for (const panel of module.panels) {
     for (const item of panel.items || []) {
       if (item.led) needs.leds += 1;
@@ -25,6 +25,7 @@ export function moduleNeeds(module) {
         case 'seg7': needs.rows += item.digits || 0; break;
         case 'bar': needs.rows += ceil(item.segments || 0, 8); break;
         case 'matrix': needs.rows += ceil((item.rows || 0) * (item.cols || 0), 8); break;
+        case 'rosette': needs.rgb += 9; break;          // addressable RGB LEDs: one data pin for the chain
         case 'alpha': needs.chars += item.chars || 0; break;
         case 'buzzer': needs.buzzer += 1; break;
         default: break;
@@ -50,7 +51,7 @@ export function moduleBudget(module, hardware) {
     ads1115: ceil(needs.analog, chips.ads1115.channels),
   };
   const usesI2c = count.mcp23017 + count.ht16k33 + count.ads1115 > 0;
-  const espPins = (usesI2c ? pins.i2c : 0) + (count.max7219 ? pins.spi : 0) + needs.buzzer * pins.buzzer;
+  const espPins = (usesI2c ? pins.i2c : 0) + (count.max7219 ? pins.spi : 0) + needs.buzzer * pins.buzzer + (needs.rgb ? 1 : 0);
   // watts on each rail: [in flight, at lamp test]
   const rails = {};
   const add = (volts, typicalMa, maxMa) => {
@@ -64,6 +65,7 @@ export function moduleBudget(module, hardware) {
   add(lampV, needs.lamps * lamps.lamp.ma * lamps.typical_on, needs.lamps * lamps.lamp.ma);
   const cellMa = needs.cells * lamps.cell.leds * lamps.cell.ma;
   add(cellV, cellMa * lamps.typical_on, cellMa);
+  if (needs.rgb) add(5, needs.rgb * lamps.rgb.ma, needs.rgb * lamps.rgb.max_ma);      // white at lamp test: all three
   for (const volts of Object.keys(rails)) if (!rails[volts][1]) delete rails[volts];
   const board = boards[module.board] || {};
   const total = (index) => Object.values(rails).reduce((sum, rail) => sum + rail[index], 0) + (board.logic_w || 0);
@@ -85,7 +87,7 @@ export const overBudget = (budget) => overLimits(budget).length > 0;
 export function describeBudget(budget) {
   const { needs, count, espPins, board, rails } = budget;
   const io = [[needs.inputs, 'in'], [needs.analog, 'analog'], [needs.leds, 'LEDs'], [needs.lamps, 'lamps'], [needs.cells, 'cells'],
-    [needs.rows, 'display rows'], [needs.chars, 'chars']].filter(([n]) => n).map(([n, what]) => `${n} ${what}`);
+    [needs.rows, 'display rows'], [needs.chars, 'chars'], [needs.rgb, 'RGB LEDs']].filter(([n]) => n).map(([n, what]) => `${n} ${what}`);
   const parts = Object.entries(count).filter(([, n]) => n).map(([chip, n]) => `${n}× ${chip.toUpperCase()}`);
   const power = Object.entries(rails).map(([volts, [typical, test]]) => {
     const limit = board.rails_w ? ` / ${board.rails_w[volts] ?? 0}` : '';

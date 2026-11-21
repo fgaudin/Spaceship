@@ -4,14 +4,16 @@
 
 #define MODULE_ID "eng"
 #define FW_VERSION "fw-0.1"
-#define CONFIG_HASH "dcfd3b55"
+#define CONFIG_HASH "4e9c3a31"
 #define STATUS_TOPIC "panel/eng/status"
 
 static const char *const BUSES[] = {"eng"};
 static const uint8_t MCP_COUNT = 3;
 static const uint8_t ADS_COUNT = 1;
-static const uint8_t MAX7219_COUNT = 5;
+static const uint8_t MAX7219_COUNT = 3;
 static const uint8_t HT16K33_COUNT = 0;
+static const uint8_t RGB_LED_COUNT = 9;
+static const uint8_t RGB_GPIO = 33;
 
 static const SwitchConfig SWITCHES[] = {
   {"panel/eng/in/master_alarm", 0, true},
@@ -85,20 +87,19 @@ static const Seg7Config SEG7S[] = {
   {"panel/eng/out/disp_twr", 1, 2, 4},
   {"panel/eng/out/disp_twr_max", 2, 0, 4},
   {"panel/eng/out/disp_stage", 1, 6, 2},
-  {"panel/eng/out/disp_eng_on", 2, 4, 2},
 };
-static const uint8_t SEG7S_COUNT = 6;
+static const uint8_t SEG7S_COUNT = 5;
 
 static const BarConfig BARS[] = {
   {"panel/eng/out/bar_fuel", 1, 0, 10},
-  {"panel/eng/out/bar_thrust", 2, 6, 10},
+  {"panel/eng/out/bar_thrust", 2, 4, 10},
 };
 static const uint8_t BARS_COUNT = 2;
 
 static const MatrixConfig MATRICES[] = {
-  {"panel/eng/out/mx_eng", 3, 0, 9, 9},
+  {}
 };
-static const uint8_t MATRICES_COUNT = 1;
+static const uint8_t MATRICES_COUNT = 0;
 
 static const AlphaConfig ALPHAS[] = {
   {}
@@ -109,3 +110,8 @@ static const BuzzerConfig BUZZERS[] = {
   {"panel/eng/out/buzzer", 4},
 };
 static const uint8_t BUZZERS_COUNT = 1;
+
+static const RosetteConfig ROSETTES[] = {
+  {"panel/eng/out/eng_rosette", 0, 9},
+};
+static const uint8_t ROSETTES_COUNT = 1;

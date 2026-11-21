@@ -228,30 +228,43 @@ def eng(x, z, thrust=100.0, on=True, fuel=True, stage=3):
     return {'x': x, 'z': z, 'on': on, 'thrust': thrust, 'max': 100.0, 'fuel': fuel, 'stage': stage}
 
 
-def test_engine_matrix_layout_and_failures():
+def leds(c):
+    return c.published[O + 'eng_rosette']['leds']
+
+
+def test_engine_rosette_layout_and_failures():
     c = Cockpit(); fed(c)
+    # a cross of four around a centre engine (x right, z down): centre, then the ring clockwise from the top
     five = [eng(0, 0), eng(1.3, 0), eng(-1.3, 0), eng(0, 1.3), eng(0, -1.3), eng(0, 0, on=False, thrust=0, stage=2)]
     engines(c, 1, five)
-    rows = c.published[O + 'mx_eng']['rows']
-    assert rows[4] == 'g...g...g' and rows[0][4] == 'g' and rows[8][4] == 'g' and sum(r.count('g') for r in rows) == 5
-    assert c.published[O + 'disp_eng_on']['text'] == ' 5'
+    assert leds(c) == 'gg.g.g.g.'
     # one engine has fuel but no thrust: amber at once, ENG FAIL after a second
     five[1] = eng(1.3, 0, thrust=0)
-    out = engines(c, 2, five)
-    assert c.published[O + 'mx_eng']['rows'][4] == 'g...g...a' and 'cw_eng_fail' not in c.active_alarms()
+    engines(c, 2, five)
+    assert leds(c) == 'gg.a.g.g.' and 'cw_eng_fail' not in c.active_alarms()
     engines(c, 3.5, five)
     assert c.published[O + 'cw_eng_fail']['on'] and c.published[O + 'master_alarm']['on']
     # flameout: red, a caution (the cue to stage), not a failure
     c = Cockpit(); fed(c)
     engines(c, 1, [eng(0, 0), eng(1, 0, thrust=0, fuel=False)])
-    assert c.published[O + 'mx_eng']['rows'][4] == '....g...r' and c.published[O + 'cw_flameout']['on']
+    assert leds(c) == 'g..r.....' and c.published[O + 'cw_flameout']['on']
     assert not c.published[O + 'cw_eng_fail']['on']
     # an engine that disappears without staging is lost: red, ENG FAIL
     engines(c, 2, [eng(0, 0)])
-    assert c.published[O + 'mx_eng']['rows'][4] == '....g...r' and c.published[O + 'cw_eng_fail']['on']
+    assert leds(c) == 'g..r.....' and c.published[O + 'cw_eng_fail']['on']
     # after staging the display starts again
     engines(c, 3, [eng(0, 0, stage=2)], stage=2)
-    assert c.published[O + 'mx_eng']['rows'][4] == '....g....' and not c.published[O + 'cw_eng_fail']['on']
+    assert leds(c) == 'g........' and not c.published[O + 'cw_eng_fail']['on']
+
+
+def test_rosette_shares_a_lamp_with_the_worst_state_and_counts_every_engine():
+    c = Cockpit(); fed(c)
+    # twelve engines in a ring: lamps shared; one flamed out shows red on its lamp, the alarm still sees it
+    ring = [eng(2 * math.sin(math.radians(a)), -2 * math.cos(math.radians(a))) for a in range(0, 360, 30)]
+    ring[0] = eng(0, -2, thrust=0, fuel=False)                     # the top one
+    engines(c, 1, ring)
+    assert leds(c)[0] == '.' and leds(c)[1] == 'r' and leds(c).count('g') == 7
+    assert c.published[O + 'cw_flameout']['on']
 
 
 def test_boosters_flamed_out_then_staged_are_not_failures():
@@ -260,13 +273,13 @@ def test_boosters_flamed_out_then_staged_are_not_failures():
     before_staging = {'engines': [core, *boosters], 'stage': 3, 'limit': 1.0, 'gimbal_locked': False}
     c.handle('tlm/engines', before_staging, 1)
     fed(c, 1, vessel={'throttle': 1.0, 'stage': 3})
-    assert c.published[O + 'mx_eng']['rows'][4] == 'r...g...r' and c.published[O + 'cw_flameout']['on']
+    assert leds(c) == 'g..r...r.' and c.published[O + 'cw_flameout']['on']
     # staging: the vessel's stage number arrives before the new engine list
     fed(c, 2, vessel={'throttle': 1.0, 'stage': 2})
     assert not c.published[O + 'cw_eng_fail']['on']
     c.handle('tlm/engines', {**before_staging, 'engines': [core], 'stage': 2}, 2.5)
     fed(c, 4, vessel={'throttle': 1.0, 'stage': 2})
-    assert c.published[O + 'mx_eng']['rows'][4] == '....g....'
+    assert leds(c) == 'g........'
     assert not c.published[O + 'cw_eng_fail']['on'] and not c.published[O + 'cw_flameout']['on']
 
 
@@ -274,14 +287,25 @@ def test_spent_engine_still_attached_is_not_shown():
     c = Cockpit(); fed(c)
     # the first stage ran dry and stays attached while the engine of the next stage burns
     engines(c, 1, [eng(1, 0, thrust=0, fuel=False, stage=3), eng(0, 0, stage=2)], stage=2)
-    assert c.published[O + 'mx_eng']['rows'][4] == '....g....'
+    assert leds(c) == 'g........'
     assert not c.published[O + 'cw_flameout']['on'] and not c.published[O + 'cw_eng_fail']['on']
+
+
+def test_an_engine_held_for_the_other_capsule_is_neither_shown_nor_lost():
+    c = Cockpit(); fed(c)
+    # flown from the lander: its Terrier burns; then STATION to the CM: the Terrier is held shut down, the Cheetah idles
+    engines(c, 1, [eng(0, 0)])
+    engines(c, 2, [{**eng(0, 0, on=False, thrust=0), 'held': True}, eng(0, 0, thrust=0, stage=-1)], throttle=0.0)
+    assert leds(c) == 'w........'
+    assert not c.published[O + 'cw_eng_fail']['on'] and 'cw_eng_fail' not in c.active_alarms()
 
 
 def test_engines_next_to_ignite_show_white_before_ignition():
     c = Cockpit(); fed(c)
-    engines(c, 1, [eng(0, 0, on=False, thrust=0, stage=3), eng(0, 0, on=False, thrust=0, stage=2)], stage=4, throttle=0.0)
-    assert c.published[O + 'mx_eng']['rows'][4] == '....w....'
+    # white: how many engines the next stage lights
+    engines(c, 1, [eng(1, 0, on=False, thrust=0, stage=3), eng(-1, 0, on=False, thrust=0, stage=3),
+                   eng(0, 0, on=False, thrust=0, stage=2)], stage=4, throttle=0.0)
+    assert leds(c) == '...w...w.'
 
 
 def test_rendezvous_and_docking_panels():

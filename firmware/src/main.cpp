@@ -14,6 +14,7 @@
 #include <Adafruit_MCP23X17.h>
 #include <Adafruit_ADS1X15.h>
 #include <Adafruit_LEDBackpack.h>
+#include <Adafruit_NeoPixel.h>
 
 #include "module_config.h"
 
@@ -39,6 +40,7 @@ static const uint32_t LAMP_BLINK_HALF_MS = 250;    // as the console's lamps: 0.
 static const uint32_t DISPLAY_BLINK_HALF_MS = 500; // as its displays: 1 s
 static const uint8_t MAX7219_INTENSITY = 8;        // 0..15
 static const uint16_t BUZZER_HZ = 760, BUZZER_WARBLE_HZ = 600;
+static const uint8_t ROSETTE_BRIGHTNESS = 64;          // 0..255: white at full glares beside the other lamps
 
 // ---------- hardware ----------
 static WiFiClient net;
@@ -50,6 +52,7 @@ static Adafruit_AlphaNum4 alphaChips[HT16K33_COUNT ? HT16K33_COUNT : 1];
 static uint8_t maxFrame[MAX7219_COUNT ? MAX7219_COUNT : 1][8];   // row bytes, MAX7219 no-decode: DP A B C D E F G
 static uint16_t outputLatch[MCP_COUNT ? MCP_COUNT : 1];          // lamps and keypad rows, per expander
 static uint16_t outputMask[MCP_COUNT ? MCP_COUNT : 1];           // which pins are outputs
+static Adafruit_NeoPixel rgbLeds(RGB_LED_COUNT, RGB_GPIO, NEO_GRB + NEO_KHZ800);
 
 // ---------- input state ----------
 struct Debounced { bool stable, last; uint8_t count; };
@@ -68,6 +71,7 @@ static float barValue[BARS_COUNT ? BARS_COUNT : 1];
 static char matrixLeds[MATRICES_COUNT ? MATRICES_COUNT : 1][128];
 static TextState alphaText[ALPHAS_COUNT ? ALPHAS_COUNT : 1];
 static bool buzzerOn[BUZZERS_COUNT ? BUZZERS_COUNT : 1];
+static char rosetteLeds[ROSETTES_COUNT ? ROSETTES_COUNT : 1][16];
 static bool outputsDirty = true;
 
 // =====================================================================================================================
@@ -326,6 +330,19 @@ static void onMessage(String &topic, String &payload) {
   }
   for (uint8_t i = 0; i < BUZZERS_COUNT; i++)
     if (!strcmp(t, BUZZERS[i].topic)) buzzerOn[i] = doc["on"] | false;
+  for (uint8_t i = 0; i < ROSETTES_COUNT; i++)
+    if (!strcmp(t, ROSETTES[i].topic)) strncpy(rosetteLeds[i], doc["leds"] | "", sizeof(rosetteLeds[i]) - 1);
+}
+
+// g burning, w lit but idle (white: how many engines the stage has), a weak, r flamed out or lost, . dark
+static uint32_t rosetteColour(char c) {
+  switch (c) {
+    case 'g': return Adafruit_NeoPixel::Color(0, 255, 40);
+    case 'w': return Adafruit_NeoPixel::Color(255, 230, 200);
+    case 'a': return Adafruit_NeoPixel::Color(255, 120, 0);
+    case 'r': return Adafruit_NeoPixel::Color(255, 0, 0);
+    default: return 0;
+  }
 }
 
 static void render() {
@@ -356,6 +373,13 @@ static void render() {
   for (uint8_t i = 0; i < BUZZERS_COUNT; i++) {
     if (buzzerOn[i]) ledcWriteTone(0, (now / 167) % 2 ? BUZZER_HZ : BUZZER_WARBLE_HZ);    // a 3 Hz warble
     else ledcWriteTone(0, 0);
+  }
+  if (RGB_LED_COUNT) {
+    for (uint8_t i = 0; i < ROSETTES_COUNT; i++)
+      for (uint8_t led = 0; led < ROSETTES[i].leds; led++)
+        rgbLeds.setPixelColor(ROSETTES[i].firstLed + led,
+                              led < strlen(rosetteLeds[i]) ? rosetteColour(rosetteLeds[i][led]) : 0);
+    rgbLeds.show();
   }
   expandersFlush();
   maxFlush();
@@ -400,6 +424,7 @@ void setup() {
   }
   for (uint8_t chip = 0; chip < HT16K33_COUNT; chip++) alphaChips[chip].begin(0x70 + chip);
   maxBegin();
+  if (RGB_LED_COUNT) { rgbLeds.begin(); rgbLeds.setBrightness(ROSETTE_BRIGHTNESS); rgbLeds.clear(); rgbLeds.show(); }
   for (uint8_t i = 0; i < BUZZERS_COUNT; i++) { ledcSetup(0, BUZZER_HZ, 8); ledcAttachPin(BUZZERS[i].gpio, 0); }
   for (uint8_t i = 0; i < 8; i++) { scanSwitches(); delay(SCAN_EVERY_MS); }      // positions known before the bus
   WiFi.onEvent(onNetworkEvent);

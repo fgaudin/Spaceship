@@ -106,10 +106,12 @@ controller to come, still `panel/eng/in/throttle`);
 STAGING · ABORT (1 × 2, right of both), top to bottom: NEXT STAGE, six cells lit for what pressing STAGE does
 (ENGINES and SOLIDS it lights, DECOUPLE (also a docking port's decouple node: a launch escape tower, an undocking),
 CLAMPS, CHUTES, FAIRING (also covers thrown off, the SM-25's doors); all dark with no stage left), the stage number,
-STAGE ARM and STAGE, then an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
-green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
-flamed out or gone; engines staged away leave the matrix, and so does an engine that ran dry in an earlier stage and
-is still attached) with a count of burning engines; CUTOFF (throttle to 0, held until the lever is back at idle; the lamp blinks while the lever is still up);
+STAGE (left) and STAGE ARM, then the engine rosette (9 RGB lamps behind 10 mm frosted discs, a centre and a ring of 8:
+an engine on the axis lights the centre, the others the ring lamp nearest their angle, clockwise from the top; lamps
+shared by several engines show the worst: green = thrust, white = lit but idle or next to ignite, so white shows how
+many engines the stage has, amber = has fuel but under half the thrust commanded, red = flamed out or gone, dark = no
+engine; engines staged away leave it, and so does an engine that ran dry in an earlier stage and is still attached);
+CUTOFF (throttle to 0, held until the lever is back at idle; the lamp blinks while the lever is still up);
 ABORT behind ABORT ARM fires KSP's abort group, and only that (what the craft's builder wired to it); two event
 lights in the C&W grid, 0.05 G (drag is felt with the engine off while descending: the entry has begun) and CONTACT
 (landed, or a leg or wheel touches the ground). The attitude switches are under the FDAI ball (below), still on the
@@ -210,7 +212,7 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 ### Where the code is
 | Part | Files |
 |---|---|
-| Cockpit logic | [cockpit-logic/cockpit/](cockpit-logic/cockpit/): `core.py` (the `Cockpit` class: messages in, outputs out), `settings.py` (every threshold and table), `alarms.py` (caution and warning), `burn_computer.py`, `node_mirror.py` (PAD ↔ KSP maneuver node), `engines.py` (engine status matrix), `event_timer.py`, `panels/` (one module per panel: its inputs and its outputs), `messages.py` and `display_format.py` (payloads and number formats). [service.py](cockpit-logic/service.py) is the MQTT shell. |
+| Cockpit logic | [cockpit-logic/cockpit/](cockpit-logic/cockpit/): `core.py` (the `Cockpit` class: messages in, outputs out), `settings.py` (every threshold and table), `alarms.py` (caution and warning), `burn_computer.py`, `node_mirror.py` (PAD ↔ KSP maneuver node), `engines.py` (the engine rosette), `event_timer.py`, `panels/` (one module per panel: its inputs and its outputs), `messages.py` and `display_format.py` (payloads and number formats). [service.py](cockpit-logic/service.py) is the MQTT shell. |
 | KSP gateway | [gateway-ksp/gateway.py](gateway-ksp/gateway.py) (main loop) and [gateway-ksp/ksp/](gateway-ksp/ksp/): `vessel_link.py` (kRPC connection, streams, telemetry payloads), `parts_watch.py` (engines, stage propellant, heat, ground contact, docking ports), `target.py` (rendezvous and docking geometry, target selection, undocking), `commands.py` (`cmd/*` → kRPC), `streams.py`. |
 | Flight dynamics | [flight-dynamics/](flight-dynamics/): `orbits.py` (two-body orbits), `planner.py` (the four PADs), `service.py`. [README](flight-dynamics/README.md). |
 | MCC data | [mcc-data/](mcc-data/): `recorder.py` (the flight's samples and events), `relief.py` (relief maps), `service.py` (the bus, and KSP for the bodies and the terrain). How the MCC uses it: [panels/virtual/mcc/README.md](panels/virtual/mcc/README.md). |
@@ -252,7 +254,7 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 .venv/bin/python tests/e2e_ksp_solo.py [circ] [plane] [rdv] [inject]   # each SOLO PAD flown in KSP and its outcome checked
 .venv/bin/python tests/e2e_ksp_simsup.py --save lor3-selftest-pad    # every SimSup failure, freeze and load in KSP (25 checks)
 .venv/bin/python tests/rehearsal_ksp_ascent.py --save lor3-selftest-pad   # pad to orbit from the panels and the stick topics; prints gaps and alarms
-.venv/bin/python tests/e2e_ksp_boosters.py --save lor3-selftest-pad   # engine matrix through booster flameouts and staging (9 checks; launches)
+.venv/bin/python tests/e2e_ksp_boosters.py --save lor3-selftest-pad   # engine rosette through booster flameouts and staging (9 checks; launches)
 .venv/bin/python tests/e2e_ksp_landing.py --save lor3-selftest-pdi    # a Mun landing on the FLIGHT DATA · LANDING figures
 ```
 (`.venv`: `python3 -m venv .venv && .venv/bin/pip install pytest paho-mqtt==2.1.0 krpc==0.7.0`.)

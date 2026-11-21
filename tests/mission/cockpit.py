@@ -188,6 +188,10 @@ class Cockpit:
             self.pin(bus, control, value)
 
     # ---------- procedures ----------
+    def burning(self):
+        """Engines giving thrust: the green lamps of the engine rosette (lamps can share engines: a lower bound)."""
+        return self.out('eng', 'eng_rosette').get('leds', '').count('g')
+
     def next_stage(self):
         return [cell.upper() for cell in NEXT_STAGE_CELLS if self.lit('eng', f'lamp_ns_{cell}')]
 
@@ -340,7 +344,7 @@ class Cockpit:
             if (self.tlm('vessel').get('thrust') or 0) > 0:
                 lit_seen = True
             if self.lit('eng', 'cw_flameout') or (time.time() > next_note - 3 and not lit_seen and
-                                                  (self.num('eng', 'disp_eng_on') or 0) == 0):
+                                                  self.burning() == 0):
                 if on_flameout is not None:
                     if on_flameout() == 'stop':
                         break

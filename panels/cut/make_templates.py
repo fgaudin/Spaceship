@@ -186,6 +186,14 @@ def component(item, footprint, settings):
         half_w, half_h = ((columns - 1) * fp['pitch'] + fp['hole']) / 2 + fp['pad'], ((rows - 1) * fp['pitch'] + fp['hole']) / 2 + fp['pad']
         front = (-half_w, -half_h, half_w, half_h)
 
+    elif kind == 'rosette':
+        lamp, radius = item.get('lamp_mm', 10), item.get('radius_mm', 17)
+        centres = [(0.0, 0.0)] + [(radius * math.sin(a * math.pi / 4), -radius * math.cos(a * math.pi / 4)) for a in range(8)]
+        cut += [circle(x, y, lamp) for x, y in centres]
+        half = radius + lamp / 2 + fp['pad']
+        behind.append(circle(0, 0, 2 * half))                  # the LED board and its spacer
+        front = (-half, -half, half, half)
+
     elif kind in ('rotary', 'knob'):
         # a selector's positions, or a continuous knob's scale over 270° (as the virtual console, widgets.js)
         positions = item['positions'] if kind == 'rotary' else item.get('scale', fp['scale'])
