@@ -5,6 +5,13 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-21 — STATION moves the whole crew; the engines follow STATION; one mission clock
 
+- **A bill of materials** (new `panels/bom/make_bom.py` → `panels/bom/BOM.md`), generated from the module definitions:
+  every control and indicator by kind and colour with the modules it is on, the driver chips as the firmware places
+  them, boards (an ESP32-POE2 also beside each glass module that has controls: cam, fdai), screens, PoE ports and the
+  faceplates' acrylic. An estimate: no spares, wiring, connectors, frames or supplies. With a cost estimate, low
+  (generic parts) and high (branded, EU distributors), from unit prices in `panels/bom/prices.json` to correct as
+  real prices come in.
+
 - **Engine rosette: no false ENG FAIL docked, and engines placed in the right frame** (gateway `parts_watch.py`, cockpit
   `engines.py`). Found in the docked stack (`full-extracted`, flown from the CM): the centre lamp red and ENG FAIL on,
   and the Cheetah on the ring's bottom lamp. The lander's Terrier, held shut down by engine sharing, had burned under
