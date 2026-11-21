@@ -44,6 +44,7 @@ body { margin: 0; background: radial-gradient(ellipse at top, #1b1e21, var(--bg)
 .zone-body { position: relative; }
 .zone-column, .zone-side { display: flex; flex-direction: column; gap: 14mm; }
 .zone-side:empty { display: none; }
+.zone-side.left > .zone.inner { align-self: flex-end; } .zone-side.right > .zone.inner { align-self: flex-start; }
 /* a flush side zone: against the column, its top level with the column's first zone (under that zone's title) */
 .zone-side.left.flush { margin-right: -14mm; } .zone-side.right.flush { margin-left: -14mm; }
 .zone.flush > .zone-title { visibility: hidden; }

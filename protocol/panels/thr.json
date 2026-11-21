@@ -1,0 +1,34 @@
+{
+  "id": "thr",
+  "title": "THROTTLE CONTROLLER",
+  "fw": "virtual-0.1",
+  "board": "usb-stand-in",
+  "note": "A stand-in: the throttle will be a separate controller (USB, like the hand controllers). Same bus and topic as before: panel/eng/in/throttle.",
+  "panels": [
+    {
+      "id": "throttle",
+      "title": "THROTTLE",
+      "size": [
+        1,
+        1
+      ],
+      "at": [
+        0,
+        0
+      ],
+      "bus": "eng",
+      "items": [
+        {
+          "type": "pot",
+          "id": "throttle",
+          "label": "THROTTLE",
+          "in": "throttle",
+          "at": [
+            50,
+            56
+          ]
+        }
+      ]
+    }
+  ]
+}

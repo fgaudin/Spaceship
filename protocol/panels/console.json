@@ -18,6 +18,22 @@
       "flush": true
     },
     {
+      "id": "controllers_left",
+      "title": "CONTROLLERS",
+      "side": "left",
+      "modules": [
+        {
+          "module": "thr",
+          "at": [
+            0,
+            0
+          ]
+        }
+      ],
+      "top": 0.5,
+      "align": "inner"
+    },
+    {
       "id": "overhead",
       "title": "OVERHEAD",
       "size": [

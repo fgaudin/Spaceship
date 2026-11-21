@@ -76,7 +76,8 @@ Components are drawn at about their real size: 0.36" 7-segment digits (9 mm high
 
 Each zone is a grid of U; a module's `at` is its top-left corner on it. A zone's optional `size` ([width, height]
 in U) makes it bigger than what it holds, so that its free places show. The zones are drawn one under the other, flat.
-`"align": "center"` centres a zone over the others. `"side": "left"` (or `"right"`) draws a zone beside that
+`"align": "center"` centres a zone over the others; on a side zone, `"align": "inner"` puts it against MAIN rather
+than the outer edge (the throttle controller, under the left window). `"side": "left"` (or `"right"`) draws a zone beside that
 column instead, its top at the column's top, or `top` U lower; `"flush": true` puts it against the column with no
 title: the windows, alongside OVERHEAD and MAIN. A panel with `"bare": true` is glass set straight into the console
 board, drawn without faceplate, title or screws, and not cut. A screen's `"frame": {"width", "rivet", "rivet_every", "corner"}` (mm)

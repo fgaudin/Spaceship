@@ -1,4 +1,5 @@
-"""The PADs a flight dynamics officer works out, from the telemetry: circularise, change plane, rendezvous, inject.
+"""The PADs a flight dynamics officer works out, from the telemetry: circularise, change plane, rendezvous (or, from
+the ground, the liftoff to meet the target), inject.
 
 Each request returns a `Pad` (TIG as mission time, Δv prograde / normal / radial, a short text for the panel) or a
 `Refusal` (why not, in a few words). TIG is the ignition time, half the burn before the event, so that the burn is
@@ -28,6 +29,14 @@ MOONS = {
     'Mun': (12000000.0, 0.0, 0.0, 0.0, 0.0, 1.7),
     'Minmus': (47000000.0, 0.0, 6.0, 78.0, 38.0, 0.9),
 }
+# LIFTOFF (RDV TGT pressed on the ground): the ascent as flown from the panels. A burn to a low parking orbit, cutoff
+# on its apoapsis, a coast up to it and CIRC there. Rough on purpose: an error of 30° in the phase costs a twelfth of
+# the time the target takes to come round again, and the RDV PAD after the insertion finishes the job.
+PARKING_ABOVE_SAFE_M = 10000.0      # parking orbit: the body's safe altitude and this
+CUTOFF_SHARE = 0.25                 # the engine stops at this share of the parking altitude ...
+CUTOFF_CLIMB_DEG = 10.0             # ... climbing at this angle
+ASCENT_LOSSES = 1.08                # Δv to orbit: circular speed and this share for gravity and steering
+SITE_STATES = ('landed', 'splashed', 'pre_launch')
 TERRAIN_MARGIN = 1.1                # an airless body's safe periapsis: its highest terrain and a tenth more
 UNKNOWN_TERRAIN = 0.05              # ... or this fraction of its radius when nobody has measured the terrain
 
@@ -208,9 +217,11 @@ def _target_orbit(telemetry, orbit):
 
 def rendezvous(telemetry):
     """A Hohmann transfer to the target's orbit, timed so that both arrive together. Both orbits nearly circular and
-    in the same plane (else: CIRC or PLANE first)."""
+    in the same plane (else: CIRC or PLANE first). On the ground: the liftoff to meet the target."""
     if not usable(telemetry):
         return Refusal('NO ORBIT DATA')
+    if telemetry.get('tlm/vessel', {}).get('situation') in SITE_STATES:
+        return liftoff(telemetry)
     orbit = own_orbit(telemetry)
     target = _target_orbit(telemetry, orbit)
     if target is None:
@@ -248,3 +259,87 @@ def _transfer(telemetry, orbit, target, label):
     if isinstance(pad, Pad) and tilt > COPLANAR_DEG:
         pad.text = f'{label} PL {tilt:.0f}DEG'            # a moon off the plane (Minmus): fix it on the way
     return pad
+
+
+# ---------- liftoff to meet a target in orbit ----------
+def liftoff(telemetry):
+    """RDV TGT on the ground: a PAD whose TIG is the liftoff (the EVENT TIMER on TIG counts down to it), its Δv the
+    ascent's, and the launch azimuth in the text. Timed so that at the insertion into the parking orbit the target leads
+    by the Hohmann phase, so the RDV PAD comes at once; azimuth along the target's plane at the site."""
+    orbit = own_orbit(telemetry)
+    body_name = telemetry['tlm/orbit']['body']
+    body = body_of(telemetry, body_name)
+    target = _target_orbit(telemetry, orbit)
+    if target is None:
+        return Refusal('RDV: NO TARGET')
+    if telemetry['tlm/orbit'].get('atm'):
+        return Refusal('LIFTOFF: AIRLESS ONLY')
+    rotation_period = (((telemetry.get('mcc/bodies') or {}).get('bodies') or {}).get(body_name) or {}).get('rotation_period')
+    spin = TWO_PI / rotation_period if rotation_period else 0.0
+    site_now = orbit.direction_at(orbit.nu)                 # a landed vessel's orbit holds where it stands
+    parking_radius = body['radius'] + body['safe_altitude'] + PARKING_ABOVE_SAFE_M
+    ascent_delta_v, ascent_time, ascent_angle = ascent(telemetry, orbit.mu, body['radius'], parking_radius)
+    _, transfer_time = hohmann(orbit.mu, parking_radius, target.a)
+    lead_at_insertion = math.pi - target.mean_motion * transfer_time
+    # the target covers n·T during the ascent, we cover the ascent's angle: lead at liftoff = at insertion + ours − its
+    wanted_lead = (lead_at_insertion + ascent_angle - target.mean_motion * ascent_time) % TWO_PI
+    normal = target.normal()
+    closing_rate = target.mean_motion - spin * normal[2]    # the site turns with the body, the target goes round
+    site_at = lambda dt: _turned(site_now, spin * dt)
+    lead_at = lambda dt: _lead(site_at(dt), target.at(orbit.ut + dt), normal)
+    wait = ((wanted_lead - lead_at(0.0)) % TWO_PI) / closing_rate
+    for _ in range(3):
+        if wait < LEAD_TIME_S:
+            wait += TWO_PI / closing_rate
+        for _ in range(20):
+            step = (wanted_lead - lead_at(wait) + math.pi) % TWO_PI - math.pi
+            wait += step / closing_rate
+            if abs(step) < 1e-6:
+                break
+        if wait >= LEAD_TIME_S:
+            break
+    azimuth = _azimuth(site_at(wait), normal)
+    clock = telemetry['tlm/time']
+    tig_met = clock['met'] + (orbit.ut + wait - clock['ut'])
+    return Pad(round(tig_met, 1), (round(ascent_delta_v, 1), 0.0, 0.0), f'LIFTOFF AZ {azimuth:03.0f}')
+
+
+def ascent(telemetry, mu, body_radius, parking_radius):
+    """(Δv, seconds from liftoff to the insertion at apoapsis, angle covered around the body) of the ascent model."""
+    circular_speed = math.sqrt(mu / parking_radius)
+    delta_v = circular_speed * ASCENT_LOSSES
+    burn = burn_time(telemetry, delta_v) or delta_v / (2 * STANDARD_GRAVITY)    # unknown engine: 2 g
+    burn_angle = circular_speed / 2 * burn / body_radius   # downrange while burning: about half the final speed
+    # the coast: an orbit through the cutoff point, climbing at CUTOFF_CLIMB_DEG, whose apoapsis is the parking radius
+    cutoff_radius = body_radius + CUTOFF_SHARE * (parking_radius - body_radius)
+    climb = math.radians(CUTOFF_CLIMB_DEG)
+    # vis-viva and angular momentum at both points: v_c r_c cos γ = v_a r_a, v² − 2μ/r the same
+    ratio = (cutoff_radius * math.cos(climb) / parking_radius) ** 2
+    speed_cutoff = math.sqrt(2 * mu * (1 / cutoff_radius - 1 / parking_radius) / (1 - ratio))
+    a = 1 / (2 / cutoff_radius - speed_cutoff ** 2 / mu)
+    e = parking_radius / a - 1
+    h = speed_cutoff * cutoff_radius * math.cos(climb)
+    nu_cutoff = math.acos(max(-1.0, min(1.0, (h ** 2 / (mu * cutoff_radius) - 1) / e)))
+    coast = Elements(a=a, e=e, i=0.0, lan=0.0, argp=0.0, nu=nu_cutoff, ut=0.0, mu=mu)
+    return delta_v, burn + coast.time_to(math.pi), burn_angle + (math.pi - nu_cutoff)
+
+
+def _turned(vector, angle):
+    """Turned by `angle` about the body's axis (z), the way it spins."""
+    cos_a, sin_a = math.cos(angle), math.sin(angle)
+    return (vector[0] * cos_a - vector[1] * sin_a, vector[0] * sin_a + vector[1] * cos_a, vector[2])
+
+
+def _lead(site, target, normal):
+    """How far the target is ahead of the site, in the target's plane, in its direction of motion (0 to 2π)."""
+    in_plane = unit(tuple(x - dot(site, normal) * n for x, n in zip(site, normal)))
+    there = target.direction_at(target.nu)
+    return math.atan2(dot(cross(in_plane, there), normal), dot(in_plane, there)) % TWO_PI
+
+
+def _azimuth(site, normal):
+    """Degrees from north, towards east, of the target's direction of motion over the site."""
+    along = unit(cross(normal, site))
+    east = unit(cross((0.0, 0.0, 1.0), site))
+    north = cross(site, east)
+    return math.degrees(math.atan2(dot(along, east), dot(along, north))) % 360

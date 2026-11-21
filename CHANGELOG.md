@@ -5,6 +5,51 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-21 — STATION moves the whole crew; the engines follow STATION; one mission clock
 
+- **RDV TGT on the ground gives the liftoff** (GAPS C17; `flight-dynamics/planner.py`). From the Mun the liftoff time
+  (the target's phase) and the launch azimuth (its plane) had been read from telemetry. Landed with a target in
+  orbit, RDV TGT now reads up a PAD whose TIG is the liftoff, counted down by the EVENT TIMER on TIG, with the ascent's
+  Δv, and the azimuth in the FLIGHT DYNAMICS text (`LIFTOFF AZ 087`): no new control. Timed on a model of the ascent
+  (to a parking orbit at the safe altitude + 10 km, insertion at its apoapsis) so that the target then leads by the
+  rendezvous transfer's phase. Airless bodies only. Unit tests in `flight-dynamics/tests/test_planner.py`.
+
+- **The throttle lever is its own controller; THRUST % and TWR MAX on ENGINE** (GAPS C17; `protocol/panels/thr.json`,
+  `eng.json`, `console.json`; cockpit `panels/engine_panel.py`). The lever will be built separately (USB, like the
+  hand controllers): the virtual one moved to a THROTTLE module in a CONTROLLERS zone under the left window, against
+  MAIN (a new `"align": "inner"` for side zones), on the same bus and topic. In its place on ENGINE, THRUST %: the
+  thrust now of the lit engines' rated thrust, so the lever and THRUST LIMIT together (lever up, limit 80 %: 80); an
+  engine giving less than it should reads low. TWR MAX beside TWR: the TWR at full throttle, also
+  with the engines off (the braking a landing can count on; TWR reads 0 then). GIMBAL LOCK moved to the top row.
+  The lever also stuck short of 100 % on a fast move: a position skipped by the 50 ms publish limit was only sent
+  if the browser fired `change`; it is now sent when the 50 ms are up.
+
+- **Staging no longer pauses telemetry** (GAPS C4; gateway `ksp/parts_watch.py`). After a staging every part stream
+  was rebuilt on the main loop, during which nothing went out (0.7 s on the asparagus rocket, 0.1–0.2 s on the
+  50-part Acapello). A fresh PartsWatch is now built on another thread (kRPC's client serialises the two threads'
+  calls) and swapped in between two cycles; meanwhile the old streams are read, those of the parts that left reading
+  0 or nothing (the solar panel and parachute readers now guard them like the others). A staging during a rebuild
+  drops it and starts another. The first read after a bind no longer reads the parts twice. Measured in KSP on the
+  Acapello without staging: swapped after 0.2 s, the slowest read meanwhile 18 ms. Unit tests in
+  `gateway-ksp/tests/test_stage_propellant.py`.
+
+- **Mission Control's text loop removed** (GAPS C9; `panels/virtual/mcc/`): it would not be used (a voice loop comes
+  later). The footer's line, FLIGHT's LOOP box, CAPCOM's "PAD read up" note and the `mcc/loop/<role>` topic are gone;
+  FLIGHT's alarms and poll take the freed column.
+
+- **RDV: ROTATION above TRANSLATION** (`protocol/panels/rdv.json`): the two docking panels swapped places, at the
+  user's request; ROTATION is now top left, TRANSLATION under it.
+
+- **SPEED on TGT is the speed relative to the target** (GAPS C17; cockpit `performance.py`). With SPEED REF on TGT, the
+  total speed in FLIGHT DATA read the surface's, so the relative speed (to null before closing) was on no display; the
+  RDV panel's CLOSING is only its part along the line of sight. SPEED now reads `tlm/target.rel_v` on TGT, as KSP's
+  navball does, and the surface's without a target; H/S and V/S stay the surface's.
+
+- **SAS PRO and RETRO bring the speed reference back to the knob's** (GAPS C19; cockpit `panels/engine_panel.py`). KSP
+  changes the navball's reference by itself, and a retained knob cannot re-send the position it is on: in the Mun
+  descent the knob was on SURF, the game on ORBIT, and SAS RETRO would have held the orbit's retrograde. The cockpit
+  does not re-send it on its own (it would fight KSP's switching); the press on PRO or RETRO, the moment it matters,
+  sends `cmd/speed_mode` with the knob's reference before `cmd/sas_mode`, when the game's is another. Otherwise, and
+  for STATION, the crew turns the knob away and back. Unit test in `cockpit-logic/tests/test_logic.py`.
+
 - **Stage Δv no longer sticks at 0** (GAPS C22; gateway `ksp/parts_watch.py`). The tanks of the stage were chosen only
   when the stage number changed, from the engines lit at that moment. Chosen while none read lit (a bind or a staging
   read before KSP reports the engine on), the list stayed empty: no stage propellant, and stage Δv read 0 through the

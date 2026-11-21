@@ -197,13 +197,17 @@ export function createWidgetBuilders(registry, publishInput) {
       const readout = createElement('div', 'pot-val');
       const showValue = () => { readout.textContent = `${Math.round(slider.value * 100)} %`; };
       const publish = () => publishInput(item.in, Number(slider.value), true);
-      let lastPublished = 0;
+      // While dragging, at most one publish per 50 ms; a position skipped is sent when that time is up, so the last
+      // one always goes out, even when the browser fires no 'change' (a fast move released off the page)
+      let lastPublished = 0, pending = null;
+      const publishNow = () => { clearTimeout(pending); pending = null; lastPublished = performance.now(); publish(); };
       slider.addEventListener('input', () => {
         showValue();
-        const now = performance.now();
-        if (now - lastPublished > MIN_MS_BETWEEN_PUBLISHES) { lastPublished = now; publish(); }
+        const wait = MIN_MS_BETWEEN_PUBLISHES - (performance.now() - lastPublished);
+        if (wait <= 0) publishNow();
+        else if (pending === null) pending = setTimeout(publishNow, wait);
       });
-      slider.addEventListener('change', publish);       // the final position, always
+      slider.addEventListener('change', publishNow);    // the final position, always
       showValue();
       inputs.set(item.in, {
         read: () => Number(slider.value),

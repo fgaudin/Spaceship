@@ -8,53 +8,35 @@ Gaps in the Moonshot course itself are in `selftest/gaps.md`.
 
 ### C1. Mission Control's PADs reach the crew as a data uplink, not by voice
 - Decided: students compute PADs and read them up; a solo pilot asks the SOLO panel (flight-dynamics service).
-- Open: the radio (voice) between Mission Control and the crew, still to be built.
-
-### C2. Pitch and heading are only on glass
-- Found by: the rehearsal (the pilot reads `tlm/attitude`) and the stick kick (which way to push for east).
-- The FDAI page shows them. Open: whether a non-glass attitude indicator (a physical ball, or LED rings) is wanted.
+- Open: the radio (voice) between Mission Control and the crew, still to be built (the user's, later).
 
 ### C3. Stage Δv is misleading on an asparagus rocket
 - Found by: the rehearsal. On the pad it reads 243 m/s: the propellant of the tanks that leave with the burning
   engines, so only the first pair of boosters. Correct by its definition, not what a pilot expects.
 - Possible fix: show Δv to the next staging and total Δv, on a selector.
 
-### C4. Staging pauses the gateway for 0.7 s
-- Found by: the stall logging. Rebuilding the part streams after `cmd/stage` takes 0.7 s, during which telemetry
-  stops. Under the 2 s NO LINK threshold, but a visible hitch on the displays at each staging.
-- Possible fix: rebuild the streams in the background, or only those of the parts that left.
-
 ### C5. The burn computer's cutoff is 0.1 s of thrust
 - 3.8 m/s short at 38 m/s², 1 m/s at 26 m/s². Inside the ΔV RESID allowance; trimming the residual at a low thrust
-  limit is the procedure. Better would mean counting Δv in the gateway at game speed.
+  limit is the procedure. Decided: that stays the procedure (trim the residual at a low thrust limit).
 
 ### C6. Hand controllers exist only as bus topics
 - `panel/hc/in/*` works (the rehearsal kicks on it), but there is no USB service yet, no page to move them by hand,
-  and the mock plant ignores them.
+  and the mock plant ignores them. Not a problem: enough for tests; a USB controller will come.
 
 ### C7. SimSup failures are all or nothing
 - No partial failures (an engine at 50 %, a slow leak). Battery and heat failures exist only in the mock: kRPC cannot
   drain a resource or heat a part.
+- An engine kept at part thrust (its own thrust limiter, held) is possible with kRPC, but the crew would need to see an
+  engine underperforming: put aside, to think about again later.
 
-### C8. The camera monitor was only tried in Chrome
-
-### C9. Mission Control has no voice and no history
-- The loop is text; consoles show the present, with no plots over time. RETRO's entry corridor (25–45 km) and
-  deorbit target (35 km) are fixed numbers, not computed for the vehicle.
-- Laptops on the network need ports 8650 and 9001 open on the cockpit machine; not tried from another machine yet.
-
-Found by the full Mun mission flown from the panels (2026-11-20/21, `tests/mission/`, craft AcapelloCams IU): C10–C22.
+### C9. RETRO's corridor and deorbit target are fixed numbers
+- The entry corridor (25–45 km) and the deorbit target (35 km) are not computed for the vehicle (see C21).
 
 ### C15. STATION cannot reach a capsule beyond 2.5 km
 - Found by: the CSM had to come down to the MEM (109 km apart). STATION only switches to a capsule KSP has loaded, so
   a far-away capsule cannot be flown without the game's own vessel switch.
 - Possible fix: switch to the other capsule's vessel at any range (the game can, kRPC `active_vessel`).
-
-### C16. SOLO has no return, descent or mid-course PAD
-- Found by: TEI, DOI and the mid-course corrections were computed by a stand-in for Mission Control (kRPC node
-  searches) and loaded as nodes; the DOI was keyed by hand. INJECT aims at the Mun's centre (impact course), so a
-  mid-course is always needed.
-- Possible fix: SOLO requests for TEI (to RETRO's corridor), DOI and MCC (moon periapsis).
+- Left as is for now: not known yet whether it is needed.
 
 ### C17. The landing and the rendezvous need figures the panels do not show
 - Found by: the descent and the Mun ascent. With the engine off TWR reads 0, so the available deceleration for the
@@ -62,24 +44,17 @@ Found by the full Mun mission flown from the panels (2026-11-20/21, `tests/missi
   (to kill before closing). The liftoff time (the target's phase angle) and the launch azimuth (its inclination)
   were read from telemetry.
 - Possible fix: TWR MAX (or decel available) beside TWR; REL V on RDV; a liftoff countdown on SOLO with a target.
+- Done: the total speed on SPEED REF TGT is the relative speed (rel_v), as on KSP's navball; TWR MAX on ENGINE.
+- Done: RDV TGT pressed while landed reads up a PAD whose TIG is the liftoff (counted down by the EVENT TIMER on TIG),
+  the azimuth in the FLIGHT DYNAMICS text; no new control (Mission Control computes them otherwise). Its ascent
+  model is still to be checked against a flight in KSP.
 
 ### C18. Nothing warns that the craft cannot turn
 - Found by: the MEM has no reaction wheel. With RCS off it has no torque: SAS MNVR stayed 140° off for minutes and the
   ascent's attitude oscillated (only the gimbal steered); with RCS on, holding attitude through a warp emptied its
   monoprop. Only ATT ERR showed it, indirectly.
 - Possible fix: a NO TORQUE caution (SAS or HOLD engaged, no wheel and RCS off); RCS ΔV going down while coasting.
-
-### C19. The SPEED REF knob cannot assert the position it is on
-- Found by: the descent. The knob (retained) was on SURF, the game on ORBIT: turning it "to SURF" sent nothing; the LED
-  blinked (right) but the crew must turn away and back.
-- Possible fix: a press on the knob, or re-sending the knob's position when the LED has blinked for a while.
-- Same for STATION: turning it to the capsule it is already on does nothing (seen in a test).
-
-### C20. The CM's power runs out under the chutes
-- Found by: the entry. The fuel cells are in the SM: after its jettison the CM has 150 EC, and the console went dark
-  at 2.9 km under the chutes (LOW POWER just before). Correct behaviour, but there is no time-to-empty figure and no
-  procedure item.
-- Possible fix: EC time left on ELECTRICAL; a checklist line (power down before the SM jettison).
+- Left as is for now.
 
 ### C21. RETRO's corridor middle gave 10 g from the Mun
 - Found by: the entry from a 34 km periapsis (corridor 25–45 km): peak 10.2 g, hottest part 62 %. The corridor is a
@@ -96,6 +71,16 @@ Found by the full Mun mission flown from the panels (2026-11-20/21, `tests/missi
 - Every save load leaves a 2–4 s telemetry gap: NO LINK comes on for that moment.
 
 ## Closed (2026-11-21)
+- C16, no TEI, DOI or mid-course PAD on SOLO: not needed; flown by hand (burn retrograde to the periapsis wanted).
+- C4, staging paused telemetry (0.7 s on a big rocket): the part streams are rebuilt on another thread and swapped in.
+- C9, the rest: the text loop was removed (it would not be used; the voice loop is the user's, later); Mission Control
+  has its history (mcc-data) and was opened from another machine.
+- C19, the SPEED REF knob could not assert the position it is on: SAS PRO and RETRO (the modes that follow it) send the
+  knob's reference first when the game's is another; otherwise, and for STATION, turn away and back (the procedure).
+- C2, pitch and heading only on glass: they are on 7-segment displays now.
+- C8, the camera monitor only tried in Chrome: it works in Firefox.
+- C20, the CM's power running out under the chutes: not a gap; the crew can work out the time left, and a design can
+  carry a battery for the descent.
 - C22, stage Δv read 0 through an ascent: the stage's tanks, chosen while no engine read lit, stayed empty; they are
   chosen again when the engines lit change.
 - C12, MET started again for an undocked vessel: one mission clock, kept by the gateway (`mission/clock`); MET RESET.

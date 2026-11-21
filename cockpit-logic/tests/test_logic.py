@@ -635,6 +635,18 @@ def test_fuel_cell_outside_temperature_and_ablator():
     assert c.published[S + 'disp_outside']['text'] == '-42' and c.published[S + 'bar_ablator'] == {'v': 0.75}
 
 
+def test_sas_pro_and_retro_bring_the_game_back_to_the_speed_reference_knob():
+    c = Cockpit(); fed(c, vessel={'sas': True, 'sas_mode': 'stability', 'speed_mode': 'orbit'})
+    c.handle(P + 'speed_ref', {'v': 1}, 1)                                  # knob on SURF
+    fed(c, 2, vessel={'sas': True, 'sas_mode': 'stability', 'speed_mode': 'orbit'})     # KSP went back to ORBIT
+    sent = c.handle(P + 'sas_retro', {'v': 1}, 3)
+    assert [m.topic for m in sent if m.topic.startswith('cmd/')] == ['cmd/speed_mode', 'cmd/sas_mode']  # reference first
+    assert topics(sent)['cmd/speed_mode'] == {'mode': 'surface'} and topics(sent)['cmd/sas_mode'] == {'mode': 'retrograde'}
+    fed(c, 4, vessel={'sas': True, 'sas_mode': 'retrograde', 'speed_mode': 'surface'})
+    assert 'cmd/speed_mode' not in topics(c.handle(P + 'sas_pro', {'v': 1}, 5))         # already the knob's
+    assert 'cmd/speed_mode' not in topics(c.handle(P + 'sas_nml', {'v': 1}, 6))         # normal: not a speed
+
+
 def test_speeds_follow_the_speed_reference_knob():
     c = Cockpit(); fed(c, flight={'v_orb': 500.0, 'vs': 300.0})
     shown = lambda: [c.published[O + name]['text'] for name in ('disp_hs', 'disp_vs', 'disp_speed')]
@@ -642,7 +654,9 @@ def test_speeds_follow_the_speed_reference_knob():
     c.handle(P + 'speed_ref', {'v': 1}, 1)
     assert shown() == ['300.0', '+300.0', '323.0']                  # SURF
     c.handle(P + 'speed_ref', {'v': 2}, 2)
-    assert shown() == ['300.0', '+300.0', '323.0']                  # TGT reads the surface too
+    assert shown() == ['300.0', '+300.0', '323.0']                  # TGT without a target: the surface
+    c.handle('tlm/target', {'set': True, 'range': 800.0, 'closing': 0.5, 'rel_v': 5.0}, 3)
+    assert shown() == ['300.0', '+300.0', '5.0']                   # TGT: the total against the target
 
 
 def test_dynamic_pressure_and_time_to_impact():
@@ -711,6 +725,24 @@ def test_twr_follows_the_present_thrust():
     assert c.published[O + 'disp_twr']['text'] == '0.00'
     flying(1, 9810.0)
     assert c.published[O + 'disp_twr']['text'] == '1.00'
+
+
+def test_thrust_percent_is_of_the_rated_thrust_so_the_limiter_shows():
+    c = Cockpit()
+    c.handle('tlm/engines', {'engines': [{'on': True, 'rated': 20000.0, 'stage': 3, 'x': 0.0, 'z': 0.0}], 'stage': 3}, 0)
+    # lever up, THRUST LIMIT 80 %: 16 kN of 20
+    fed(c, 0, vessel={'mass': 1000.0, 'thrust': 16000.0, 'thrust_avail': 16000.0, 'isp': 300.0})
+    assert c.published[O + 'disp_thrust_pct']['text'] == '80'
+    c.handle('tlm/engines', {'engines': [{'on': False, 'rated': 20000.0, 'stage': 3, 'x': 0.0, 'z': 0.0}], 'stage': 3}, 1)
+    fed(c, 1, vessel={'mass': 1000.0, 'thrust': 0.0, 'thrust_avail': 0.0, 'isp': 300.0})
+    assert c.published[O + 'disp_thrust_pct']['text'] == '0'
+
+
+def test_twr_max_is_at_full_throttle_also_with_the_engine_off():
+    c = Cockpit()
+    fed(c, 0, vessel={'mass': 1000.0, 'thrust': 0.0, 'thrust_avail': 19620.0, 'isp': 300.0}, flight={'alt': 0.0})
+    c.handle('tlm/orbit', {'body': 'Kerbin', 'apo': 80000.0, 'peri': -100000.0}, 0)
+    assert c.published[O + 'disp_twr']['text'] == '0.00' and c.published[O + 'disp_twr_max']['text'] == '2.00'
 
 
 def test_twr_uses_the_body_the_game_sends():

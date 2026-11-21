@@ -87,13 +87,16 @@ through the modes between, as a knob would. The buttons ask and the game decides
 its mode; it is asked again a few times, then the game's mode is lit again (TGT without a target, MNVR without a node).
 A mode changed in the game, by KSP's own buttons or a node deleted, is followed, not fought.
 
-**FLIGHT DATA · LANDING** (module LND in MAIN, one 3 × 1 U panel, on the `eng` bus), what a landing needs on the left, where the eye goes first: altitude in m, above the sea or the ground by ALT REF; vertical and horizontal speed against the orbit or the surface by the SPEED REF knob (TGT reading the surface); TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides); four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN; CONTACT; the GEAR switch (its LED lit while the gear is down). On the right, for the climb: total speed, g, dynamic pressure in kPa.
+**FLIGHT DATA · LANDING** (module LND in MAIN, one 3 × 1 U panel, on the `eng` bus), what a landing needs on the left, where the eye goes first: altitude in m, above the sea or the ground by ALT REF; vertical and horizontal speed against the orbit or the surface by the SPEED REF knob (TGT reading the surface); TIME TO IMPACT: the height over the sink rate, dashes when climbing or on an orbit that stays above the surface; HOVER TIME: the seconds the stage can hold the craft still, its Δv over the local gravity, dashes when the engines cannot lift it; DRIFT right and up across the craft's axis (for a lander on its tail, which way it slides); four green lamps below 1000 m: SINK OK (under 2 m/s + 10 % of the radar altitude), DRIFT OK (1 m/s), UPRIGHT (within 10°), GEAR DOWN; CONTACT; the GEAR switch (its LED lit while the gear is down). On the right, for the climb: total speed (by SPEED REF too; on TGT the speed relative to the target, as on KSP's navball, or the surface's without one), g, dynamic pressure in kPa.
 
 **REENTRY · RECOVERY** (module in MAIN, on the `sys` bus): CHUTE ARM, CHUTE, BRAKES, ablator, the hottest part as a percentage of its limit, time to the atmosphere at the present sink rate, outside temperature and pressure, the 0.05 G light, and KSP's verdict on opening the chutes (SAFE, RISKY, UNSAFE). **SCIENCE** (module in MAIN, `sci` bus): step through the experiments; RUN, SEND, DUMP, RESET the one shown, RUN ALL, with its state, biome and science value.
 
-**ENG** (I/O module, 3 × 2): CAUTION & WARNING (the MET is on the camera monitor's panel, with MET RESET beside it); ENGINE (ENG ARM, throttle,
-CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
-equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off);
+**ENG** (I/O module, 3 × 2): CAUTION & WARNING (the MET is on the camera monitor's panel, with MET RESET beside it); ENGINE (ENG ARM, THRUST %: the thrust now
+of the lit engines' rated thrust, the lever and the limiter together (80 with the lever up and the limit at 80 %), CUTOFF, GIMBAL LOCK, THRUST LIMIT knob, stage fuel, stage Δv from the rocket
+equation, for the engines the next staging lights before ignition, the current TWR: the thrust now against the local
+gravity, 0 with the engines off, and TWR MAX: at full throttle with the limiter as set, also with the engines off).
+The throttle lever is a separate controller (THROTTLE, under the left window against MAIN; a stand-in for a USB
+controller to come, still `panel/eng/in/throttle`);
 STAGING · ABORT (1 × 2, right of both), top to bottom: NEXT STAGE, six cells lit for what pressing STAGE does
 (ENGINES and SOLIDS it lights, DECOUPLE (also a docking port's decouple node: a launch escape tower, an undocking),
 CLAMPS, CHUTES, FAIRING (also covers thrown off, the SM-25's doors); all dark with no stage left), the stage number,
@@ -157,7 +160,9 @@ name set in JRTI's part menu. The page reaches JRTI (port 8080 on the KSP machin
 
 **SOLO** (I/O module, `index.html#solo`, `solo` bus): for a pilot flying without Mission Control.
 - PAD REQUEST: CIRC, PLANE, RDV TGT and INJECT (knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which
-  it reads up to the burn computer as CAPCOM would; the display says what it sent or why not. How it works:
+  it reads up to the burn computer as CAPCOM would; the display says what it sent or why not. RDV TGT on the ground
+  (an airless body, a target in orbit) gives the liftoff: TIG the liftoff, on the EVENT TIMER's TIG source, and the
+  launch azimuth on the display (`LIFTOFF AZ 087`). How it works:
   [flight-dynamics/README.md](flight-dynamics/README.md).
 - ORBIT (2 U wide): apoapsis and periapsis in km, the time to each, inclination.
 - NAVIGATION: body orbited, latitude, longitude, and the MODE switch: on MCC, for a crew with Mission Control,
@@ -165,7 +170,7 @@ name set in JRTI's part menu. The page reaches JRTI (port 8080 on the KSP machin
 
 **MCC** (Mission Control, http://localhost:8650/mcc.html): one tab per flight controller (FLIGHT, FIDO, RETRO,
 GUIDO, BOOSTER, EECOM, CAPCOM), meant for one laptop per controller on the same network. A go/no-go poll run by
-FLIGHT, a text loop, and CAPCOM reads up PADs to the burn computer when the link is up. MCC does not see injected
+FLIGHT, and CAPCOM reads up PADs to the burn computer when the link is up. MCC does not see injected
 failures. How it works: [panels/virtual/mcc/README.md](panels/virtual/mcc/README.md).
 
 **WALL** (Mission Control's front screen, http://localhost:8650/wall.html, for a TV or a projector): the ground
@@ -184,7 +189,8 @@ display, stuck switch). How it works: [simsup/README.md](simsup/README.md).
 rates on 7-segment displays beside it, the FDAI controls in the corners around it (MARKERS top left, NEEDLES and ERROR
 SCALE at the bottom), and under them SAS, RCS and RCS FINE on the left, SPEED REF on the right (the navball's speed
 reference, which SAS PRO and RETRO follow: orbit, surface or target; it acts only when turned, and its LED blinks while
-the game's reference is another one, since KSP changes it by itself). The SAS modes are on the SAS MODE module below.
+the game's reference is another one, since KSP changes it by itself; pressing SAS PRO or RETRO brings the game back
+to the knob's reference first, and otherwise turning the knob away and back re-sends it). The SAS modes are on the SAS MODE module below.
 The page alone: http://localhost:8650/fdai.html, also linked from the panel's top bar): an attitude ball drawn
 from `tlm/attitude` (pitch, heading, roll against the local horizon), with a roll index, prograde and retrograde markers,
 three fly-to error needles (to prograde or retrograde, ±5° or ±50° full scale), three rate scales and a NO ATT flag when

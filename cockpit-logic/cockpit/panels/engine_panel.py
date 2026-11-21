@@ -8,7 +8,8 @@ from ..alarms import ALARMS, stage_fuel_fraction
 from ..display_format import fit_number, format_mission_time
 from ..engines import IDLE, OFF, THRUSTING
 from ..messages import PanelOutputs, switch_lamp
-from ..performance import current_thrust_to_weight, hover_time, speeds_in_reference, stage_delta_v, time_to_impact
+from ..performance import (current_thrust_to_weight, hover_time, speeds_in_reference, stage_delta_v, thrust_to_weight,
+                           time_to_impact)
 
 SWITCHES_WITH_LAMP = ('sas', 'rcs')
 NEXT_STAGE_LAMPS = {'engines': 'lamp_ns_engines', 'solids': 'lamp_ns_solids', 'decouple': 'lamp_ns_decouple',
@@ -17,10 +18,11 @@ LAMPS = ['master_alarm', 'master_caution', 'led_eng_arm', 'lamp_stage', 'lamp_ab
          'lamp_contact', *(f'led_{switch}' for switch in SWITCHES_WITH_LAMP), 'led_speed_ref',
          *(f'lamp_sas_{key}' for key in S.SAS_MODE_BUTTONS),
          *NEXT_STAGE_LAMPS.values(), 'led_rcs_fine', 'led_gear', 'lamp_td_sink', 'lamp_td_drift', 'lamp_td_upright', 'lamp_td_gear', *ALARMS]
+SPEED_REF_SAS_BUTTONS = ('sas_pro', 'sas_retro')     # the SAS modes that follow the speed reference
 # display → (digits, the dashes shown without telemetry)
 DISPLAYS = {'disp_alt': 8, 'disp_hs': 5, 'disp_vs': 5, 'disp_speed': 5, 'disp_g': 4, 'disp_q': 4, 'disp_hover': 4,
             'disp_impact': 5, 'disp_drift_right': 5, 'disp_drift_up': 5, 'disp_met': 7,
-            'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5, 'disp_twr': 4, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
+            'disp_stage': 2, 'disp_eng_on': 2, 'disp_dv': 5, 'disp_twr': 4, 'disp_twr_max': 4, 'disp_thrust_pct': 3, 'disp_att_pitch': 5, 'disp_att_hdg': 5, 'disp_att_roll': 5, 'disp_rate_pitch': 4,
             'disp_rate_yaw': 4, 'disp_rate_roll': 4}
 BARS = ['bar_fuel', 'bar_thrust']
 
@@ -66,8 +68,27 @@ def handle_input(cockpit, change):
         if not change.pressed:
             return []
         cockpit.sas_mode_choice, cockpit.sas_mode_retries = S.SAS_MODE_BUTTONS[control[4:]], 0
-        return cockpit.command('cmd/sas_mode', {'mode': cockpit.sas_mode_choice})
+        commands = []
+        if control in SPEED_REF_SAS_BUTTONS:
+            # PRO and RETRO hold the navball's prograde: the game's speed reference must be the knob's. KSP changes it
+            # by itself and a knob cannot re-send the position it is on (GAPS C19), so the press brings it back.
+            knob_mode = cockpit.selected('speed_ref', S.SPEED_MODES)
+            if knob_mode is not None and cockpit.vessel.get('speed_mode') != knob_mode:
+                commands = cockpit.command('cmd/speed_mode', {'mode': knob_mode})
+        return commands + cockpit.command('cmd/sas_mode', {'mode': cockpit.sas_mode_choice})
     return None
+
+
+
+def thrust_percent(vessel, engines):
+    """The thrust now as a percentage of the lit engines' rated thrust (full throttle, limiter at 100 %, at the outside
+    pressure): the lever and the THRUST LIMIT knob together, so 80 with the lever up and the knob on 80 %; an engine
+    giving less than it should reads low, a flameout 0. 0 with no engine lit, None when unknown."""
+    thrust = vessel.get('thrust')
+    if thrust is None:
+        return None
+    rated = sum(engine.get('rated') or 0.0 for engine in engines if engine.get('on'))
+    return 0.0 if rated <= 0 else min(100.0, 100.0 * thrust / rated)
 
 
 # ---------- outputs ----------
@@ -216,6 +237,12 @@ def _render_displays(cockpit, outputs):
     _render_ascent_descent(cockpit, outputs)
     outputs.text('disp_dv', fit_number(stage_delta_v(cockpit), 0, DISPLAYS['disp_dv']))
     outputs.text('disp_twr', fit_number(current_thrust_to_weight(cockpit), 2, DISPLAYS['disp_twr']))
+    # TWR MAX: at full throttle with the thrust limiter as set, also with the engines off or before ignition (the
+    # engines the next staging lights): the braking a landing can count on (GAPS C17)
+    outputs.text('disp_twr_max', fit_number(thrust_to_weight(cockpit), 2, DISPLAYS['disp_twr_max']))
+    # THRUST %: what the lit engines give now, of their rated thrust (the lever is a separate controller)
+    engines = cockpit.telemetry.get('tlm/engines', {}).get('engines') or []
+    outputs.text('disp_thrust_pct', fit_number(thrust_percent(cockpit.vessel, engines), 0, DISPLAYS['disp_thrust_pct']))
     _render_attitude(cockpit, outputs)
     mission_time = cockpit.clock.get('met')
     outputs.text('disp_met', format_mission_time(mission_time) if mission_time is not None else '--.--.--')

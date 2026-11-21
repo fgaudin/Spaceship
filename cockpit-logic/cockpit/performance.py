@@ -73,12 +73,19 @@ def hover_time(cockpit):
 
 
 def speeds_in_reference(cockpit):
-    """(horizontal, vertical, total) m/s against what the SPEED REF knob selects: the orbit, or the surface (also for
-    TGT: a speed against a target says nothing of the ground below). Turning with the planet only adds sideways
-    speed, so the vertical speed is the same in both. Each is None when unknown."""
+    """(horizontal, vertical, total) m/s against what the SPEED REF knob selects: the orbit, or the surface. On TGT the
+    total is the speed relative to the target, as on KSP's navball (the surface's without a target), while horizontal
+    and vertical stay the surface's: against a target they mean nothing, and the ground below still matters. Turning
+    with the planet only adds sideways speed, so the vertical speed is the same against the orbit and the surface.
+    Each is None when unknown."""
     flight = cockpit.flight
     vertical = flight.get('vs')
-    if cockpit.selected('speed_ref', S.SPEED_MODES) != 'orbit':
+    mode = cockpit.selected('speed_ref', S.SPEED_MODES)
+    if mode == 'target':
+        target = cockpit.target
+        relative = target.get('rel_v') if target.get('set') else None
+        return flight.get('hs'), vertical, relative if relative is not None else flight.get('speed')
+    if mode != 'orbit':
         return flight.get('hs'), vertical, flight.get('speed')
     total = flight.get('v_orb')
     if total is None or vertical is None:

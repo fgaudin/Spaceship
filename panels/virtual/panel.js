@@ -259,6 +259,7 @@ function buildConsole(consoleLayout, definitions) {
     Object.assign(grid.style, { width: mm(width * U_MM), height: mm(height * U_MM) });
     checkGrid(placed, sizeOf, (entry) => entry.module, `zone ${zone.id}`);
     if (zone.align === 'center') section.classList.add('centered');
+    if (zone.align === 'inner' && zone.side) section.classList.add('inner');     // against MAIN, not the outer edge
     if (zone.side && zone.top) section.style.marginTop = mm(zone.top * U_MM);
     if (zone.side && zone.flush) {
       section.classList.add('flush');

@@ -3,7 +3,6 @@
    MCC topics (one writer each, retained so that a console opened late sees the state):
      mcc/poll          FLIGHT           {"open", "question", "met"}: the go/no-go poll
      mcc/poll/<role>   that console     {"go": true | false, "met"}: its answer
-     mcc/loop/<role>   that console     {"text", "met"} (not retained): a note on the flight director's loop
    and from mcc-data (mcc-data/service.py): mcc/history/<id>, mcc/events, mcc/bodies, mcc/maps, mcc/data/status.
    MCC never subscribes to sim/*: flight controllers find failures from what the vehicle does, as in Apollo. */
 

@@ -4,8 +4,7 @@
    (mcc.html#fido+retro).
 
    The footer and the poll banner speak for every console held: one GO / NO-GO answers for all of them (FLIGHT's
-   board still shows each), and a note on the loop is signed with all of them. FLIGHT runs the poll and does not
-   answer it. */
+   board still shows each). FLIGHT runs the poll and does not answer it. */
 import { CONSOLES } from './roster.js';
 import { store, publish, met } from './bus.js';
 import { create, formatMet } from './ui.js';
@@ -144,16 +143,6 @@ function wireFooter() {
   for (const [id, go] of [['answer-go', true], ['answer-nogo', false], ['banner-go', true], ['banner-nogo', false]]) {
     document.getElementById(id).addEventListener('click', () => answer(go));
   }
-  document.getElementById('loop-form').addEventListener('submit', (event) => {
-    event.preventDefault();
-    const input = document.getElementById('loop-text');
-    const text = input.value.trim();
-    if (!text) return;
-    const roles = heldRoles();
-    // one message, on the first console's topic, signed with every console held
-    publish(`mcc/loop/${roles[0]}`, { text, met: met(), roles });
-    input.value = '';
-  });
 }
 
 buildTabs();

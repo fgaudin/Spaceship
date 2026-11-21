@@ -147,3 +147,64 @@ def test_injection_in_jnsq_aims_at_its_mun():
     first_burn, _ = hohmann(JNSQ_MU, JNSQ_RADIUS + 100000.0, 90960000.0)
     assert isinstance(pad, Pad) and abs(pad.dv[0] - first_burn) < 0.05
     assert moon_orbit('Mun', 0.0, jnsq(1700000.0)).a == 90960000.0
+
+
+# ---------- LIFTOFF: RDV TGT on the ground ----------
+import planner  # noqa: E402
+
+MUN_MU, MUN_RADIUS, MUN_DAY = BODIES['Mun']['mu'], BODIES['Mun']['radius'], 138984.4
+
+
+def on_the_mun(site_lat=0.0, site_lon=180.0, target=None, situation='landed', atm=0):
+    """A lander standing on the Mun (its orbit: a degenerate ellipse through where it stands) and a target."""
+    # the site's direction from the lat/lon in the inertial frame at this moment: argp + nu along an inclined plane
+    tlm = {'tlm/orbit': {'body': 'Mun', 'a': 100000.0, 'e': 0.99, 'i': 90.0 if site_lat else 0.0,
+                         'lan': (site_lon - 90.0) % 360 if site_lat else 0.0, 'argp': site_lat if site_lat else 0.0,
+                         'nu': 0.0 if site_lat else site_lon, 'ut': 1000.0, 'mu': MUN_MU, 'radius': MUN_RADIUS,
+                         'atm': atm},
+           'tlm/time': {'ut': 1000.0, 'met': 500.0},
+           'tlm/vessel': {'situation': situation, 'mass': 4000.0, 'thrust_avail': 60000.0, 'isp': 345.0},
+           'mcc/bodies': {'bodies': {'Mun': {'rotation_period': MUN_DAY}}}}
+    if target:
+        tlm['tlm/target'] = {'set': True, 'orbit': {'body': 'Mun', 'ut': 1000.0, 'e': 0.0, 'argp': 0.0,
+                                                    'a': 230000.0, **target}}
+    return tlm
+
+
+def test_liftoff_east_into_an_equatorial_orbit():
+    pad = rendezvous(on_the_mun(target={'i': 0.0, 'lan': 0.0, 'nu': 0.0}))
+    assert isinstance(pad, Pad) and pad.text == 'LIFTOFF AZ 090'
+    assert 550 < pad.dv[0] < 650 and pad.dv[1:] == (0.0, 0.0)             # about circular speed and a bit
+    assert pad.tig_met >= 500.0 + planner.LEAD_TIME_S
+
+
+def test_liftoff_azimuth_follows_the_targets_plane():
+    # a polar orbit passing over the site (on the equator, at its node): straight north or south
+    northward = rendezvous(on_the_mun(site_lon=0.0, target={'i': 90.0, 'lan': 0.0, 'nu': 0.0}))
+    assert northward.text in ('LIFTOFF AZ 000', 'LIFTOFF AZ 360', 'LIFTOFF AZ 001', 'LIFTOFF AZ 359')
+    # a retrograde equatorial orbit: west
+    assert rendezvous(on_the_mun(target={'i': 180.0, 'lan': 0.0, 'nu': 0.0})).text == 'LIFTOFF AZ 270'
+    # inclined 30° from a site on the equator: asin(cos 30° / cos 0°) = 60° (going north) or 120° (south)
+    tilted = int(rendezvous(on_the_mun(target={'i': 30.0, 'lan': 0.0, 'nu': 0.0})).text.split()[-1])
+    assert min(abs(tilted - 60), abs(tilted - 120)) <= 1
+
+
+def test_liftoff_comes_when_the_target_leads_by_what_the_ascent_needs():
+    tlm = on_the_mun(target={'i': 0.0, 'lan': 0.0, 'nu': 0.0})
+    pad = rendezvous(tlm)
+    wait = pad.tig_met - 500.0
+    orbit = planner.own_orbit(tlm)
+    target = planner._target_orbit(tlm, orbit)
+    spin = 2 * math.pi / MUN_DAY
+    parking = MUN_RADIUS + BODIES['Mun']['safe_altitude'] + planner.PARKING_ABOVE_SAFE_M
+    _, ascent_time, ascent_angle = planner.ascent(tlm, MUN_MU, MUN_RADIUS, parking)
+    # where the target is at the insertion, against where we are then: the Hohmann phase
+    site_at_insertion = planner._turned(orbit.direction_at(orbit.nu), spin * wait + ascent_angle)
+    lead = planner._lead(site_at_insertion, target.at(orbit.ut + wait + ascent_time), target.normal())
+    _, transfer_time = hohmann(MUN_MU, parking, target.a)
+    assert abs(lead - (math.pi - target.mean_motion * transfer_time) % (2 * math.pi)) < 0.01
+
+
+def test_liftoff_refusals():
+    assert rendezvous(on_the_mun()).text == 'RDV: NO TARGET'
+    assert rendezvous(on_the_mun(target={'i': 0.0, 'lan': 0.0, 'nu': 0.0}, atm=70000)).text == 'LIFTOFF: AIRLESS ONLY'

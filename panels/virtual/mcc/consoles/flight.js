@@ -1,10 +1,7 @@
-/* FLIGHT: the flight director. Mission phase and health at a glance, the crew's alarms, the go/no-go poll, the loop. */
+/* FLIGHT: the flight director. Mission phase and health at a glance, the crew's alarms, the go/no-go poll. */
 import { create, box, figures, formatMet, km, fixed } from '../ui.js';
-import { store, publish, onMessage, met, vessel, flight, orbit, linkUp, telemetryLive } from '../bus.js';
+import { store, publish, met, vessel, flight, orbit, linkUp, telemetryLive } from '../bus.js';
 import { CONSOLES } from '../roster.js';
-
-const LOOP_LINES = 200;
-const loop = [];
 
 export function phase() {
   const craft = vessel(), height = flight().alt, apoapsis = orbit().apo;
@@ -20,17 +17,17 @@ export function phase() {
   }
 }
 
-let setFigure, pollBoard, pollStatus, alarmsBox, loopList;
+let setFigure, pollBoard, pollStatus, alarmsBox;
 
 export function mount(root) {
   const status = box(root, 'STATUS', { at: [0, 0] });
   setFigure = figures(status, [['phase', 'Phase'], ['vessel', 'Vessel'], ['met', 'MET'], ['body', 'Body'],
     ['alt', 'Altitude'], ['speed', 'Speed'], ['link', 'Link'], ['tlm', 'Telemetry'], ['crew', 'Cockpit']]);
 
-  alarmsBox = box(root, "CREW'S ALARMS", { at: [1, 0] });
+  alarmsBox = box(root, "CREW'S ALARMS", { at: [1, 0], size: [2, 1] });
   alarmsBox.append(create('div', 'mcc-alarms'));
 
-  const poll = box(root, 'GO / NO-GO POLL', { at: [0, 1], size: [2, 1] });
+  const poll = box(root, 'GO / NO-GO POLL', { at: [0, 1], size: [3, 1] });
   const form = create('form', 'mcc-inline');
   const question = create('input');
   question.placeholder = 'e.g. GO for TLI?';
@@ -50,24 +47,6 @@ export function mount(root) {
   pollBoard = create('div', 'mcc-poll');
   poll.append(form, pollStatus, pollBoard);
 
-  const loopBox = box(root, 'LOOP', { at: [2, 0], size: [1, 2] });
-  loopList = create('ol', 'mcc-feed');
-  loopBox.append(loopList);
-  onMessage((topic, payload, retained) => {
-    if (!topic.startsWith('mcc/loop/') || retained) return;
-    const roles = payload.roles || [topic.split('/')[2]];      // a laptop holding several consoles signs with all
-    loop.push({ ...payload, role: roles.join('/') });
-    loop.splice(0, loop.length - LOOP_LINES);
-    drawLoop();
-  });
-}
-
-function drawLoop() {
-  loopList.replaceChildren(...loop.slice().reverse().map((line) => {
-    const item = create('li');
-    item.append(create('span', 'met', formatMet(line.met)), create('span', 'role', line.role.toUpperCase()), create('span', '', line.text));
-    return item;
-  }));
 }
 
 export function update() {

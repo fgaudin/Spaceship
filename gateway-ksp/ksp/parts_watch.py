@@ -1,5 +1,8 @@
 """What the gateway watches part by part: engines, stage propellant, solar panels, reaction wheels, parachutes, ground contact, heat
-and docking ports. Rebuilt after every staging, because parts leave and kRPC streams on them go stale."""
+and docking ports. Rebuilt after every staging, because parts leave and kRPC streams on them go stale: in the
+background, so that telemetry goes on meanwhile (it stopped for 0.7 s at each staging on a big rocket, GAPS C4)."""
+import threading
+
 from .streams import FAST_HZ, SLOW_HZ, StreamGroup, read_or
 
 TOTAL_RESOURCES = ('ElectricCharge', 'LiquidFuel', 'Oxidizer', 'MonoPropellant', 'XenonGas', 'Ablator',
@@ -60,6 +63,23 @@ class WatchedExperiment:
                 'value': self.values and self.values[0], 'transmit': self.values and self.values[1]}
 
 
+class Rebuild:
+    """A PartsWatch built on another thread: kRPC's client serialises the calls of the two threads, and the main loop
+    keeps reading its streams meanwhile."""
+    def __init__(self, stage_number, generation):
+        self.stage_number, self.generation, self.result, self.done = stage_number, generation, None, threading.Event()
+
+    def run(self, connection, vessel):
+        try:
+            fresh = PartsWatch(connection, vessel)
+            fresh.stage_propellant(self.stage_number)       # its tanks too
+            self.result = fresh
+        except Exception as error:                          # the vessel went away: the next read starts again
+            print(f'parts rebuild failed: {error}', flush=True)
+        finally:
+            self.done.set()
+
+
 class PartsWatch:
     def __init__(self, connection, vessel):
         self.connection, self.vessel = connection, vessel
@@ -67,6 +87,11 @@ class PartsWatch:
         self.stage_streams = StreamGroup(connection)
         self.watched_stage = None       # stage number the stage propellant streams belong to
         self.watched_lit = None         # and the engines lit then (indexes in self.engines)
+        self.stage_tanks = []           # (resource, capacity, amount stream)
+        self.rebuild = None             # a PartsWatch being built in the background after a staging, or None
+        self.stale = False              # staged: the part streams are to be rebuilt
+        self.generation = 0             # stagings so far: a rebuild started before the last one is stale too
+        self.closed = False
         self.refresh()
 
     def refresh(self):
@@ -98,6 +123,7 @@ class PartsWatch:
         self._watch_total_resources()
 
     def close(self):
+        self.closed = True
         self.streams.close()
         self.stage_streams.close()
 
@@ -149,11 +175,14 @@ class PartsWatch:
         for this, so there is one stream per tank and resource, rebuilt when the stage number changes, and chosen
         again when the engines lit change: tanks chosen while none was lit yet (a bind or a staging read before KSP
         reports the engine on) stayed empty, and stage Δv read 0 through a whole ascent (GAPS C22)."""
-        if stage_number != self.watched_stage:
-            self.watched_stage = stage_number
-            self.refresh()
-            self.watched_lit = self._lit_engines()
-            self._watch_stage_tanks(stage_number)
+        if stage_number != self.watched_stage or self.stale:
+            if self.watched_stage is None:
+                # just bound: the parts were read by the constructor, only the tanks are left (a bind stops
+                # telemetry anyway)
+                self.watched_stage, self.watched_lit = stage_number, self._lit_engines()
+                self._watch_stage_tanks(stage_number)
+            elif not self._take_rebuild(stage_number):
+                self._start_rebuild(stage_number)       # meanwhile: the old streams, those of parts gone read 0
         else:
             lit = self._lit_engines()
             if lit != self.watched_lit:
@@ -162,7 +191,7 @@ class PartsWatch:
         totals = {}
         for resource, capacity, amount in self.stage_tanks:
             total = totals.setdefault(resource, {'amount': 0.0, 'max': 0.0})
-            total['amount'] += amount()
+            total['amount'] += read_or(0.0, amount)
             total['max'] += capacity
         return {resource: {'amount': round(total['amount'], 3), 'max': round(total['max'], 3)}
                 for resource, total in totals.items()}
@@ -192,13 +221,46 @@ class PartsWatch:
                     self.stage_tanks.append((resource, capacity, amount))
 
     def forget_stage(self):
-        """After a staging command: rebuild on the next read."""
-        self.watched_stage = None
+        """After a staging command: rebuild on the next read (in the background)."""
+        self.stale = self.watched_stage is not None
+        self.generation += 1
+
+    # ---------- rebuilding in the background ----------
+    def _start_rebuild(self, stage_number):
+        if self.rebuild is not None and (self.rebuild.stage_number, self.rebuild.generation) == (stage_number,
+                                                                                                  self.generation):
+            return                                      # under way
+        rebuild = self.rebuild = Rebuild(stage_number, self.generation)
+        thread = threading.Thread(target=rebuild.run, args=(self.connection, self.vessel), daemon=True,
+                                  name='parts-rebuild')
+        thread.start()
+
+    def _take_rebuild(self, stage_number):
+        """Swap the rebuilt streams in when ready (on the main loop, between two cycles). True when taken."""
+        rebuild = self.rebuild
+        if rebuild is None or not rebuild.done.is_set():
+            return False
+        self.rebuild = None
+        fresh = rebuild.result
+        if fresh is None or (rebuild.stage_number, rebuild.generation) != (stage_number, self.generation):
+            return False                                # failed, or staged again meanwhile: start over
+        if self.closed:
+            fresh.close()
+            return False
+        old_streams, old_stage_streams = self.streams, self.stage_streams
+        kept = {'not_flown_engines': self.not_flown_engines, 'rebuild': None, 'closed': False, 'stale': False,
+                'generation': self.generation}
+        self.__dict__.update({**fresh.__dict__, **kept})
+        old_streams.close()
+        old_stage_streams.close()
+        if self.not_flown_engines:
+            self.read_next_stage()                      # built without them: docked, NEXT STAGE leaves them out
+        return True
 
     # ---------- solar panels, parachutes, ground ----------
     def solar_deployed_state(self):
         """True / False, or None when the vessel has no deployable panel."""
-        return any(deployed() for deployed in self.solar_deployed) if self.solar_deployed else None
+        return any(read_or(False, deployed) for deployed in self.solar_deployed) if self.solar_deployed else None
 
     def antenna_deployed_state(self):
         """True / False, or None when the vessel has no deployable antenna."""
@@ -226,7 +288,7 @@ class PartsWatch:
         """'deployed', 'armed', 'cut' or 'stowed'; None without parachutes."""
         if not self.parachute_states:
             return None
-        states = {state().name for state in self.parachute_states}
+        states = {state.name for state in (read_or(None, stream) for stream in self.parachute_states) if state is not None}
         if states & PARACHUTE_OUT_STATES:
             return 'deployed'
         if 'armed' in states:

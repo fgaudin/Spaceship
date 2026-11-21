@@ -36,7 +36,6 @@ export function mount(root) {
     const delta = ['pro', 'nrm', 'rad'].map((name) => Number(values[name] || 0));
     if (!parts.every(Number.isFinite) || !delta.every(Number.isFinite)) return;
     publish('pad/uplink', { tig_met: tig, dv: delta });
-    publish('mcc/loop/capcom', { text: `PAD read up: TIG ${formatMet(tig)}, Δv ${delta.join(' / ')}`, met: met() });
   });
   padBox.append(form);
   setStatus = figures(box(root, 'READBACK', { at: [0, 1] }), [['link', 'Link'], ['waiting', 'On the burn computer'], ['loaded', 'Loaded PAD']]);

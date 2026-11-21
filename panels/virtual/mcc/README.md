@@ -11,9 +11,8 @@ columns as lets them be drawn biggest, all at the same zoom (`fitConsoles` in `m
 fills the window; three are smaller, but each keeps its layout.
 
 - Open: `http://<cockpit machine>:8650/mcc.html`, or `mcc.html#fido` for one console, `mcc.html#fido+retro` for two.
-- A laptop holding several consoles answers a poll once for all of them (FLIGHT's board shows each), and its notes
-  on the loop are signed with all of them (FIDO/RETRO). Holding FLIGHT with others: it runs the poll and answers for
-  the others.
+- A laptop holding several consoles answers a poll once for all of them (FLIGHT's board shows each). Holding FLIGHT
+  with others: it runs the poll and answers for the others.
 - The laptops must reach the cockpit machine on ports 8650 (the pages) and 9001 (the bus, MQTT over WebSockets).
   Docker publishes both on every interface; a firewall on the cockpit machine may still need to let them through.
 
@@ -22,7 +21,7 @@ fills the window; three are smaller, but each keeps its layout.
 ```
   laptop: FLIGHT ─┐                                    ┌─ tlm/*, cw/state, cmp/pad, panel/*/in  (read only)
   laptop: FIDO   ─┤                                    │
-  laptop: RETRO  ─┼── MQTT broker (ws://…:9001) ───────┼─ mcc/poll, mcc/poll/<role>, mcc/loop/<role>  (MCC's own)
+  laptop: RETRO  ─┼── MQTT broker (ws://…:9001) ───────┼─ mcc/poll, mcc/poll/<role>  (MCC's own)
   laptop: …      ─┤                                    │
   laptop: CAPCOM ─┘                                    └─ pad/uplink  (CAPCOM only: a PAD read up to the crew)
 ```
@@ -34,7 +33,6 @@ broker as retained messages, so a laptop that joins late sees the poll and the a
 |---|---|---|
 | `mcc/poll` | FLIGHT | `{"open", "question", "met"}`, retained: the go/no-go poll |
 | `mcc/poll/<role>` | that console | `{"go": true \| false, "met"}`, retained: its answer (FLIGHT clears them all when it opens a poll) |
-| `mcc/loop/<role>` | that console | `{"text", "met", "roles"}`: a note on the flight director's loop; `roles` lists every console the laptop holds |
 | `pad/uplink` | CAPCOM | `{"tig_met", "dv": [prograde, normal, radial]}`: the burn computer shows it until the crew accepts it |
 
 MCC never reads `sim/*`. As in Apollo, flight controllers find a failure from what the vehicle does; only the
@@ -44,7 +42,7 @@ instructor (SimSup, a separate page) knows what was injected.
 
 | Tab | Role | Shows |
 |---|---|---|
-| FLIGHT | Flight director | Mission phase, vessel, MET, link, telemetry and cockpit health; the crew's alarms; the go/no-go poll board (open, close, each console's answer); the loop. |
+| FLIGHT | Flight director | Mission phase, vessel, MET, link, telemetry and cockpit health; the crew's alarms; the go/no-go poll board (open, close, each console's answer). |
 | FIDO | Flight dynamics | Orbit elements and a drawing; time to apsides and to the next SOI change; the target (range, closing speed, line-of-sight rate); latitude, longitude, altitude. |
 | RETRO | Retrofire | Periapsis against the entry corridor, 36 to 64 % of the atmosphere's height (25–45 km on stock Kerbin, 29–51 km on JNSQ's), the Δv at apoapsis to bring it to the middle, time to the atmosphere, load, dynamic pressure, heat, and KSP's verdict on opening the chutes. |
 | GUIDO | Guidance | The burn computer's PAD and state, time to TIG, burn time at full thrust, a read-up waiting for the crew; how far the nose is from the burn direction; attitude, SAS mode, navball reference. |
@@ -52,14 +50,14 @@ instructor (SimSup, a separate page) knows what was injected.
 | EECOM | Electrical, thermal, comms | Charge, its trend and how long it lasts, solar panels, lights; the hottest part; monopropellant, fuel, oxidizer, xenon, ablator; life support (crew, and food, water and oxygen with the hours each lasts, recyclers not counted); science (experiments, ready, holding data, its value, biome); the radio link (signal, first relay, hops, antennas). |
 | CAPCOM | Capsule communicator | The PAD form: read-up only with a radio link (AOS); the readback (waiting on the burn computer, loaded); a feed of the crew's actions on the panels. |
 
-Every console except FLIGHT has the same footer: GO / NO-GO for the open poll, and a line to the loop.
+Every console except FLIGHT has the same footer: GO / NO-GO for the open poll.
 
 ## The code
 
 | File | What it is |
 |---|---|
 | `../mcc.html`, `../mcc.css` | The page and its styles (colours from `panel.css`). |
-| `mcc.js` | Tabs (toggles), the consoles held and remembered, the poll banner and footer (answer, loop), the update loop (twice a second). |
+| `mcc.js` | Tabs (toggles), the consoles held and remembered, the poll banner and footer (answer), the update loop (twice a second). |
 | `bus.js` | The MCC's store of the last payload per topic and small readers (`vessel()`, `orbit()`, `linkUp()`…), on the connection of the shared `../bus.js`. The top bar and the page navigation come from the shared `../shell.js`. |
 | `roster.js` | The consoles in tab order. Adding one: write `consoles/<id>.js` with `mount(root)` and `update()`, add it here. |
 | `consoles/*.js` | One module per console. |
@@ -105,5 +103,5 @@ KSP (the mock plant) it still records; the pages use stock's bodies and draw the
 
 ## Not done yet
 
-- A voice loop. The text loop stands in.
+- A voice loop (the text loop was removed: it would not be used).
 - RETRO's corridor and deorbit target are fractions of the atmosphere for a small capsule, not computed for the vehicle.

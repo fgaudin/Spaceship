@@ -71,7 +71,6 @@ attitude angles). Seeded from the KSP self-test (`selftest/interface.md`).
 | `fd/status` | flight-dynamics | `{"text", "ok"}`: what the last SOLO request gave ("CIRC APO 1004.2", "RDV: NO TARGET") | on change | 1, retained |
 | `mcc/poll` | MCC, FLIGHT console | `{"open", "question", "met"}`: the go/no-go poll ([panels/virtual/mcc/README.md](../panels/virtual/mcc/README.md)) | on change | 1, retained |
 | `mcc/poll/<role>` | MCC, that console | `{"go": bool, "met"}`: its answer | on change | 1, retained |
-| `mcc/loop/<role>` | MCC, that console | `{"text", "met", "roles"}`: a note on the flight director's loop (roles: every console the laptop holds) | event | 1 |
 | `mcc/history/get` | an MCC page | `{"id"}`: asks the recorder for the flight so far | on connecting | 1 |
 | `mcc/history/<id>` | mcc-data | `{"flight", "launch": {"lat", "lon", "body", "t"} or null, "columns": {"t", "ut", "alt", "radar", "apo", "peri", "spd", "vorb", "vs", "q", "g", "lat", "lon", "thr", "thrust", "mass", "heat", "ec", "body"}, "events": [...]}`: one sample a second (t: MET; ec: charge, 0..1), as columns | on request | 1 |
 | `mcc/events` | mcc-data | `{"t", "text", "kind"}`: a flight event as it happens (kind: milestone, stage, engine, comm, alarm) | event | 1 |
