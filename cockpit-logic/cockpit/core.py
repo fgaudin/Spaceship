@@ -70,7 +70,7 @@ class Cockpit:
         self.sas_mode_memory = None             # the last mode the game held: the one SAS takes when it comes on again
         self.sas_was_on = False
         self.charge_rate = 0.0                  # EC/s, smoothed
-        self.previous_charge_sample = None      # (mission time, amount)
+        self.previous_charge_sample = None      # (universal time, amount, vessel name)
         self.docking_rates = rendezvous_panel.DockingRates()   # yaw, pitch and roll rates against the port
         self.attitude_rates = AngleRates(S.ATTITUDE_RATE_SMOOTHING)   # pitch, heading and roll rates
         self.was_powered = True

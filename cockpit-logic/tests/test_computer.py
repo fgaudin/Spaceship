@@ -40,9 +40,8 @@ def test_bad_entries_light_err_and_change_nothing():
     c.select_field('tig')
     keys(c, '0 1 7 5 0 0 ENTR')               # 75 minutes
     assert c.entry_error and c.pad['tig'] is None and c.selected_field == 'tig'
-    c.select_field('pro'); c.select_field('pro')          # pressing the field again leaves it
-    assert c.selected_field is None and not c.entry_error
-    c.select_field('pro')
+    c.select_field('pro'); c.select_field('pro')          # pressing the field again keeps it, entry started again
+    assert c.selected_field == 'pro' and not c.entry_error and c.typed == ''
     keys(c, '1 . 2 3')                        # one decimal only
     assert c.entry_error and c.typed == '1.2'
     keys(c, 'CLR CLR')
@@ -161,3 +160,14 @@ def test_burn_time_is_shown_before_the_tig_is_keyed():
     for k in ('1', '0', '0', 'ENTR'):
         c.press_key(k)
     assert not c.has_pad() and c.burn_time({'tlm/vessel': {'mass': 10000.0, 'thrust_avail': 100000.0, 'isp': 300.0}}) > 9
+
+
+def test_the_field_entr_moved_to_can_be_pressed():
+    """ENTR moves on to PRO; pressing PRO's button then (as a crew does) must key PRO, not TIG."""
+    c = BurnComputer()
+    c.select_field('tig')
+    keys(c, '0 0 0 3 0 8 ENTR')
+    assert c.selected_field == 'pro'
+    c.select_field('pro')
+    keys(c, '- 1 3 . 0 ENTR')
+    assert c.pad['tig'] == 188 and c.pad['dv'][0] == -13.0

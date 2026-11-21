@@ -67,6 +67,8 @@ class CommandHandler:
         self.link.vessel.control.activate_next_stage()
         time.sleep(0.1)                     # let the part list settle before it is read again
         self.link.parts.forget_stage()
+        # docked: an engine of the capsule not flown that the staging lit goes out at once, before the throttle reaches it
+        self.link.engine_sharing.apply(self.link, failed=self.failures.failed_engines)
 
     def abort(self, request):
         self.link.vessel.control.abort = True
@@ -262,6 +264,7 @@ class CommandHandler:
         'controls_only', the crew stays where it is."""
         if request.get('to') in STATIONS:
             self.link.station.go_to(request['to'], self.link, move_crew=not request.get('controls_only'))
+            self.link.engine_sharing.apply(self.link, failed=self.failures.failed_engines)
 
     # ---------- game ----------
     def pause(self, request):

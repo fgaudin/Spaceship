@@ -848,3 +848,21 @@ def test_next_stage_lamps_show_what_staging_does():
     assert lit == {'engines', 'solids', 'clamps'}
     fed(c, 1, vessel={'next_stage': None})                              # no stage left: all dark
     assert not any(c.published[O + f'lamp_ns_{key}']['on'] for key in ('engines', 'solids', 'clamps'))
+
+
+def test_charge_rate_over_universal_time_and_per_vessel():
+    """EC/s from UT, not MET: MET stands still on the pad (the rate froze at −198.9 EC/s); a new vessel starts again."""
+    c = Cockpit()
+    def charge(t, ut, met, amount, name='Ship'):
+        c.handle('tlm/time', {'ut': ut, 'met': met, 'warp': 1}, t)
+        c.handle('tlm/vessel', {'name': name, 'mass': 1000.0, 'thrust': 0.0, 'thrust_avail': 0.0, 'stage': 1}, t)
+        c.handle('tlm/resources', {'total': {'ElectricCharge': {'amount': amount, 'max': 1000}}}, t)
+    charge(0, 100.0, 0.0, 900.0)
+    charge(1, 101.0, 0.0, 898.0)                # on the pad: MET stays 0, UT runs
+    assert c.charge_rate < -0.1
+    for second in range(2, 40):
+        charge(second, 100.0 + second, 0.0, 898.0)
+    assert abs(c.charge_rate) < 0.01             # steady charge: the rate settles to zero
+    charge(40, 140.0, 0.0, 300.0, name='Lander')  # another vessel, far less charge: no jump
+    charge(41, 141.0, 0.0, 300.0, name='Lander')
+    assert abs(c.charge_rate) < 0.01

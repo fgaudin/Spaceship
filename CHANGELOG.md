@@ -3,8 +3,29 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
-## 2026-11-21 — STATION moves the whole crew
+## 2026-11-21 — STATION moves the whole crew; the engines follow STATION
 
+- **Docked, the engine controls drive the flown capsule's engines only** (gateway, new `ksp/engine_sharing.py`). After
+  docking, KSP rebuilt the staging and put the CSM's Cheetah and the lander's Terrier, which face opposite ways, in one
+  stage, and ENG ARM and the throttle reach every engine: in the Mun mission the Cheetah had to be lit alone through
+  kRPC (GAPS C10). Now, while the two capsules are docked, the engines on the side of the capsule not flown are shut
+  down and remembered; STATION flying the other capsule swaps them, and undocked they are lit again. A capsule's side
+  is found in the part tree: the docking joint is the docked port whose parent is the other port, and the parts under
+  it are one capsule's. Checked on the slow telemetry cycle, at once after STAGE (an engine a staging lit goes out
+  before the throttle reaches it) and after a STATION move; an engine SimSup failed is never relit. NEXT STAGE leaves
+  the other capsule's engines out; `tlm/station` gains `held`. Unit tests `gateway-ksp/tests/test_engine_sharing.py`;
+  checked in KSP on the docked CSM and lander: CM flown, Cheetah lit and Terrier held; STATION LM, the reverse; back.
+- **NEXT STAGE shows every separation** (GAPS C11): DECOUPLE also lights for a docking port whose decouple node is in
+  the stage (the launch escape tower on the CM's nose port showed SOLIDS alone), and FAIRING for covers thrown off by
+  parts other than engines (`ModuleJettison`: the SM-25's doors showed a dark stage). Engine shrouds are left out: they
+  do not come off when the engine is staged. Checked in KSP: the tower's stage SOLIDS + DECOUPLE, the SM-25's FAIRING.
+- **EC/s is measured over UT** (GAPS C13): over mission time it froze, since MET stands still on the pad and starts
+  again at 0 for an undocked vessel (−198.9 EC/s on the pad with the charge not moving), and jumped on a vessel change.
+  It now starts again on another vessel or a clock going back. Test `test_charge_rate_over_universal_time_and_per_vessel`.
+- **A burn computer field button always selects its field** (GAPS C14). ENTR moves on to the next field, and pressing
+  that field's button, as a crew does, toggled it off: the next keys went into TIG (keying a DOI gave TIG 00.01.30 and
+  Δv 0, with no ERR). Pressing the selected field's button now starts its entry again; CLR leaves a field.
+  Test `test_the_field_entr_moved_to_can_be_pressed`.
 - **STATION took only one kerbal across per move**, whatever the seats: turning it to LM with two in the CM left one
   behind, and turning it back could never empty the lander (it only swapped one kerbal each time). The gateway asked
   kRPC for every transfer from one crew list read before the first: after a transfer those crew objects are stale,

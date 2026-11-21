@@ -84,16 +84,22 @@ def time_from_selected_event(cockpit):
 
 # ---------- telemetry ----------
 def track_charge_rate(cockpit):
-    """EC/s for the display: the change of the total electric charge over game time, smoothed."""
+    """EC/s for the display: the change of the total electric charge over game time (UT), smoothed. Mission time would
+    not do: it stands still on the pad and starts again at 0 for an undocked vessel, which froze the rate (−198.9 EC/s
+    on the pad with the charge not moving). Another vessel, or the clock going back (a save loaded), starts again."""
     charge = cockpit.resources.get('total', {}).get('ElectricCharge')
-    mission_time = cockpit.clock.get('met')
-    if not charge or mission_time is None:
+    universal_time = cockpit.clock.get('ut')
+    if not charge or universal_time is None:
         return
+    vessel = cockpit.vessel.get('name')
     previous = cockpit.previous_charge_sample
-    if previous and mission_time > previous[0]:
-        rate = (charge['amount'] - previous[1]) / (mission_time - previous[0])
+    if previous and (previous[2] != vessel or universal_time < previous[0]):
+        previous, cockpit.charge_rate = None, 0.0
+    if previous and universal_time > previous[0]:
+        rate = (charge['amount'] - previous[1]) / (universal_time - previous[0])
         cockpit.charge_rate += (rate - cockpit.charge_rate) * CHARGE_RATE_SMOOTHING
-    cockpit.previous_charge_sample = (mission_time, charge['amount'])
+    if previous is None or universal_time > previous[0]:
+        cockpit.previous_charge_sample = (universal_time, charge['amount'], vessel)
 
 
 # ---------- outputs ----------

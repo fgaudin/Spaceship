@@ -58,7 +58,10 @@ seats for, pilots first, then flies the craft from that capsule (`cmd/station`).
 the kerbals in each, and TUNNEL when the two are docked. If the selector is turned back during the blackout, the crew
 goes back once it is over. Undocked, only the controls move: the game switches to the other capsule if it is close
 enough to be loaded. The selector wins: after a separation (the game stays on the side with the original root part)
-or "control from here" in the game, the controls go back to the capsule it names, if it has crew. The two windows (old 17" 5:4 monitors in portrait, 270 × 338 mm active area, 1024 × 1280, bare glass set into the board against MAIN's sides in a 22 mm riveted frame, 3.15 × 3.83 U, their top level with MAIN's; each holds its camera at 50° through JRTI) show that capsule's window cameras:
+or "control from here" in the game, the controls go back to the capsule it names, if it has crew. Docked, the engine
+controls drive that capsule's engines only: the other capsule's engines are held shut down (staging cannot light them
+either, and NEXT STAGE leaves them out) and lit again when STATION flies their capsule or when the two are apart; an
+engine SimSup failed stays out. The two windows (old 17" 5:4 monitors in portrait, 270 × 338 mm active area, 1024 × 1280, bare glass set into the board against MAIN's sides in a 22 mm riveted frame, 3.15 × 3.83 U, their top level with MAIN's; each holds its camera at 50° through JRTI) show that capsule's window cameras:
 in the VAB, attach two Hullcam cameras straight onto each capsule, looking out where its windows would, and name them
 `cm_left`, `cm_right`, `lm_left`, `lm_right` in JRTI's part menu, the left ones rolled a quarter turn one way and the
 right ones the other: the left window turns its picture −90° (counter-clockwise) and the right one +90°
@@ -87,7 +90,8 @@ A mode changed in the game, by KSP's own buttons or a node deleted, is followed,
 CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
 equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off);
 STAGING · ABORT (1 × 2, right of both), top to bottom: NEXT STAGE, six cells lit for what pressing STAGE does
-(ENGINES and SOLIDS it lights, DECOUPLE, CLAMPS, CHUTES, FAIRING; all dark with no stage left), the stage number,
+(ENGINES and SOLIDS it lights, DECOUPLE (also a docking port's decouple node: a launch escape tower, an undocking),
+CLAMPS, CHUTES, FAIRING (also covers thrown off, the SM-25's doors); all dark with no stage left), the stage number,
 STAGE ARM and STAGE, then an engine status matrix (9 × 9 LEDs, one per engine, laid out as the engines sit across the vessel:
 green = thrust, white = lit but idle or next to ignite, amber = has fuel but under half the thrust commanded, red =
 flamed out or gone; engines staged away leave the matrix, and so does an engine that ran dry in an earlier stage and
@@ -111,7 +115,8 @@ the throttle.
 
 **CMP** (I/O panel, burn computer): one PAD, one display per field (TIG, Δv prograde / normal / radial). Press a field's
 button, key the value (TIG as hhmmss, Δv in m/s; keyboard: digits, `.`, `-`, Enter, Backspace), ENTER stores it and
-moves to the next field (a selected field keeps showing its value until the first key, then what is keyed and a cursor). A maneuver node made or moved in the game's map view is
+moves to the next field (a selected field keeps showing its value until the first key, then what is keyed and a cursor;
+pressing the button of the field already selected starts its entry again, CLR leaves it). A maneuver node made or moved in the game's map view is
 loaded as the PAD (TIG = node time − half the burn time), and ATT ERR shows the angle to the burn attitude. A PAD read up by Mission Control (`pad/uplink`) blinks on the displays until UPLINK ACCEPT (CLR
 rejects it). The computer shows time to TIG, Δv to go and the burn time at full thrust, and mirrors the PAD to KSP as a
 maneuver node at TIG + half the burn time so that SAS MODE MNVR holds the burn attitude. BURN ARM zeroes the Δv counter;

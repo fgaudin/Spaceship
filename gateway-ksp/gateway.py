@@ -110,6 +110,7 @@ def fly(link, client, command_queue, publish_status, failures):
         payloads = link.telemetry(include_slow=include_slow, include_target=cycle % TARGET_TELEMETRY_EVERY == 0)
         if include_slow:
             commands.failures.keep_applied(link)
+            link.engine_sharing.apply(link, failed=commands.failures.failed_engines)
         commands.follow_sas_mode(payloads.get('tlm/vessel'))
         payloads = commands.failures.filter_telemetry(payloads)
         took = time.monotonic() - started

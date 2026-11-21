@@ -90,9 +90,11 @@ class BurnComputer:
 
     # ---------- keying ----------
     def select_field(self, field):
-        """A field button: start keying that field. Pressing it again leaves the field unchanged."""
+        """A field button: start keying that field, also when it is selected already (ENTR moves on to the next field
+        by itself, and a crew presses that field's button anyway: a toggle deselected it, and the keys then went into
+        TIG). CLR leaves a field."""
         self.entry_error = False
-        self.selected_field = None if self.selected_field == field else field
+        self.selected_field = field
         self.typed = ''
 
     def press_key(self, key):

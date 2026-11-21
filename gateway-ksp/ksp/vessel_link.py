@@ -5,6 +5,7 @@ import math
 import krpc
 
 from .parts_watch import PartsWatch
+from .engine_sharing import EngineSharing
 from .station import StationWatch
 from .streams import FAST_HZ, SLOW_HZ, UNLIMITED, StreamGroup
 from .target import target_telemetry
@@ -39,6 +40,7 @@ class VesselLink:
         self.target_facts = None            # target.SlowFacts, read on the slow cycle
         self.vessel_name = None             # read on the slow cycle only (a plain kRPC read)
         self.hold_engaged = False           # ATTITUDE HOLD: the autopilot holds the cockpit's pitch and heading (commands.py)
+        self.engine_sharing = EngineSharing()   # docked: the engines of the capsule not flown are held (engine_sharing.py)
 
     # ---------- binding to the active vessel ----------
     def bind(self):
@@ -206,7 +208,8 @@ class VesselLink:
             payloads['tlm/comm'] = self._comm_payload(now)
             payloads['tlm/groups'] = {'on': [bool(group()) for group in self.action_groups]}
             payloads['tlm/science'] = {'experiments': self.parts.science_telemetry(), 'biome': now['biome']}
-            payloads['tlm/station'] = self.station.telemetry()
+            payloads['tlm/station'] = {**self.station.telemetry(),
+                                       'held': sum(1 for engine in self.engine_sharing.held if engine.part.vessel == self.vessel)}
         if include_slow or (include_target and self.has_target):
             payloads['tlm/target'] = target_telemetry(self, refresh_slow_facts=include_slow)
         return payloads

@@ -23,7 +23,7 @@ attitude angles). Seeded from the KSP self-test (`selftest/interface.md`).
 | `tlm/thermal` | plant | `{"max", "outside"}`: the hottest part as a fraction of its temperature limit (skin of every part, core of the engines); outside: the static air temperature, °C (about −270 in space) | 2 Hz | 0 |
 | `tlm/comm` | plant | `{"link", "strength" (0..1), "hops", "via", "antenna"}`: the radio link to the ground; via: the first station or relay on the way, or null; antenna: deployable antennas out, or null when there is none | 2 Hz | 0 |
 | `tlm/science` | plant | `{"experiments": [{"title", "available", "data", "inoperable", "rerunnable", "value", "transmit"}], "biome"}`: value, transmit: the science of the data held, kept or sent | 2 Hz | 0 |
-| `tlm/station` | plant | `{"at": "cm"/"lm"/null, "joined", "cm": {"crew", "seats", "here"} or null, "lm": {...} or null}`: the two capsules, found by their window cameras; at: the one the craft is flown from; here: in the active vessel; joined: both in it (docked), so the crew can go across | 2 Hz | 0 |
+| `tlm/station` | plant | `{"at": "cm"/"lm"/null, "joined", "cm": {"crew", "seats", "here"} or null, "lm": {...} or null, "held"}`: the two capsules, found by their window cameras; at: the one the craft is flown from; here: in the active vessel; joined: both in it; held: engines of the capsule not flown held shut down while docked (the engine controls drive the flown capsule's only) (docked), so the crew can go across | 2 Hz | 0 |
 | `tlm/groups` | plant | `{"on": [bool × 10]}`: the craft's custom action groups 1 to 10 | 2 Hz | 0 |
 | `cmd/throttle` | cockpit logic | `{"v": 0..1}` | on change, ≤ 20 Hz | 0 |
 | `cmd/stage` | cockpit logic | `{}` | event | 1 |

@@ -7,6 +7,7 @@ TOTAL_RESOURCES = ('ElectricCharge', 'LiquidFuel', 'Oxidizer', 'MonoPropellant',
 FUEL_CELL = 'fuel cell'          # in the name of the resource converter of the stock fuel cells
 STAGE_PROPELLANTS = ('LiquidFuel', 'Oxidizer', 'SolidFuel', 'MonoPropellant', 'XenonGas')
 PARACHUTE_OUT_STATES = {'semi_deployed', 'deployed'}
+JETTISON_MODULE = 'ModuleJettison'   # a part that throws a cover off when staged (the SM-25's doors)
 
 
 class WatchedEngine:
@@ -89,6 +90,7 @@ class PartsWatch:
                                 + [streams.attribute(wheel, 'grounded', FAST_HZ) for wheel in parts.wheels])
         self._watch_heat(parts)
         self.docking_ports = list(parts.docking_ports)
+        self.not_flown_engines = getattr(self, 'not_flown_engines', [])   # engine_sharing.py: the other capsule's
         self.next_stage = self._next_stage_contents(parts)
         self.docking_port_states = [streams.attribute(port, 'state', SLOW_HZ) for port in self.docking_ports]
         self.docking_states_seen, self.is_docked = None, False
@@ -220,6 +222,9 @@ class PartsWatch:
         return 'cut' if states == {'cut'} else 'stowed'
 
     # ---------- the next staging ----------
+    def read_next_stage(self):
+        self.next_stage = self._next_stage_contents(self.vessel.parts)
+
     def _next_stage_contents(self, parts):
         """What pressing STAGE does: how many liquid engines and solid motors it lights, and whether it decouples,
         releases launch clamps, opens parachutes or jettisons a fairing. None when no stage is left. Read when the
@@ -229,11 +234,19 @@ class PartsWatch:
             if stage < 0:
                 return None
             in_stage = lambda items: any(item.part.stage == stage for item in items)
-            lit = [engine for engine in self.engines if engine.stage == stage]
+            lit = [watched for watched in self.engines
+                   if watched.stage == stage and watched.engine not in self.not_flown_engines]
             solids = sum('SolidFuel' in engine.propellants for engine in lit)
+            # A docking port separates too, by its decouple node (a launch escape tower on the CM's nose port, an
+            # undocking), and covers come off parts that are not fairings (the SM-25's doors, ModuleJettison): both
+            # left NEXT STAGE dark or short in the Mun mission. Engines carry ModuleJettison for their shrouds, which
+            # do not come off when the engine is staged: left out.
+            ports = any(port.part.stage == stage for port in parts.docking_ports)
+            covers = any(module.part.stage == stage and module.part.engine is None
+                         for module in parts.modules_with_name(JETTISON_MODULE))
             return {'stage': stage, 'engines': len(lit) - solids, 'solids': solids,
-                    'decouple': in_stage(parts.decouplers), 'clamps': in_stage(parts.launch_clamps),
-                    'chutes': in_stage(self.parachutes), 'fairing': in_stage(parts.fairings)}
+                    'decouple': in_stage(parts.decouplers) or ports, 'clamps': in_stage(parts.launch_clamps),
+                    'chutes': in_stage(self.parachutes), 'fairing': in_stage(parts.fairings) or covers}
         except Exception as error:      # a part kRPC cannot read: no preview rather than no telemetry
             print('next stage unreadable:', str(error).splitlines()[0], flush=True)
             return None
