@@ -15,6 +15,7 @@ NEARBY_M = 2500             # beyond this KSP has not loaded the other vessel: i
 FIND_AGAIN_EVERY_S = 10     # the capsules are looked for again this often (docking, undocking, staging)
 CREW_ORDER = ('Pilot', 'Engineer', 'Scientist')     # who goes across first when not everyone fits
 SWITCH_SETTLE_S = 0.5       # after switching vessels, before controlling it
+TRANSFER_SETTLE_S = 0.5     # between two kerbals going across (back to back, the second transfer failed)
 
 
 def other(station):
@@ -129,9 +130,17 @@ class StationWatch:
 
     def _move_crew(self, source, target):
         """As many as fit, pilots first. Never into a full part: kRPC then drops the kerbal out of the vessel."""
-        crew = sorted(source.crew, key=lambda kerbal: CREW_ORDER.index(kerbal.trait)
-                      if kerbal.trait in CREW_ORDER else len(CREW_ORDER))
-        for kerbal in crew:
-            if target.available_seats <= 0:
+        order = lambda kerbal: CREW_ORDER.index(kerbal.trait) if kerbal.trait in CREW_ORDER else len(CREW_ORDER)
+        for _ in range(target.crew_capacity):
+            # the source's crew read again each time: after a transfer, the crew objects read before it are stale and
+            # kRPC fails on them (NullReferenceException), which used to stop the move after the first kerbal
+            remaining = sorted(source.crew, key=order)
+            if not remaining or target.available_seats <= 0:
                 break
-            self.space_center.transfer_crew(kerbal, target)
+            try:
+                self.space_center.transfer_crew(remaining[0], target)
+            except Exception as error:      # KSP not ready for the next transfer yet: once more, a moment later
+                print(f'crew transfer of {remaining[0].name} failed ({error}); trying again', flush=True)
+                time.sleep(TRANSFER_SETTLE_S)
+                self.space_center.transfer_crew(sorted(source.crew, key=order)[0], target)
+            time.sleep(TRANSFER_SETTLE_S)

@@ -75,7 +75,7 @@ attitude angles). Seeded from the KSP self-test (`selftest/interface.md`).
 | `mcc/history/<id>` | mcc-data | `{"flight", "launch": {"lat", "lon", "body", "t"} or null, "columns": {"t", "ut", "alt", "radar", "apo", "peri", "spd", "vorb", "vs", "q", "g", "lat", "lon", "thr", "thrust", "mass", "heat", "ec", "body"}, "events": [...]}`: one sample a second (t: MET; ec: charge, 0..1), as columns | on request | 1 |
 | `mcc/events` | mcc-data | `{"t", "text", "kind"}`: a flight event as it happens (kind: milestone, stage, engine, comm, alarm) | event | 1 |
 | `mcc/bodies` | mcc-data, from KSP | `{"ut", "bodies": {"<name>": {"radius", "mu", "rotation_period", "atmosphere", "soi", "parent", "orbit": {"a", "e", "i", "lan", "argp", "m0", "epoch", "period"} or null, "subsolar": {"lat", "lon"} at ut, "highest": its highest terrain (m), once mapped}}}` | 60 s | 1, retained |
-| `mcc/maps` | mcc-data | `{"<body>": {"file", "radius", "min", "max", "ocean", "size"}}`: the relief maps made, served as `maps/<file>` | on change | 1, retained |
+| `mcc/maps` | mcc-data | `{"<body>": {"file", "radius", "min", "max", "ocean", "size"}}`: the relief maps made of the bodies of the game flown (a body's map has its radius in this game; another install's map of the same name is left out), served as `maps/<file>` | on change | 1, retained |
 | `mcc/data/status` | mcc-data | `{"online", "krpc", "mapping": {"body", "progress"} or null}` (LWT offline) | on change | 1, retained |
 | `sim/simsup/*` | SimSup and its page | the station's own state, log and requests (simsup/README.md) | | |
 

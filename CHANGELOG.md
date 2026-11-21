@@ -3,6 +3,22 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-21 — STATION moves the whole crew
+
+- **STATION took only one kerbal across per move**, whatever the seats: turning it to LM with two in the CM left one
+  behind, and turning it back could never empty the lander (it only swapped one kerbal each time). The gateway asked
+  kRPC for every transfer from one crew list read before the first: after a transfer those crew objects are stale,
+  the next `transfer_crew` failed inside kRPC (NullReferenceException) and the error was lost. The gateway now reads
+  the source capsule's crew again before each kerbal, waits 0.5 s between two, tries once more on a failure and logs
+  it. Found by the full Mun mission flown from the panels; checked in KSP: two kerbals CM → LM in one move, and back.
+- **The Mun was mapped over and over** (the wall's MAPPING reached 100 % and started again: 41 times in a day) once
+  maps of two installs sat in `maps/`, a JNSQ Mun of 400 km next to stock's of 200 km. mcc-data listed the maps by
+  body name only, so the JNSQ file, sorted last, hid the stock one, and the stock Mun's was always "missing". Each body
+  now gets only the map of its radius in the game flown (none when that one is not made yet), the check for a missing
+  map looks at the files on disk, and `mcc/maps` is published once the bodies are read. The wall gets the stock Mun's
+  map again instead of the JNSQ one. Unit test `mcc-data/tests/test_maps.py`; checked on the running stack: stock
+  Kerbin and Mun on `mcc/maps`, stock Minmus mapped once.
+
 ## 2026-11-20 — the game's bodies everywhere (JNSQ), ice and deserts on the wall's maps
 
 - **MAIN's row 5 centred:** REENTRY · RECOVERY and SCI (SCIENCE · ACTION GROUPS) move half a U left, to [0.5, 5]

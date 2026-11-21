@@ -140,14 +140,26 @@ def map_file(name, radius):
     return f'{name}-{int(radius)}-{MAP_VERSION}.png'
 
 
-def list_maps():
+def map_files():
+    """The relief maps on disk, of this colouring."""
+    return {file for file in os.listdir(MAPS_DIR) if file.endswith(f'-{MAP_VERSION}.png')} if os.path.isdir(MAPS_DIR) else set()
+
+
+def list_maps(bodies=None):
+    """{body: map info}. Maps of several installs can sit side by side (a JNSQ Mun of 400 km next to stock's of
+    200 km, same name): with `bodies`, a body gets only the map of its radius in the game flown, and none if that one
+    is not made yet. Keying by name alone let the other install's map hide the right one, which was then made again
+    and again."""
     maps = {}
     for file in sorted(os.listdir(MAPS_DIR)) if os.path.isdir(MAPS_DIR) else []:
         if file.endswith(f'-{MAP_VERSION}.json'):
             try:
                 with open(os.path.join(MAPS_DIR, file)) as handle:
                     info = json.load(handle)
-                maps[info['body']] = info
+                name = info['body']
+                if bodies is not None and (name not in bodies or info.get('radius') != bodies[name]['radius']):
+                    continue
+                maps[name] = info
             except (OSError, ValueError, KeyError):
                 continue
     return maps
@@ -233,28 +245,26 @@ def keep_krpc(client):
 
 def serve_krpc(client, connection):
     space_center = connection.space_center
-    publish(client, 'mcc/maps', list_maps(), retain=True)
-    bodies_read_at = 0.0
+    bodies_read_at = 0.0             # mcc/maps once the bodies are read: only the maps of this game's bodies
     bodies = {}
     while True:
         if time.monotonic() - bodies_read_at > BODIES_EVERY_S:
             reading = read_bodies(space_center)
             bodies = reading['bodies']
-            for name, info in list_maps().items():          # the highest terrain, measured by the map
-                if name in bodies and info.get('radius') == bodies[name]['radius']:
-                    bodies[name]['highest'] = info['max']
+            for name, info in list_maps(bodies).items():    # the highest terrain, measured by the map
+                bodies[name]['highest'] = info['max']
             publish(client, 'mcc/bodies', reading, retain=True)
+            publish(client, 'mcc/maps', list_maps(bodies), retain=True)
             bodies_read_at = time.monotonic()
         with lock:
             current = recorder.latest['tlm/orbit'].get('body')
-        maps = list_maps()
-        missing = [name for name in wanted_maps(bodies, current)
-                   if map_file(name, bodies[name]['radius']) not in {info['file'] for info in maps.values()}]
+        on_disk = map_files()
+        missing = [name for name in wanted_maps(bodies, current) if map_file(name, bodies[name]['radius']) not in on_disk]
         if missing:
             make_map(client, space_center.bodies[missing[0]], missing[0])
             status['mapping'] = None
             publish_status(client)
-            publish(client, 'mcc/maps', list_maps(), retain=True)
+            publish(client, 'mcc/maps', list_maps(bodies), retain=True)
             bodies_read_at = 0.0                            # again, with the new map's highest terrain
             continue
         time.sleep(2.0)
