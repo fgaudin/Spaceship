@@ -73,6 +73,14 @@ class BurnComputer:
         self.selected_field, self.typed, self.entry_error = None, '', False
         self._pad_changed()
 
+    def shift_mission_time(self, seconds):
+        """The mission clock was set again (MET RESET, or a vessel of another flight): a PAD keeps its moment in UT,
+        so its TIG in MET moves by the clock's change."""
+        for pad in (self.pad, self.uplinked_pad):
+            if pad and pad.get('tig') is not None:
+                pad['tig'] = round(pad['tig'] + seconds, 1)
+        self._pad_changed()
+
     def receive_uplink(self, payload):
         try:
             delta_v = [float(component) for component in payload['dv']]

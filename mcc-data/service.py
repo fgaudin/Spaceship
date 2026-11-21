@@ -39,7 +39,7 @@ SAMPLE_EVERY_S = 1.0
 BODIES_EVERY_S = 60.0
 KRPC_RETRY_S = 10.0
 ROW_PAUSE_S = 0.01              # between map rows: kRPC shares the game's frame with the gateway
-SUBSCRIPTIONS = [('tlm/time', 0), ('tlm/flight', 0), ('tlm/orbit', 0), ('tlm/vessel', 0), ('tlm/thermal', 0),
+SUBSCRIPTIONS = [('mission/clock', 1), ('tlm/time', 0), ('tlm/flight', 0), ('tlm/orbit', 0), ('tlm/vessel', 0), ('tlm/thermal', 0),
                  ('tlm/resources', 0), ('tlm/comm', 0), ('tlm/target', 0), ('cw/state', 1), ('mcc/history/get', 1)]
 
 lock = threading.Lock()

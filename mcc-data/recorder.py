@@ -10,6 +10,8 @@ from dataclasses import dataclass
 MAX_POINTS = 7200           # past it, every other point goes: the whole flight stays, at half the resolution
 MAX_EVENTS = 400
 NEW_FLIGHT_MET_S = 1.0      # the clock back under this: a new flight
+MISSION_CLOCK_MOVED_S = 1.0     # mission/clock's launch moving more than this: the clock was set again
+FLIGHT_UNDER_WAY_S = 60.0       # ... and a flight under way (past this MET) ends
 THRUST_ON_FRACTION = 0.01   # of the thrust available
 ENGINE_DEBOUNCE_S = 2.0     # an engine must stay on or off this long to be an event
 MAX_Q_MIN_PA = 1000.0
@@ -77,6 +79,18 @@ class Recorder:
                                                'tlm/resources')}
         self.start_flight()
 
+    def follow_mission_clock(self, record):
+        """The gateway's mission clock (mission/clock): MET is UT − its launch, carried across undockings. Its launch
+        moving (MET RESET, another craft flown) starts a new flight once one is under way; a new launch is already
+        caught by MET going back to zero."""
+        launch = (record or {}).get('launch_ut')
+        if launch is None:
+            return
+        known, self.mission_launch_ut = getattr(self, 'mission_launch_ut', None), launch
+        if known is not None and abs(launch - known) > MISSION_CLOCK_MOVED_S and self.points \
+                and self.points[-1]['t'] > FLIGHT_UNDER_WAY_S:
+            self.start_flight()
+
     def start_flight(self):
         # what was heard before belongs to the flight before (a revert: its orbit can still name the Mun); the
         # clock stays, it is what said a new flight started
@@ -94,6 +108,9 @@ class Recorder:
     # ---------- input ----------
     def on_message(self, topic, payload):
         """New telemetry; returns the events it makes (cw/state, tlm/comm, tlm/target make them at once)."""
+        if topic == 'mission/clock':
+            self.follow_mission_clock(payload)
+            return []
         if topic in self.latest:
             self.latest[topic] = payload
             return []

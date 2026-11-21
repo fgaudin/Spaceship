@@ -107,6 +107,17 @@ class StationWatch:
         payload['joined'] = all(payload[station] and payload[station]['here'] for station in STATIONS)
         return payload
 
+    def other_vessels(self):
+        """The vessels of the capsules that are not in the bound vessel (apart after an undocking)."""
+        found = []
+        try:
+            for capsule in self._capsules().values():
+                if capsule.vessel != self.vessel and capsule.vessel not in found:
+                    found.append(capsule.vessel)
+        except RuntimeError:            # one went away meanwhile
+            self.found_at = None
+        return found
+
     def go_to(self, station, link, move_crew=True):
         """cmd/station: the crew goes across into `station`'s capsule while it has seats (only when the two are
         docked, and `move_crew`), then the craft is flown from it, switching to its vessel when the two are apart.

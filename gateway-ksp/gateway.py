@@ -12,6 +12,7 @@ import paho.mqtt.client as mqtt
 
 from ksp.commands import CommandHandler
 from ksp.failures import PlantFailures
+from ksp.mission_clock import MissionClock
 from ksp.vessel_link import NEW_VESSEL, NO_VESSEL, VesselLink
 
 MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
@@ -33,7 +34,8 @@ def connect_to_broker(command_queue):
     client.will_set('gateway/status', json.dumps({'connected': False, 'plant': 'ksp'}), qos=1, retain=True)
     # cmd/* from the cockpit; sim/* from the instructor (failures, freeze, loading a save)
     client.on_connect = lambda client, userdata, flags, reason, properties=None: client.subscribe(
-        [('cmd/#', 1), ('sim/failures/#', 1), ('sim/freeze', 1), ('sim/load', 1)])
+        [('cmd/#', 1), ('sim/failures/#', 1), ('sim/freeze', 1), ('sim/load', 1),
+         ('mission/clock', 1)])     # the mission clock's record, retained: read back after a restart
     client.on_message = lambda client, userdata, message: command_queue.put(
         (message.topic, json.loads(message.payload or b'{}')))
     while True:
@@ -70,6 +72,22 @@ def run_commands(command_queue, commands, wait_until=None):
             print(f'slow command: {topic} {request} took {took:.2f} s', flush=True)
 
 
+def restore_mission_clock(command_queue, link):
+    """The retained mission/clock record, read back before the first vessel is bound; every other message waiting
+    (commands need a vessel) goes back in the queue, in order."""
+    waiting = []
+    while True:
+        try:
+            waiting.append(command_queue.get_nowait())
+        except queue.Empty:
+            break
+    for topic, request in waiting:
+        if topic == 'mission/clock':
+            link.mission_clock.restore(request)
+        else:
+            command_queue.put((topic, request))
+
+
 def game_scene(link):
     """The game's scene without a vessel: 'editor_vab', 'space_center', ... (the cockpit is quiet in the editors)."""
     try:
@@ -81,6 +99,7 @@ def game_scene(link):
 def fly(link, client, command_queue, publish_status, failures):
     """The telemetry loop for one kRPC connection. Returns only by raising (scene change, KSP quit, vessel gone)."""
     commands = CommandHandler(link, failures)
+    restore_mission_clock(command_queue, link)     # before a vessel is bound
     status_sent_at, cycle = 0.0, 0
     cycle_period = 1 / TELEMETRY_RATE_HZ
     next_cycle_at = time.monotonic()
@@ -118,6 +137,9 @@ def fly(link, client, command_queue, publish_status, failures):
             print(f'slow telemetry read: {took:.2f} s (slow cycle: {include_slow}; topics: {sorted(payloads)})', flush=True)
         for topic, payload in payloads.items():
             client.publish(topic, json.dumps(payload), qos=0, retain=(topic == 'tlm/orbit'))
+        if link.mission_clock.changed:
+            link.mission_clock.changed = False
+            client.publish('mission/clock', json.dumps(link.mission_clock.record()), qos=1, retain=True)
         # Cycles start on a fixed beat, whatever the work took; after a long stall the beat starts again from now.
         next_cycle_at = max(next_cycle_at + cycle_period, time.monotonic())
         run_commands(command_queue, commands, wait_until=next_cycle_at)
@@ -127,13 +149,14 @@ def main():
     command_queue = queue.Queue()
     client = connect_to_broker(command_queue)
     failures = PlantFailures()
+    mission_clock = MissionClock()      # outlives each kRPC connection, like the failures
 
     def publish_status(**fields):
         client.publish('gateway/status', json.dumps({'plant': 'ksp', **fields}), qos=1, retain=True)
 
     while True:
         try:
-            link = VesselLink(KRPC_HOST)
+            link = VesselLink(KRPC_HOST, mission_clock)
         except Exception as error:
             publish_status(connected=False, error=str(error)[:200])
             print('kRPC not reachable:', error, flush=True)

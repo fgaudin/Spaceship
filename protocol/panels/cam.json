@@ -39,6 +39,16 @@
             150,
             177
           ]
+        },
+        {
+          "type": "button",
+          "id": "met_reset",
+          "label": "MET RESET (HOLD)",
+          "in": "met_reset",
+          "at": [
+            215,
+            174.3
+          ]
         }
       ],
       "bus": "eng"

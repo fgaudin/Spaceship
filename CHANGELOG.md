@@ -3,7 +3,36 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
-## 2026-11-21 — STATION moves the whole crew; the engines follow STATION
+## 2026-11-21 — STATION moves the whole crew; the engines follow STATION; one mission clock
+
+- **Stage Δv no longer sticks at 0** (GAPS C22; gateway `ksp/parts_watch.py`). The tanks of the stage were chosen only
+  when the stage number changed, from the engines lit at that moment. Chosen while none read lit (a bind or a staging
+  read before KSP reports the engine on), the list stayed empty: no stage propellant, and stage Δv read 0 through the
+  whole second Mun ascent. Reproduced in KSP by binding with the lander's engine shut down and lighting it after (0 m/s;
+  628 m/s with the fix). The tanks are now chosen again whenever the set of lit engines changes (their `active` is
+  already streamed: no extra calls). It was not the save load: three loads of `full-landed` in a row, and a reload
+  between two burns, all read right. Unit test `gateway-ksp/tests/test_stage_propellant.py`.
+
+- **One mission clock for the flight** (GAPS C12; gateway, new `ksp/mission_clock.py`). KSP keeps a mission time per
+  vessel and starts a vessel made by an undocking at 0: in the Mun mission the lander's MET went from 08:33 to 00:00,
+  so PADs keyed in MET, the event timer and Mission Control's history (which starts a new flight when MET goes back to
+  0) followed whichever vessel was flown. The gateway now keeps the launch's UT and sends `tlm/time.met` = UT − it,
+  with the game's own as `vessel_met`. On the pad the clock follows the vessel; each vessel bound afterwards carries on
+  the flight when it is a fragment of it (bound just after our own undock, staging or STATION switch, or named in the
+  flight, and started after the launch) or the same vessel; anything else starts a new flight. The other capsule's
+  vessel is adopted into the flight as soon as it is apart, so its own save keeps the mission's MET even if it was
+  never flown. The record is retained on `mission/clock` (a restarted gateway, or KSP restarted, carries on);
+  mcc-data starts a new flight when its launch moves. Checked in KSP: undocking into the lander, MET 13.32.51 carried
+  on (the vessel's own: 6 s); the lander's own save, MET 09.48.19 from the launch (its own: 4493 s). Unit tests
+  `gateway-ksp/tests/test_mission_clock.py`, `mcc-data` recorder test.
+- **MET RESET** (CAM panel, beside MET, `cmd/met_reset`): held 2 s, the mission clock starts again from the vessel
+  flown, for the case the rules get wrong (a save of another flight whose vessel has a name of this one). A short press
+  does nothing: the guard without a second control. It does not zero MET: MET becomes the flown vessel's own mission
+  time, so a second reset on the same vessel shows no change. The button sits at 174.3 mm, 2.7 mm above MET's `at`,
+  so that it lines up with the digits rather than with the block of digits and legend. A PAD keeps its moment in UT when the clock is set again: the
+  burn computer moves its MET TIG by the clock's change.
+- **A gateway restart no longer runs commands before a vessel is bound** (found while adding the clock: a waiting
+  `cmd/*` with no vessel took the link down); only the retained `mission/clock` is read first.
 
 - **Docked, the engine controls drive the flown capsule's engines only** (gateway, new `ksp/engine_sharing.py`). After
   docking, KSP rebuilt the staging and put the CSM's Cheetah and the lander's Terrier, which face opposite ways, in one

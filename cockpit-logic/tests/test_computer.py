@@ -171,3 +171,22 @@ def test_the_field_entr_moved_to_can_be_pressed():
     c.select_field('pro')
     keys(c, '- 1 3 . 0 ENTR')
     assert c.pad['tig'] == 188 and c.pad['dv'][0] == -13.0
+
+
+def test_a_pad_keeps_its_moment_when_the_mission_clock_is_set_again():
+    """MET RESET (or another flight's clock): the PAD's TIG in MET moves by the clock's change, its UT stays."""
+    c = Cockpit()
+    c.handle('tlm/time', {'ut': 10000.0, 'met': 4000.0, 'warp': 1}, 0)     # launch at UT 6000
+    c.burn_computer.load(4600.0, [10.0, 0.0, 0.0])                         # TIG at UT 10600
+    c.handle('tlm/time', {'ut': 10001.0, 'met': 1.0, 'warp': 1}, 1)        # the clock now starts at UT 10000
+    assert c.burn_computer.pad['tig'] == 600.0                             # still UT 10600
+
+
+def test_met_reset_needs_a_two_second_press():
+    c = Cockpit()
+    fed(c)
+    out = topics(c.handle('panel/eng/in/met_reset', {'v': 1}, 10) + c.handle('panel/eng/in/met_reset', {'v': 0}, 10.5))
+    assert 'cmd/met_reset' not in out                                      # a short press does nothing
+    c.handle('panel/eng/in/met_reset', {'v': 1}, 20)
+    out = topics(c.handle('panel/eng/in/met_reset', {'v': 0}, 22.2))
+    assert 'cmd/met_reset' in out

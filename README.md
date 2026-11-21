@@ -61,7 +61,12 @@ enough to be loaded. The selector wins: after a separation (the game stays on th
 or "control from here" in the game, the controls go back to the capsule it names, if it has crew. Docked, the engine
 controls drive that capsule's engines only: the other capsule's engines are held shut down (staging cannot light them
 either, and NEXT STAGE leaves them out) and lit again when STATION flies their capsule or when the two are apart; an
-engine SimSup failed stays out. The two windows (old 17" 5:4 monitors in portrait, 270 × 338 mm active area, 1024 × 1280, bare glass set into the board against MAIN's sides in a 22 mm riveted frame, 3.15 × 3.83 U, their top level with MAIN's; each holds its camera at 50° through JRTI) show that capsule's window cameras:
+engine SimSup failed stays out. MET is the mission's, not the vessel's: it counts from the launch across undockings,
+in either capsule and in a save of either (KSP starts a vessel made by an undocking at 0; the gateway keeps the
+launch's UT and decides on each vessel whether it belongs to the flight, `gateway-ksp/ksp/mission_clock.py`). If it
+ever goes wrong, MET RESET, beside MET on the camera monitor's panel and held 2 s, starts it again from the vessel
+flown (Mission Control's history then starts a new flight). It does not zero MET: MET becomes that vessel's own
+mission time (KSP's, `vessel_met`), so a second reset on the same vessel changes nothing on the display. The two windows (old 17" 5:4 monitors in portrait, 270 × 338 mm active area, 1024 × 1280, bare glass set into the board against MAIN's sides in a 22 mm riveted frame, 3.15 × 3.83 U, their top level with MAIN's; each holds its camera at 50° through JRTI) show that capsule's window cameras:
 in the VAB, attach two Hullcam cameras straight onto each capsule, looking out where its windows would, and name them
 `cm_left`, `cm_right`, `lm_left`, `lm_right` in JRTI's part menu, the left ones rolled a quarter turn one way and the
 right ones the other: the left window turns its picture −90° (counter-clockwise) and the right one +90°
@@ -86,7 +91,7 @@ A mode changed in the game, by KSP's own buttons or a node deleted, is followed,
 
 **REENTRY · RECOVERY** (module in MAIN, on the `sys` bus): CHUTE ARM, CHUTE, BRAKES, ablator, the hottest part as a percentage of its limit, time to the atmosphere at the present sink rate, outside temperature and pressure, the 0.05 G light, and KSP's verdict on opening the chutes (SAFE, RISKY, UNSAFE). **SCIENCE** (module in MAIN, `sci` bus): step through the experiments; RUN, SEND, DUMP, RESET the one shown, RUN ALL, with its state, biome and science value.
 
-**ENG** (I/O module, 3 × 2): CAUTION & WARNING (the MET is on the camera monitor's panel); ENGINE (ENG ARM, throttle,
+**ENG** (I/O module, 3 × 2): CAUTION & WARNING (the MET is on the camera monitor's panel, with MET RESET beside it); ENGINE (ENG ARM, throttle,
 CUTOFF, THRUST LIMIT knob, GIMBAL LOCK, stage fuel, stage Δv from the rocket
 equation, for the engines the next staging lights before ignition, and the current TWR: the thrust now against the local gravity, 0 with the engines off);
 STAGING · ABORT (1 × 2, right of both), top to bottom: NEXT STAGE, six cells lit for what pressing STAGE does

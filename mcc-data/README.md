@@ -3,11 +3,11 @@
 Mission Control's data besides the live telemetry: the flight recorder, the bodies as the game has them, and relief
 maps of their terrain. What uses it and how: [panels/virtual/mcc/README.md](../panels/virtual/mcc/README.md); the
 topics: [protocol/topics.md](../protocol/topics.md) (`mcc/history`, `mcc/events`, `mcc/bodies`, `mcc/maps`,
-`mcc/data/status`).
+`mcc/data/status`; it reads `mission/clock`).
 
 | File | What it is |
 |---|---|
-| `recorder.py` | One sample a second and the flight's events; a new flight when the MET starts again from zero, a quickload drops what came after. Pure. |
+| `recorder.py` | One sample a second and the flight's events; a new flight when the MET starts again from zero or when `mission/clock`'s launch moves (MET RESET, another craft), a quickload drops what came after. Pure. |
 | `relief.py` | Shading and colouring a grid of heights into a PNG (no library). Pure. |
 | `service.py` | The bus, the recorder's clock and disk copy (`STATE_FILE`), and a kRPC connection of its own for the bodies and the terrain (`MAPS_DIR`). |
 

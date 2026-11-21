@@ -45,12 +45,6 @@ Gaps in the Moonshot course itself are in `selftest/gaps.md`.
 
 Found by the full Mun mission flown from the panels (2026-11-20/21, `tests/mission/`, craft AcapelloCams IU): C10–C22.
 
-### C12. MET starts again at 0 for an undocked vessel
-- Found by: undocking the MEM (MET 08:33 → 00:00). The gateway sends the active vessel's own mission time, and KSP
-  gives a new vessel a new one. The burn computer's TIG is keyed in MET, so the LM's and the CSM's PADs are on
-  different clocks, and the event timer and MCC follow whichever vessel is flown.
-- Possible fix: a mission clock kept by the cockpit from the launch (UT − launch UT), carried across undocking.
-
 ### C15. STATION cannot reach a capsule beyond 2.5 km
 - Found by: the CSM had to come down to the MEM (109 km apart). STATION only switches to a capsule KSP has loaded, so
   a far-away capsule cannot be flown without the game's own vessel switch.
@@ -79,6 +73,7 @@ Found by the full Mun mission flown from the panels (2026-11-20/21, `tests/missi
 - Found by: the descent. The knob (retained) was on SURF, the game on ORBIT: turning it "to SURF" sent nothing; the LED
   blinked (right) but the crew must turn away and back.
 - Possible fix: a press on the knob, or re-sending the knob's position when the LED has blinked for a while.
+- Same for STATION: turning it to the capsule it is already on does nothing (seen in a test).
 
 ### C20. The CM's power runs out under the chutes
 - Found by: the entry. The fuel cells are in the SM: after its jettison the CM has 150 EC, and the console went dark
@@ -91,10 +86,6 @@ Found by the full Mun mission flown from the panels (2026-11-20/21, `tests/missi
   fixed share of the atmosphere, not worked out for the entry speed (C9).
 - Possible fix: a corridor computed for the vehicle and the entry speed (shallower from the Mun).
 
-### C22. Stage Δv read 0 on the MEM after a reload
-- Found by: the second Mun ascent: stage Δv 0 through the whole climb from the same save that had shown 638 m/s.
-  Not reproduced or explained yet.
-
 ### Notes for tests (not cockpit gaps)
 - The Terrier fired once for about 6 s right after a save load, with switches retained from a run before (ENG ARM on);
   not seen with every input neutral before the load. Tests zero their inputs before loading.
@@ -105,6 +96,9 @@ Found by the full Mun mission flown from the panels (2026-11-20/21, `tests/missi
 - Every save load leaves a 2–4 s telemetry gap: NO LINK comes on for that moment.
 
 ## Closed (2026-11-21)
+- C22, stage Δv read 0 through an ascent: the stage's tanks, chosen while no engine read lit, stayed empty; they are
+  chosen again when the engines lit change.
+- C12, MET started again for an undocked vessel: one mission clock, kept by the gateway (`mission/clock`); MET RESET.
 - C10, no per-engine control docked: the engine controls drive the flown capsule's engines; the other's are held.
 - C11, NEXT STAGE missed separations: docking-port decouple nodes and jettisoned covers now light DECOUPLE and FAIRING.
 - C13, the EC rate froze or jumped: measured over UT, started again on a new vessel.

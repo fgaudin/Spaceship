@@ -96,3 +96,14 @@ def test_a_launch_saved_on_the_wrong_body_is_found_again_on_restore():
                'events': [{'t': 0.4, 'text': 'LIFTOFF', 'kind': 'milestone'}],
                'launch': {'lat': 0.0, 'lon': 0.0, 'body': 'Mun', 't': 0.36}})
     assert r.launch == {'lat': 1.0, 'lon': 2.0, 'body': 'Kerbin', 't': 0.4}
+
+
+def test_a_mission_clock_set_again_starts_a_new_flight():
+    import recorder
+    r = recorder.Recorder()
+    r.on_message('mission/clock', {'launch_ut': 1000.0})
+    r.points = [{'t': 30.0}, {'t': 500.0}]
+    r.on_message('mission/clock', {'launch_ut': 1000.4})          # the same clock (rounding): nothing
+    assert len(r.points) == 2
+    r.on_message('mission/clock', {'launch_ut': 9000.0})          # MET RESET: a new flight
+    assert r.points == []

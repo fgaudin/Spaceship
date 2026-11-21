@@ -52,7 +52,7 @@ HAND_CONTROLLER_DEADBAND = 0.05     # a stick axis under this is zero
 FINE_CONTROL_SCALE = 0.3            # RCS FINE: the sticks command 30 % of their throw (KSP's precision mode scales only the keyboard)
 THROTTLE_IDLE_BELOW = 0.05          # the lever must come back under this to release a throttle cut
 THROTTLE_DISAGREE_ABOVE = 0.005     # game throttle this far from the one commanded: command it again (a 0.02 trickle
-                                    # left after a save load gave 1 kN for minutes, and KSP will not time-warp then)
+# left after a save load gave 1 kN for minutes, and KSP will not time-warp then)
 THROTTLE_UP_ABOVE = 0.02            # lever position that counts as "throttle up"
 THRUST_LIMIT_STEP = 0.05            # the limiter knob moves the engines in steps of 5 %
 ENGINE_GRID_SIZE = 9                # engine status matrix: 9 × 9 LEDs
@@ -124,6 +124,13 @@ NODE_ECHO_DELAY_S = 2.0             # after commanding a node, ignore the game's
 NODE_SAME_TIME_S, NODE_SAME_DELTA_V = 0.5, 0.05     # tolerances to recognise the node the cockpit itself made
 
 # ---------- STATION: moving between the CM and the LM ----------
-STATION_BLACKOUT_S = 15         # the console dark while the crew goes through the tunnel
-STATION_LAMP_TEST_S = 3         # then every lamp lit as it powers up
-STATION_REASSERT_EVERY_S = 2    # the controls sent back to the selector's capsule at most this often
+STATION_BLACKOUT_S = 8  # the console dark while the crew goes through the tunnel
+STATION_LAMP_TEST_S = 3  # then every lamp lit as it powers up
+STATION_REASSERT_EVERY_S = (
+    2  # the controls sent back to the selector's capsule at most this often
+)
+
+MET_RESET_HOLD_S = (
+    2.0  # MET RESET acts only when held this long (a guard without a second control)
+)
+MISSION_CLOCK_JUMP_S = 1.0  # the launch's UT (UT − MET) moving by more than this: the mission clock was set again

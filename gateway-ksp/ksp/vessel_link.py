@@ -6,6 +6,7 @@ import krpc
 
 from .parts_watch import PartsWatch
 from .engine_sharing import EngineSharing
+from .mission_clock import MissionClock
 from .station import StationWatch
 from .streams import FAST_HZ, SLOW_HZ, UNLIMITED, StreamGroup
 from .target import target_telemetry
@@ -27,7 +28,7 @@ NO_VESSEL, SAME_VESSEL, NEW_VESSEL = 'no vessel', 'same vessel', 'new vessel'
 
 
 class VesselLink:
-    def __init__(self, krpc_host):
+    def __init__(self, krpc_host, mission_clock=None):
         self.connection = krpc.connect(name='capsule-gateway', address=krpc_host)
         self.space_center = self.connection.space_center
         self.vessel = None
@@ -41,6 +42,8 @@ class VesselLink:
         self.vessel_name = None             # read on the slow cycle only (a plain kRPC read)
         self.hold_engaged = False           # ATTITUDE HOLD: the autopilot holds the cockpit's pitch and heading (commands.py)
         self.engine_sharing = EngineSharing()   # docked: the engines of the capsule not flown are held (engine_sharing.py)
+        # one MET for the flight, across undockings (mission_clock.py); outlives a kRPC connection (KSP restarted)
+        self.mission_clock = mission_clock if mission_clock is not None else MissionClock()
 
     # ---------- binding to the active vessel ----------
     def bind(self):
@@ -71,6 +74,9 @@ class VesselLink:
         # where CTRL FROM PORT off goes back to
         self.default_control_part = (controlling_part if controlling_part.docking_port is None
                                      else active_vessel.parts.root)
+        decision = self.mission_clock.bind(active_vessel.name, self.space_center.ut, active_vessel.met,
+                                           active_vessel.situation.name)
+        print(f'mission clock: {decision}, launch UT {self.mission_clock.launch_ut}', flush=True)
         return NEW_VESSEL
 
     def unbind(self):
@@ -184,13 +190,18 @@ class VesselLink:
         maneuver node, the radio link and the action groups only with `include_slow`; the target with `include_slow`,
         or with `include_target` while one is set (docking needs it faster)."""
         now = {name: stream() for name, stream in self.read.items()}
+        self.mission_clock.follow(now['universal_time'], now['mission_time'], now['situation'].name)
+        mission_time = self.mission_clock.met(now['universal_time'])
+        if mission_time is None:
+            mission_time = now['mission_time']
         thrusting = now['thrust'] > 0
         self._orbit_rate(fast=thrusting)
         travel = self._direction_of_travel(now)
         payloads = {
             'tlm/attitude': {'pitch': round(now['pitch'], 2), 'heading': round(now['heading'], 2),
                              'roll': round(now['roll'], 2), 'prograde': travel and travel['prograde']},
-            'tlm/time': {'ut': round(now['universal_time'], 2), 'met': round(now['mission_time'], 2),
+            'tlm/time': {'ut': round(now['universal_time'], 2), 'met': round(mission_time, 2),
+                         'vessel_met': round(now['mission_time'], 2),
                          'warp': now['warp_rate'], 'paused': now['paused']},
             'tlm/flight': self._flight_payload(now, travel),
             'tlm/vessel': self._vessel_payload(now, refresh_name=include_slow),
@@ -208,6 +219,11 @@ class VesselLink:
             payloads['tlm/comm'] = self._comm_payload(now)
             payloads['tlm/groups'] = {'on': [bool(group()) for group in self.action_groups]}
             payloads['tlm/science'] = {'experiments': self.parts.science_telemetry(), 'biome': now['biome']}
+            for other in self.station.other_vessels():       # the other capsule, apart: part of this flight
+                try:
+                    self.mission_clock.adopt(other.name, now['universal_time'], other.met)
+                except RuntimeError:
+                    pass
             payloads['tlm/station'] = {**self.station.telemetry(),
                                        'held': sum(1 for engine in self.engine_sharing.held if engine.part.vessel == self.vessel)}
         if include_slow or (include_target and self.has_target):

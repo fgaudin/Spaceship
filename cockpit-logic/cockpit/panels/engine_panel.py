@@ -33,6 +33,15 @@ def handle_input(cockpit, change):
         return cockpit.command_throttle()
     if control == 'eng_cutoff':
         return cockpit.cut_throttle() if change.pressed else []
+    if control == 'met_reset':
+        # MET RESET, next to MET: held 2 s, the mission clock starts again from the vessel flown (gateway)
+        if change.pressed:
+            cockpit.met_reset_pressed_at = cockpit.now
+            return []
+        pressed_at, cockpit.met_reset_pressed_at = cockpit.met_reset_pressed_at, None
+        if pressed_at is not None and cockpit.now - pressed_at >= S.MET_RESET_HOLD_S:
+            return cockpit.command('cmd/met_reset', {})
+        return []
     if control == 'thrust_lim':
         # Only when the knob moves: limiters set in the VAB are left alone until then.
         if not change.moved:

@@ -66,6 +66,7 @@ class PartsWatch:
         self.streams = StreamGroup(connection)
         self.stage_streams = StreamGroup(connection)
         self.watched_stage = None       # stage number the stage propellant streams belong to
+        self.watched_lit = None         # and the engines lit then (indexes in self.engines)
         self.refresh()
 
     def refresh(self):
@@ -145,11 +146,19 @@ class PartsWatch:
     # ---------- propellant of the current stage ----------
     def stage_propellant(self, stage_number):
         """{'<resource>': {'amount', 'max'}} for the tanks that leave with the burning engines. kRPC 0.7 has no call
-        for this, so there is one stream per tank and resource, rebuilt when the stage number changes."""
+        for this, so there is one stream per tank and resource, rebuilt when the stage number changes, and chosen
+        again when the engines lit change: tanks chosen while none was lit yet (a bind or a staging read before KSP
+        reports the engine on) stayed empty, and stage Δv read 0 through a whole ascent (GAPS C22)."""
         if stage_number != self.watched_stage:
             self.watched_stage = stage_number
             self.refresh()
+            self.watched_lit = self._lit_engines()
             self._watch_stage_tanks(stage_number)
+        else:
+            lit = self._lit_engines()
+            if lit != self.watched_lit:
+                self.watched_lit = lit
+                self._watch_stage_tanks(stage_number)
         totals = {}
         for resource, capacity, amount in self.stage_tanks:
             total = totals.setdefault(resource, {'amount': 0.0, 'max': 0.0})
@@ -157,6 +166,9 @@ class PartsWatch:
             total['max'] += capacity
         return {resource: {'amount': round(total['amount'], 3), 'max': round(total['max'], 3)}
                 for resource, total in totals.items()}
+
+    def _lit_engines(self):
+        return frozenset(index for index, watched in enumerate(self.engines) if read_or(False, watched.active))
 
     def _watch_stage_tanks(self, stage_number):
         """The tanks that leave with the burning engines; before ignition, with the engines that the next staging

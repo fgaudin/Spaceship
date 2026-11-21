@@ -38,11 +38,12 @@ class CommandHandler:
             'cmd/antenna': self.antennas, 'cmd/action_group': self.action_group, 'cmd/speed_mode': self.speed_mode,
             'cmd/thrust_limit': self.thrust_limit, 'cmd/gimbal': self.gimbal_lock,
             'cmd/target': lambda request: select_target(self.link, request),
-            'cmd/undock': lambda request: undock(self.link),
+            'cmd/undock': self.undock,
             'cmd/control_from': lambda request: control_from_port(self.link, bool(request.get('port'))),
             'cmd/node': self.maneuver_node, 'cmd/pause': self.pause, 'cmd/game': self.save_or_load,
             'cmd/science': self.science, 'cmd/warp': self.warp, 'cmd/rotate': self.rotate, 'cmd/translate': self.translate,
-            'cmd/station': self.station, 'cmd/hold': self.hold,
+            'cmd/station': self.station, 'cmd/hold': self.hold, 'cmd/met_reset': self.met_reset,
+            'mission/clock': lambda record: self.link.mission_clock.restore(record),
         }
         self.wanted_hold = None             # (pitch, heading) in degrees while ATTITUDE HOLD is on, else None
         self.hold_vessel = None             # the vessel whose autopilot holds it
@@ -63,7 +64,17 @@ class CommandHandler:
         self.link.commanded_throttle = clamp(float(request.get('v', 0)), 0.0, 1.0)
         self.link.vessel.control.throttle = self.link.commanded_throttle
 
+    def undock(self, request):
+        self.link.mission_clock.note_split()        # the vessel bound next is part of this flight
+        undock(self.link)
+
+    def met_reset(self, request):
+        """MET RESET: the mission clock starts again from the vessel flown."""
+        vessel = self.link.vessel
+        self.link.mission_clock.reset(vessel.name, self.link.space_center.ut, vessel.met)
+
     def stage(self, request):
+        self.link.mission_clock.note_split()
         self.link.vessel.control.activate_next_stage()
         time.sleep(0.1)                     # let the part list settle before it is read again
         self.link.parts.forget_stage()
@@ -263,6 +274,7 @@ class CommandHandler:
         """{'to': 'cm' | 'lm'}: the crew goes across and the craft is flown from that capsule; with
         'controls_only', the crew stays where it is."""
         if request.get('to') in STATIONS:
+            self.link.mission_clock.note_split()
             self.link.station.go_to(request['to'], self.link, move_crew=not request.get('controls_only'))
             self.link.engine_sharing.apply(self.link, failed=self.failures.failed_engines)
 

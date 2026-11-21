@@ -71,6 +71,8 @@ class Cockpit:
         self.sas_was_on = False
         self.charge_rate = 0.0                  # EC/s, smoothed
         self.previous_charge_sample = None      # (universal time, amount, vessel name)
+        self.mission_launch_ut = None           # UT − MET: where the mission clock starts
+        self.met_reset_pressed_at = None        # MET RESET held since (cockpit time)
         self.docking_rates = rendezvous_panel.DockingRates()   # yaw, pitch and roll rates against the port
         self.attitude_rates = AngleRates(S.ATTITUDE_RATE_SMOOTHING)   # pitch, heading and roll rates
         self.was_powered = True
@@ -258,13 +260,25 @@ class Cockpit:
             return self.command(S.TOGGLE_COMMANDS[control], {'on': change.on})
         return []
 
+    def _follow_mission_clock(self, clock):
+        """The launch's UT is UT − MET: when it moves (MET RESET, another flight), a PAD keeps its UT, so its MET TIG
+        moves with the clock."""
+        if clock.get('ut') is None or clock.get('met') is None:
+            return
+        launch = clock['ut'] - clock['met']
+        if self.mission_launch_ut is not None and abs(launch - self.mission_launch_ut) > S.MISSION_CLOCK_JUMP_S:
+            self.burn_computer.shift_mission_time(self.mission_launch_ut - launch)
+        self.mission_launch_ut = launch
+
     def _acknowledge(self, warnings):
         self.acknowledged_alarms |= {name for name in self.active_alarms() if ALARMS[name].is_warning == warnings}
 
     def _on_telemetry(self, topic, payload):
         self.telemetry[topic] = payload
         self.last_telemetry_time = self.now
-        if topic == 'tlm/vessel':
+        if topic == 'tlm/time':
+            self._follow_mission_clock(payload)
+        elif topic == 'tlm/vessel':
             return self._count_burn()
         if topic == 'tlm/resources':
             systems_panel.track_charge_rate(self)
