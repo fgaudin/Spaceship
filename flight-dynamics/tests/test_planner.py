@@ -173,38 +173,56 @@ def on_the_mun(site_lat=0.0, site_lon=180.0, target=None, situation='landed', at
 
 def test_liftoff_east_into_an_equatorial_orbit():
     pad = rendezvous(on_the_mun(target={'i': 0.0, 'lan': 0.0, 'nu': 0.0}))
-    assert isinstance(pad, Pad) and pad.text == 'LIFTOFF AZ 090'
-    assert 550 < pad.dv[0] < 650 and pad.dv[1:] == (0.0, 0.0)             # about circular speed and a bit
+    assert isinstance(pad, Pad) and pad.text == 'LIFT AZ090 AP 29'      # apoapsis 1 km under the target's 30 km
+    assert 550 < pad.dv[0] < 700 and pad.dv[1:] == (0.0, 0.0)             # the burn and the CIRC at the apoapsis
     assert pad.tig_met >= 500.0 + planner.LEAD_TIME_S
+
+
+def azimuth_of(pad):
+    return int(pad.text.split()[1][2:])
 
 
 def test_liftoff_azimuth_follows_the_targets_plane():
     # a polar orbit passing over the site (on the equator, at its node): straight north or south
-    northward = rendezvous(on_the_mun(site_lon=0.0, target={'i': 90.0, 'lan': 0.0, 'nu': 0.0}))
-    assert northward.text in ('LIFTOFF AZ 000', 'LIFTOFF AZ 360', 'LIFTOFF AZ 001', 'LIFTOFF AZ 359')
+    assert azimuth_of(rendezvous(on_the_mun(site_lon=0.0, target={'i': 90.0, 'lan': 0.0, 'nu': 0.0}))) in (0, 1, 359, 360)
     # a retrograde equatorial orbit: west
-    assert rendezvous(on_the_mun(target={'i': 180.0, 'lan': 0.0, 'nu': 0.0})).text == 'LIFTOFF AZ 270'
+    assert azimuth_of(rendezvous(on_the_mun(target={'i': 180.0, 'lan': 0.0, 'nu': 0.0}))) == 270
     # inclined 30° from a site on the equator: asin(cos 30° / cos 0°) = 60° (going north) or 120° (south)
-    tilted = int(rendezvous(on_the_mun(target={'i': 30.0, 'lan': 0.0, 'nu': 0.0})).text.split()[-1])
+    tilted = azimuth_of(rendezvous(on_the_mun(target={'i': 30.0, 'lan': 0.0, 'nu': 0.0})))
     assert min(abs(tilted - 60), abs(tilted - 120)) <= 1
 
 
-def test_liftoff_comes_when_the_target_leads_by_what_the_ascent_needs():
+def test_liftoff_brings_the_target_to_the_apoapsis_when_we_get_there():
     tlm = on_the_mun(target={'i': 0.0, 'lan': 0.0, 'nu': 0.0})
     pad = rendezvous(tlm)
     wait = pad.tig_met - 500.0
     orbit = planner.own_orbit(tlm)
     target = planner._target_orbit(tlm, orbit)
     spin = 2 * math.pi / MUN_DAY
-    parking = MUN_RADIUS + BODIES['Mun']['safe_altitude'] + planner.PARKING_ABOVE_SAFE_M
-    _, ascent_time, ascent_angle = planner.ascent(tlm, MUN_MU, MUN_RADIUS, parking)
-    # where the target is at the insertion, against where we are then: the Hohmann phase
-    site_at_insertion = planner._turned(orbit.direction_at(orbit.nu), spin * wait + ascent_angle)
-    lead = planner._lead(site_at_insertion, target.at(orbit.ut + wait + ascent_time), target.normal())
-    _, transfer_time = hohmann(MUN_MU, parking, target.a)
-    assert abs(lead - (math.pi - target.mean_motion * transfer_time) % (2 * math.pi)) < 0.01
+    _, ascent_time, ascent_angle = planner.ascent(tlm, MUN_MU, MUN_RADIUS, target.a - planner.APO_UNDER_TARGET_M)
+    # where we are at the apoapsis, against where the target is then: the same place
+    there = planner._turned(orbit.direction_at(orbit.nu), spin * wait + ascent_angle)
+    lead = planner._lead(there, target.at(orbit.ut + wait + ascent_time), target.normal())
+    assert min(lead, 2 * math.pi - lead) < 0.01
+
+
+def test_the_ascent_model_matches_the_ascent_flown_in_ksp():
+    # Mun, from a site at 3 619 m to an apoapsis of 27.3 km: 987 s, 137.7°, about 640 m/s (lander at 4 t, 60 kN)
+    tlm = on_the_mun()
+    delta_v, ascent_time, ascent_angle = planner.ascent(tlm, MUN_MU, MUN_RADIUS + 3619.0, MUN_RADIUS + 27320.0)
+    assert abs(ascent_time - 987) < 30 and abs(math.degrees(ascent_angle) - 137.7) < 3 and abs(delta_v - 640) < 25
 
 
 def test_liftoff_refusals():
     assert rendezvous(on_the_mun()).text == 'RDV: NO TARGET'
     assert rendezvous(on_the_mun(target={'i': 0.0, 'lan': 0.0, 'nu': 0.0}, atm=70000)).text == 'LIFTOFF: AIRLESS ONLY'
+    assert rendezvous(on_the_mun(target={'i': 0.0, 'lan': 0.0, 'nu': 0.0, 'a': 202000.0})).text == 'LIFTOFF: TGT TOO LOW'
+
+
+def test_rdv_in_orbit_near_the_target_says_close_in():
+    # beside the CSM after the liftoff: a transfer would wait for the next lap (64 h); the RDV panel does it
+    tlm = telemetry(a=MUN_RADIUS + 28000.0, body='Mun', target={'a': MUN_RADIUS + 29700.0, 'e': 0.0, 'i': 0.0,
+                                                                  'lan': 0.0, 'argp': 0.0, 'nu': 358.0})
+    tlm['tlm/orbit'].update({'mu': MUN_MU, 'radius': MUN_RADIUS})
+    tlm['tlm/target']['range'] = 8000.0
+    assert rendezvous(tlm).text == 'RDV: CLOSE IN'

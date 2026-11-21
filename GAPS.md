@@ -46,8 +46,10 @@ Gaps in the Moonshot course itself are in `selftest/gaps.md`.
 - Possible fix: TWR MAX (or decel available) beside TWR; REL V on RDV; a liftoff countdown on SOLO with a target.
 - Done: the total speed on SPEED REF TGT is the relative speed (rel_v), as on KSP's navball; TWR MAX on ENGINE.
 - Done: RDV TGT pressed while landed reads up a PAD whose TIG is the liftoff (counted down by the EVENT TIMER on TIG),
-  the azimuth in the FLIGHT DYNAMICS text; no new control (Mission Control computes them otherwise). Its ascent
-  model is still to be checked against a flight in KSP.
+  the azimuth and the cutoff apoapsis in the FLIGHT DYNAMICS text; no new control (Mission Control computes them
+  otherwise). A direct rendezvous at the apoapsis; flown in KSP it arrived with the CSM 3.8° (15 km) behind, about
+  2.5° of it the ascent model and 1.5° a cutoff 5 km short. The M.E.M. reached orbit with nothing left to close in
+  (645 m/s asked of a 642 m/s stage, and its monoprop spent on attitude: no reaction wheel).
 
 ### C18. Nothing warns that the craft cannot turn
 - Found by: the MEM has no reaction wheel. With RCS off it has no torque: SAS MNVR stayed 140° off for minutes and the

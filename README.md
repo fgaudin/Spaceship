@@ -161,8 +161,9 @@ name set in JRTI's part menu. The page reaches JRTI (port 8080 on the KSP machin
 **SOLO** (I/O module, `index.html#solo`, `solo` bus): for a pilot flying without Mission Control.
 - PAD REQUEST: CIRC, PLANE, RDV TGT and INJECT (knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which
   it reads up to the burn computer as CAPCOM would; the display says what it sent or why not. RDV TGT on the ground
-  (an airless body, a target in orbit) gives the liftoff: TIG the liftoff, on the EVENT TIMER's TIG source, and the
-  launch azimuth on the display (`LIFTOFF AZ 087`). How it works:
+  (an airless body, a target in orbit) gives a direct rendezvous: TIG the liftoff, on the EVENT TIMER's TIG source,
+  and on the display the launch azimuth for HEADING and the apoapsis to cut off on (`LIFT AZ088 AP 29`); CIRC there
+  meets the target. Within 25 km of the target RDV TGT says CLOSE IN (fly it on the RDV panel). How it works:
   [flight-dynamics/README.md](flight-dynamics/README.md).
 - ORBIT (2 U wide): apoapsis and periapsis in km, the time to each, inclination.
 - NAVIGATION: body orbited, latitude, longitude, and the MODE switch: on MCC, for a crew with Mission Control,

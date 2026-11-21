@@ -21,7 +21,7 @@ switch on MCC (on NAVIGATION, `panel/solo/in/mcc_mode`), Mission Control is ther
 | CIRC | Circularise | At apoapsis when the periapsis is below the safe altitude (or on an escape path: at periapsis), else at the next apsis. Δv = circular speed − speed there (vis-viva), prograde or retrograde. |
 | PLANE | Change plane | Into the target's plane (a vessel around the same body), or the equator's without a target, at the node where it is cheaper (the farther one). The velocity is turned into the new plane: mostly normal, a little retrograde. |
 | RDV TGT | Rendezvous | A Hohmann transfer to the target's orbit, timed so that both arrive together: when the target leads by π − (the angle it covers during the transfer). Both orbits nearly circular (e < 0.05) and in the same plane (0.5°); otherwise it says CIRC FIRST or PLANE FIRST. |
-| RDV TGT, on the ground | Liftoff | Landed (or on the pad) on an airless body, with a target in orbit: TIG is the liftoff (count it down on the EVENT TIMER, source TIG), Δv the ascent's (circular speed at the parking orbit and 8 %), and the text the launch azimuth, `LIFTOFF AZ 087`: the target's direction of motion over the site. Timed so that at the insertion into the parking orbit (safe altitude + 10 km) the target leads by the rendezvous transfer's phase, so the RDV PAD after CIRC comes at once. |
+| RDV TGT, on the ground | Liftoff | Landed (or on the pad) on an airless body, with a target in orbit: a direct rendezvous. TIG is the liftoff (count it down on the EVENT TIMER, source TIG), Δv the ascent's and the CIRC's, and the text the launch azimuth (HEADING on ATTITUDE HOLD: the target's direction of motion over the site) and the apoapsis to cut off on, 1 km under the target's orbit: `LIFT AZ088 AP 29`. Timed so that the target reaches that apoapsis when we do: CIRC there, then close in on the RDV panel. |
 | INJECT (knob MUN / MINMUS) | Injection | The same transfer from a parking orbit around the moon's planet, with the moon as the target. Minmus is off the equator: the PAD says so (PL 6DEG), to correct on the way. |
 
 Every TIG is the ignition time, half the burn before the event, so that the burn is centred on it; the burn time
@@ -54,6 +54,10 @@ setting).
 - The injection aims at the moon's centre: the encounter is there, the periapsis at the moon is not chosen. A
   mid-course correction (a later PLANE or CIRC) finishes the job.
 - The rendezvous PAD is the transfer burn only; matching speed at arrival is flown on the RDV panel.
-- The liftoff's ascent is a model, not the pilot's: a burn to a cutoff at a quarter of the parking altitude climbing at
-  10°, a coast to apoapsis and CIRC there (`planner.py`, the LIFTOFF constants). An error of 30° in the phase costs a
-  twelfth of the time the target takes to come round again; the RDV PAD finishes the job. Airless bodies only.
+- The liftoff's ascent is a model of the one flown from the panels: cutoff 1.6 km above the site climbing 2.5°, then
+  a coast of about 135° to the apoapsis (`planner.py`, the LIFTOFF constants, fitted on a Mun ascent in KSP). An
+  ascent flown otherwise arrives early or late; the RDV panel closes the gap. Airless bodies only. Why not a parking
+  orbit and a transfer: low orbits around a moon are all about the same height, so the phase between them changes
+  over days (a liftoff 2° off gave a 64 h wait).
+- RDV TGT with the target within 25 km answers `RDV: CLOSE IN`: on about the same orbit a transfer waits for the
+  next lap; that is flown on the RDV panel.

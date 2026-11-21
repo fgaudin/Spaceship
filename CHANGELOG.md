@@ -7,11 +7,14 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 - **RDV TGT on the ground gives the liftoff** (GAPS C17; `flight-dynamics/planner.py`). From the Mun the liftoff time
   (the target's phase) and the launch azimuth (its plane) had been read from telemetry. Landed with a target in
-  orbit, RDV TGT now reads up a PAD whose TIG is the liftoff, counted down by the EVENT TIMER on TIG, with the ascent's
-  Δv, and the azimuth in the FLIGHT DYNAMICS text (`LIFTOFF AZ 087`): no new control. Timed on a model of the ascent
-  (to a parking orbit at the safe altitude + 10 km, insertion at its apoapsis) so that the target then leads by the
-  rendezvous transfer's phase. Airless bodies only. Unit tests in `flight-dynamics/tests/test_planner.py`.
-
+  orbit, RDV TGT now reads up a PAD whose TIG is the liftoff, counted down by the EVENT TIMER on TIG, with the Δv of
+  the ascent and the CIRC, and on the FLIGHT DYNAMICS display the azimuth for HEADING and the apoapsis to cut off on
+  (`LIFT AZ088 AP 29`): no new control. A direct rendezvous: the apoapsis 1 km under the target's orbit, timed so the
+  target is there when we are. The first version aimed at a parking orbit and a transfer: flown in KSP, the liftoff
+  came out 9° off the phase it wanted, which beside a target at nearly the same height meant a 64 h wait for the
+  transfer. The ascent model's constants come from that flight (cutoff 1.6 km above the site climbing 2.5°, 987 s
+  and 138° from liftoff to the apoapsis); the model gives 986 s and 137°. RDV TGT in orbit within 25 km of the target
+  now says CLOSE IN instead of such a wait. Airless bodies only. Unit tests in `flight-dynamics/tests/test_planner.py`.
 - **The throttle lever is its own controller; THRUST % and TWR MAX on ENGINE** (GAPS C17; `protocol/panels/thr.json`,
   `eng.json`, `console.json`; cockpit `panels/engine_panel.py`). The lever will be built separately (USB, like the
   hand controllers): the virtual one moved to a THROTTLE module in a CONTROLLERS zone under the left window, against
