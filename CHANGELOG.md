@@ -5,6 +5,26 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-21 — STATION moves the whole crew; the engines follow STATION; one mission clock
 
+- **A draft of the panel modules' firmware** (new `firmware/`). One generic firmware for the ESP32-POE2 boards,
+  the same node as a module of the virtual console: raw inputs out (debounced switches and buttons, selectors,
+  levers on ADS1115, the keypad), outputs drawn from the cockpit's topics (lamps through MCP23017, 7-segment, bars and
+  the matrix on a MAX7219 chain, alphanumerics on HT16K33, the buzzer), blinking locally, status and will as the
+  console's. `tools/gen_module.py` places each control of `protocol/panels/<module>.json` on the module's chips and
+  writes the header the build uses, a wiring table (`generated/<module>/WIRING.md`) and a PlatformIO environment per
+  module. Its config hash is the console's (checked on two modules). It compiles for every module (PlatformIO,
+  Arduino core 2.0.16); it has not run on a board: the pins and the colour matrix are to check (README).
+
+- **A Simpit gateway, as a fallback plant** (new `gateway-simpit/`, proof of concept). If kRPC ever stops being
+  usable, KSP can be reached through the Kerbal Simpit plugin (2.3.1, already in the stock install): the gateway plays
+  the Arduino on its serial line (a tty0tty pair or two USB-serial adapters: KSP's Mono cannot open a socat pty,
+  "Inappropriate ioctl for device", found in KSP) and publishes the same `tlm/*` and
+  takes the same `cmd/*` for what Simpit carries: altitude, speeds, orbit, attitude, flight status, action groups,
+  stage Δv, resources; throttle, stage, abort, the switches, SAS mode, rotation and translation, custom action groups,
+  time warp. No UT or MET, parts, docking geometry or nodes. The protocol was taken from the Arduino library bundled
+  with the mod (COBS framing, XOR checksum, SYN / SYNACK / ACK with the library version). Tested against a simulated
+  plugin, also over a real pty through the gateway's own loop; not yet against KSP (Settings.cfg's PortName and a
+  restart).
+
 - **RDV TGT on the ground gives the liftoff** (GAPS C17; `flight-dynamics/planner.py`). From the Mun the liftoff time
   (the target's phase) and the launch azimuth (its plane) had been read from telemetry. Landed with a target in
   orbit, RDV TGT now reads up a PAD whose TIG is the liftoff, counted down by the EVENT TIMER on TIG, with the Δv of

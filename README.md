@@ -19,6 +19,8 @@ The mock and the gateway both write `tlm/*` and every topic has one writer, so s
 | `cockpit` | Cockpit logic: interlocks, lamp test, caution & warning, displays, game/panel disagreement. Pure core + MQTT shell | [cockpit-logic/](cockpit-logic/) |
 | `plant-mock` | Publishes `tlm/*` from its own simple physics, obeys `cmd/*`; failures for the instructor | [plant-mock/](plant-mock/) |
 | `gateway-ksp` | The only process that talks to KSP: kRPC → `tlm/*`, `cmd/*` → kRPC (profile `ksp`, host network) | [gateway-ksp/](gateway-ksp/) |
+| `gateway-simpit` | A fallback plant, proof of concept: KSP through the Kerbal Simpit plugin's serial protocol instead of kRPC, same topics for what Simpit carries (run on the host, not in compose) | [gateway-simpit/](gateway-simpit/) |
+| (firmware) | The panel modules' firmware, a draft before any board: generated per module from `protocol/panels/<module>.json` (PlatformIO, ESP32-POE2) | [firmware/](firmware/) |
 | `panel` | nginx serving the virtual console and the glass and station pages; the console is drawn from `protocol/panels/` | [panels/virtual/](panels/virtual/) |
 
 Topics, payloads and rules: [protocol/topics.md](protocol/topics.md).
@@ -208,7 +210,7 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 | KSP gateway | [gateway-ksp/gateway.py](gateway-ksp/gateway.py) (main loop) and [gateway-ksp/ksp/](gateway-ksp/ksp/): `vessel_link.py` (kRPC connection, streams, telemetry payloads), `parts_watch.py` (engines, stage propellant, heat, ground contact, docking ports), `target.py` (rendezvous and docking geometry, target selection, undocking), `commands.py` (`cmd/*` → kRPC), `streams.py`. |
 | Flight dynamics | [flight-dynamics/](flight-dynamics/): `orbits.py` (two-body orbits), `planner.py` (the four PADs), `service.py`. [README](flight-dynamics/README.md). |
 | MCC data | [mcc-data/](mcc-data/): `recorder.py` (the flight's samples and events), `relief.py` (relief maps), `service.py` (the bus, and KSP for the bodies and the terrain). How the MCC uses it: [panels/virtual/mcc/README.md](panels/virtual/mcc/README.md). |
-| Mission Control | [panels/virtual/mcc/](panels/virtual/mcc/): `mcc.js` (tabs, poll, loop), `bus.js`, `roster.js`, one module per console in `consoles/`. Architecture: [mcc/README.md](panels/virtual/mcc/README.md). |
+| Mission Control | [panels/virtual/mcc/](panels/virtual/mcc/): `mcc.js` (tabs, poll), `bus.js`, `roster.js`, one module per console in `consoles/`. Architecture: [mcc/README.md](panels/virtual/mcc/README.md). |
 | SimSup | [simsup/](simsup/): `simsup_core.py` (the logic), `service.py`, `scenarios.json`; the page is `panels/virtual/simsup.*`. Architecture: [simsup/README.md](simsup/README.md). |
 | Laser-cut faceplates | [panels/cut/](panels/cut/): `make_templates.py` (SVG templates for LightBurn from `protocol/panels/`, with layout checks), `footprints.json` (each component's cutout and size, placeholders until the parts are in hand). [README](panels/cut/README.md). |
 | Mock plant | [plant-mock/](plant-mock/): `simulation.py` (the model), `vehicle.py` (planet and launcher constants), `plant.py` (the service). |
