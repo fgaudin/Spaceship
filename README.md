@@ -6,12 +6,16 @@ Plan and ideas: [PLAN.md](PLAN.md). Agent self-test of the Moonshot course in KS
 ## Prototype: the cockpit bus
 
 ```sh
-docker compose up -d --build                  # broker + cockpit logic + mock plant + virtual panel
-open http://localhost:8650                    # the virtual panel
-docker compose stop plant-mock && docker compose --profile ksp up -d gateway-ksp   # KSP instead of the mock
+./capsule start               # everything, with KSP as the plant (kRPC on 127.0.0.1:50000)
+./capsule start mock          # the mock plant instead (its own physics, no KSP)
+./capsule stop                # stop it all (the broker keeps nothing: switch positions and the mission clock go)
+./capsule rebuild [service]   # after a code change: rebuild the images and restart them
+./capsule status | logs       # what runs and the plant's link; follow the logs
+open http://localhost:8650    # the virtual panel
 ```
 
-The mock and the gateway both write `tlm/*` and every topic has one writer, so stop one before starting the other.
+The mock and the gateway both write `tlm/*` and every topic has one writer, so `start` stops the other plant
+(`plant-mock` is in the compose profile `mock`, `gateway-ksp` in `ksp`).
 
 | Service | What it does | Code |
 |---|---|---|

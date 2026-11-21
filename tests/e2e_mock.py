@@ -1,4 +1,4 @@
-"""End-to-end test on the running stack (docker compose up, mock plant): act as the panel, fly a launch, check outputs.
+"""End-to-end test on the running stack (./capsule start mock): act as the panel, fly a launch, check outputs.
 
     .venv/bin/python tests/e2e_mock.py
 """

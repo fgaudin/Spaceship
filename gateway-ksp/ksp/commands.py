@@ -22,6 +22,8 @@ ACTION_GROUP_SWITCHES = {'cmd/rcs': 'rcs', 'cmd/gear': 'gear', 'cmd/lights': 'li
 def clamp(value, low, high):
     return max(low, min(high, value))
 
+STAGE_SLOW_S = 0.3                  # a staging longer than this is broken down in the log
+
 
 class CommandHandler:
     def __init__(self, link, failures=None):
@@ -74,12 +76,18 @@ class CommandHandler:
         self.link.mission_clock.reset(vessel.name, self.link.space_center.ut, vessel.met)
 
     def stage(self, request):
+        started = time.monotonic()
         self.link.mission_clock.note_split()
         self.link.vessel.control.activate_next_stage()
+        staged = time.monotonic()
         time.sleep(0.1)                     # let the part list settle before it is read again
         self.link.parts.forget_stage()
         # docked: an engine of the capsule not flown that the staging lit goes out at once, before the throttle reaches it
         self.link.engine_sharing.apply(self.link, failed=self.failures.failed_engines)
+        done = time.monotonic()
+        if done - started > STAGE_SLOW_S:   # where a slow staging spends its time (GAPS C4: 0.7-0.8 s)
+            print(f'stage: activate_next_stage {staged - started:.2f} s, settle 0.10 s, '
+                  f'engine sharing {done - staged - 0.1:.2f} s', flush=True)
 
     def abort(self, request):
         self.link.vessel.control.abort = True

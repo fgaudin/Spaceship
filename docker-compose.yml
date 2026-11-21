@@ -1,6 +1,7 @@
 # Capsule prototype: MQTT bus, plant (mock or KSP gateway), cockpit logic, virtual panel.
-#   docker compose up -d --build                                   # mock plant
-#   docker compose stop plant-mock && docker compose --profile ksp up -d gateway-ksp   # KSP instead (kRPC 127.0.0.1:50000)
+#   ./capsule start            # everything, KSP as the plant (kRPC 127.0.0.1:50000)
+#   ./capsule start mock       # the mock plant instead
+#   ./capsule stop             # (by hand: docker compose --profile ksp up -d --build, or --profile mock)
 # Panel: http://localhost:8650   Broker: mqtt://localhost:1883, ws://localhost:9001
 services:
   broker:
@@ -16,6 +17,7 @@ services:
     restart: unless-stopped
 
   plant-mock:
+    profiles: [mock]
     build: ./plant-mock
     environment: { MQTT_HOST: broker }
     depends_on: [broker]

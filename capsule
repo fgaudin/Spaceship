@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# The whole capsule stack in one command.
+#   ./capsule start [ksp|mock]     start (or bring up to date) everything, with KSP (default) or the mock as the plant
+#   ./capsule stop                 stop everything (the broker's retained state goes: switch positions, mission clock)
+#   ./capsule restart [ksp|mock]
+#   ./capsule rebuild [service…]   rebuild images after a code change and restart them (all, or the ones named)
+#   ./capsule status               what runs, and the plant's link
+#   ./capsule logs [service…]      follow the logs
+# One plant at a time: starting one stops the other (they both write tlm/*).
+set -euo pipefail
+cd "$(dirname "$0")"
+compose() { docker compose --profile ksp --profile mock "$@"; }
+
+plant="${2:-ksp}"
+case "$plant" in ksp|mock) ;; *) echo "plant: ksp or mock, not '$plant'" >&2; exit 2;; esac
+other() { [ "$1" = ksp ] && echo plant-mock || echo gateway-ksp; }
+
+case "${1:-}" in
+  start)
+    compose stop "$(other "$plant")" >/dev/null 2>&1 || true
+    docker compose --profile "$plant" up -d --build --remove-orphans
+    echo "panel: http://localhost:8650   plant: $plant" ;;
+  stop)
+    compose stop ;;
+  restart)
+    "$0" stop && "$0" start "$plant" ;;
+  rebuild)
+    shift
+    if [ "$#" -eq 0 ]; then
+      running=$(compose ps --services --status running)
+      compose build $running && compose up -d $running
+    else
+      compose build "$@" && compose up -d "$@"
+    fi ;;
+  status)
+    compose ps --format 'table {{.Service}}\t{{.Status}}'
+    docker compose exec -T broker mosquitto_sub -t gateway/status -C 1 -W 2 2>/dev/null \
+      | sed 's/^/gateway\/status: /' || echo "gateway/status: none (no plant, or the broker is down)" ;;
+  logs)
+    shift; compose logs -f --tail 50 "$@" ;;
+  *)
+    sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

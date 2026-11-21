@@ -5,6 +5,15 @@ What changed and why, in more detail than the commit messages. Newest first. Top
 
 ## 2026-11-21 — STATION moves the whole crew; the engines follow STATION; one mission clock
 
+- **One command for the stack: `./capsule start [ksp|mock]`, `stop`, `restart`, `rebuild`, `status`, `logs`.** Starting
+  a plant stops the other (both write `tlm/*`); the mock plant moved to a compose profile of its own (`mock`), so
+  a plain `docker compose up` no longer starts it beside the KSP gateway.
+- **The liftoff flight test is in the repository** (`tests/mission/liftoff.py`), its cutoff anticipation shortened
+  (0.35 s of the apoapsis's rise cut 5 km short at TWR 11; 0.1 s now).
+- **`firmware/tests/test_generated.py`**: fails when `firmware/generated/` no longer matches `protocol/panels/`.
+- **A slow staging is broken down in the gateway's log** (activate_next_stage, settle, engine sharing), to find where
+  the 0.7-0.8 s of GAPS C4 still go.
+
 - **A draft of the panel modules' firmware** (new `firmware/`). One generic firmware for the ESP32-POE2 boards,
   the same node as a module of the virtual console: raw inputs out (debounced switches and buttons, selectors,
   levers on ADS1115, the keypad), outputs drawn from the cockpit's topics (lamps through MCP23017, 7-segment, bars and

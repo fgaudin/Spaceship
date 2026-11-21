@@ -1,7 +1,7 @@
 """End-to-end test with KSP: the stack with gateway-ksp (not the mock), acting as the panels; every result is checked on
 the bus (tlm/*, panel outputs) and against KSP itself through a separate kRPC connection (ground truth).
 
-    docker compose stop plant-mock && docker compose --profile ksp up -d --build gateway-ksp
+    ./capsule start ksp
     .venv/bin/python tests/e2e_ksp.py [--save lor3-selftest-lko]
 
 Loads the save (vessel in orbit), so nothing irreversible is tested: no staging, no abort, no chute.
