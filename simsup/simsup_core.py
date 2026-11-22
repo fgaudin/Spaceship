@@ -107,6 +107,7 @@ class SimSup:
     frozen: bool = False
     probe_mode: bool = False                            # probe/mode: the probe control room flies, not the crew
     clearance: list = None                              # probe/clearance: the room's groups cleared; None: not known yet
+    stations: list = None                               # stations/open: the stations open to the students; None: not set
     next_number: int = 1
     now: float = 0.0
     changed: bool = True
@@ -117,7 +118,7 @@ class SimSup:
         messages = []
         if topic == 'sim/simsup/cmd':
             messages += self._request(payload)
-        elif topic in ('probe/mode', 'probe/clearance'):
+        elif topic in ('probe/mode', 'probe/clearance', 'stations/open'):
             self._adopt_probe_state(topic, payload)
         elif topic.startswith('tlm/'):
             self.telemetry[topic] = payload
@@ -215,6 +216,13 @@ class SimSup:
             if removed:
                 self._add_log('simsup', f"clearance withdrawn: {', '.join(removed)}")
             return [Message('probe/clearance', {'groups': self.clearance}, retain=True)]
+        if action == 'stations':
+            stations = request.get('open')
+            if not isinstance(stations, list):
+                return []
+            self.stations = sorted({str(station) for station in stations})
+            self._add_log('simsup', f"stations open: {', '.join(self.stations) or 'none'}")
+            return [Message('stations/open', {'open': self.stations}, retain=True)]
         if action == 'note':
             self._add_log('note', str(request.get('text', ''))[:200])
             return []
@@ -225,6 +233,9 @@ class SimSup:
         the instructor had cleared. After that the service's own state is the truth."""
         if topic == 'probe/mode':
             self.probe_mode = bool(payload.get('on'))
+        elif topic == 'stations/open':
+            if self.stations is None and isinstance(payload.get('open'), list):
+                self.stations = sorted(str(station) for station in payload['open'])
         elif self.clearance is None and isinstance(payload.get('groups'), list):
             self.clearance = sorted(str(group) for group in payload['groups'])
 

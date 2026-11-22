@@ -115,6 +115,17 @@ docker compose up -d --build simsup                       # with the rest of the
 - A voice loop to the crew, and Mission Control's side (PADs are uplinked from the burn computer's own page).
 - Battery and heat failures in KSP: kRPC cannot drain a resource or heat a part.
 
+## Password and stations
+
+The page asks for a login (user `simsup`): the web server serves `simsup.html`, `.js` and `.css` only with the password
+in `panels/auth/simsup.htpasswd`, which is not in git ([panels/auth/README.md](../panels/auth/README.md)). It locks the
+page, not the bus.
+
+The drawer (STATIONS in the top bar, which also shows what is open) opens **CONSOLE**, **MCC** and **WALL** to the
+students (`stations/open`). A closed station's tab stays in the other pages' top bars, greyed out and not clickable, and its page shows "station
+closed" and takes no key. Until a choice is made, every station is open. The probe room is always open. FDAI and CAM
+have no tab: they are the console's glass modules.
+
 ## The probe control room
 
 The *Probe control room* drawer (PROBE in the page's top bar, which also shows probe mode and how many groups are cleared; Esc closes it) sets **probe mode** (`probe/mode`: the cockpit logic flies the probe sequencer's

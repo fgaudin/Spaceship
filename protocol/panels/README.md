@@ -101,7 +101,7 @@ LED currents, the share of lamps lit) are in `hardware.json`, rough figures to c
 
 ## Changing the layout
 
-Edit the numbers and reload the console page (`index.html`). It never reflows: what moves is what you moved. The
+Edit the numbers and reload the console page (`console.html`). It never reflows: what moves is what you moved. The
 wheel zooms around the pointer, dragging pans, double-click fits a module, Esc fits everything.
 
 - The **grid** checkbox draws a 10 mm grid on every panel; empty U places of a zone show faintly.

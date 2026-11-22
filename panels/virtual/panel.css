@@ -333,3 +333,16 @@ kbd { background: #2b3035; border-radius: 3px; padding: 0 .3rem; border: 1px sol
 .embedded .fdai-plate .readouts { display: none; }
 .embedded .screen { flex-basis: min(36rem, calc(100vh - 2rem)); }
 .embedded .cam-screen { width: min(100%, calc((100vh - 2rem) * 16 / 9)); }
+
+/* a station the instructor has not opened (shell.js) */
+.station-closed { position: fixed; inset: 0; z-index: 1000; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 1rem; background: var(--bg); color: var(--legend-dim); font-size: 1.1rem; letter-spacing: .08em; }
+.station-closed b { color: var(--amber); font-size: 2.4rem; letter-spacing: .3em; }
+.station-closed[hidden] { display: none; }
+/* the top bar stays above it: its tabs lead away from a closed station */
+html.station-is-closed .topbar { position: sticky; top: 0; z-index: 1001; }
+html.station-is-closed .topbar .links { visibility: hidden; }     /* the closed page's own controls (zoom, grid…) */
+.navlink.closed { opacity: .35; pointer-events: none; cursor: default; }
+/* SimSup's tab sits at the right end of the top bar (shell.js), after the page's own items */
+.topbar > .navlink-right { margin-left: auto; }
+.topbar > .links ~ .navlink-right { margin-left: 0; }

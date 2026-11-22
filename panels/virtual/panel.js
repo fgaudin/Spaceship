@@ -11,7 +11,8 @@
    panel/<module>/status, over its own bus connection like its board would. There are no rules here: interlocks,
    lamps and displays are the cockpit logic's job.
 
-   URL: index.html[#<module>][?broker=ws://host:9001]; index.html?panel=<module> fits that module (old links). */
+   URL: console.html[#<module>][?broker=ws://host:9001]; console.html?panel=<module> fits that module (old links; the old
+   name index.html redirects here). */
 
 import { connectBus, parse } from './bus.js';
 import { createElement, createWidgetBuilders } from './widgets.js';

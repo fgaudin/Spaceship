@@ -61,5 +61,6 @@ services:
       - ./panels/virtual:/srv/panel:ro
       - ./protocol/panels:/srv/panels:ro
       - ./panels/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./panels/auth:/etc/nginx/auth:ro       # SimSup's password (panels/auth/README.md)
     extra_hosts: ["host.docker.internal:host-gateway"]     # JRTI's camera server, proxied as /jrti/
     restart: unless-stopped

@@ -3,6 +3,24 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-22 — SimSup: a password, and the stations the students may open
+
+- **SimSup asks for a password** (`panels/nginx.conf`, `docker-compose.yml`, new `panels/auth/README.md`): the web
+  server serves `simsup.html`, `.js` and `.css` only with a login (user `simsup`), from `panels/auth/simsup.htpasswd`,
+  which git ignores. It locks the page, not the MQTT bus (accepted: a classroom on a local network).
+- **Stations opened by the instructor** (`shell.js`, `panel.css`, SimSup's drawer, `simsup_core.py`; topic
+  `stations/open`, retained): CONSOLE, MCC and WALL open to the students only when ticked in SimSup. A closed station's
+  tab stays, greyed out and not clickable, and its page shows "station closed" under the top bar (the tabs lead away;
+  the page's own top-bar controls are hidden) and takes no key (the console's keys
+  move the hand controllers).
+  With nothing chosen yet, all are open. SimSup's own page shows every tab; the probe room is always open.
+- **The console is `console.html`; the site's root is the probe room** (`panels/nginx.conf`, `shell.js`, READMEs,
+  `capsule`): `/` redirects to `probe.html`, the one station always open, and the old `index.html` (with its `#module`
+  and `?broker=`) redirects to `console.html`. Redirects are relative (`absolute_redirect off`), so they keep port 8650.
+- **SIMSUP's tab sits apart, at the right end of the top bar** (`shell.js`, `panel.css`), after the page's own items. The other tabs go PROBE, WALL, MCC, CONSOLE.
+- **FDAI and CAM have no tab any more**: they are the console's glass modules (their pages still exist).
+- The drawer's button (STATIONS) shows what is open, probe mode and the groups cleared.
+
 ## 2026-11-22 — Probe control room; MCC: the footer is gone
 
 - **A probe control room** (new `panels/virtual/probe.html`, `probe.css`, `probe/probe.js`, `probe/catalogue.js`,

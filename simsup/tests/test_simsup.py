@@ -144,3 +144,13 @@ def test_a_restarted_simsup_keeps_the_clearances_it_had_published():
     simsup.handle('sim/simsup/cmd', {'action': 'clearance', 'groups': []}, 1)
     simsup.handle('probe/clearance', {'groups': []}, 1)
     assert simsup.clearance == []
+
+
+def test_stations_are_opened_by_the_instructor_and_kept_across_a_restart():
+    simsup = SimSup()
+    out = topics(simsup.handle('sim/simsup/cmd', {'action': 'stations', 'open': ['mcc', 'console']}, 1))
+    assert out['stations/open'] == {'open': ['console', 'mcc']}
+    assert simsup.log[-1]['text'] == 'stations open: console, mcc'
+    restarted = SimSup()
+    restarted.handle('stations/open', {'open': ['wall']}, 0)
+    assert restarted.stations == ['wall']

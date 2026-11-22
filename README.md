@@ -11,7 +11,7 @@ Plan and ideas: [PLAN.md](PLAN.md). Agent self-test of the Moonshot course in KS
 ./capsule stop                # stop it all (the broker keeps nothing: switch positions and the mission clock go)
 ./capsule rebuild [service]   # after a code change: rebuild the images and restart them
 ./capsule status | logs       # what runs and the plant's link; follow the logs
-open http://localhost:8650    # the virtual panel
+open http://localhost:8650/console.html    # the virtual panel (the site's root is the probe room)
 ```
 
 The mock and the gateway both write `tlm/*` and every topic has one writer, so `start` stops the other plant
@@ -35,7 +35,7 @@ of modules, each module one board carrying panels of W×H U (1 U = 100 mm) with 
 ([protocol/panels/README.md](protocol/panels/README.md)). Nothing reflows; only the zoom changes. It works like a map:
 the wheel zooms around the pointer, dragging pans, and every control works at any zoom, so several modules can be
 used at once; double-click a module to fit it, Esc (or the zoom percentage) fits the whole console, and
-`index.html#cmp` opens fitted on one module. The **grid** checkbox draws 10 mm squares; misplaced controls are outlined in red.
+`console.html#cmp` opens fitted on one module. The **grid** checkbox draws 10 mm squares; misplaced controls are outlined in red.
 
 Each module is a dumb I/O node like its future ESP32: it publishes raw inputs (`panel/eng/in/<control>`, retained for
 switches), draws what the cockpit logic sends (`panel/eng/out/<output>`) and its heartbeat. Controls: guarded toggles (click the red guard to open
@@ -166,7 +166,7 @@ the camera the CAMERA panel selects (`cam/select`) and publishes what it can sho
 name set in JRTI's part menu. The page reaches JRTI (port 8080 on the KSP machine) through the panel server's `/jrti/`
 ([panels/nginx.conf](panels/nginx.conf)), since JRTI sends no CORS header; another source: `cam.html?jrti=<url>`.
 
-**SOLO** (I/O module, `index.html#solo`, `solo` bus): for a pilot flying without Mission Control.
+**SOLO** (I/O module, `console.html#solo`, `solo` bus): for a pilot flying without Mission Control.
 - PAD REQUEST: CIRC, PLANE, RDV TGT and INJECT (knob: Mun or Minmus) ask the flight-dynamics service for a PAD, which
   it reads up to the burn computer as CAPCOM would; the display says what it sent or why not. RDV TGT on the ground
   (an airless body, a target in orbit) gives a direct rendezvous: TIG the liftoff, on the EVENT TIMER's TIG source,

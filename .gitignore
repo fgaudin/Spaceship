@@ -34,6 +34,7 @@ desktop.ini
 # local secrets
 .env
 .env.*
+panels/auth/*.htpasswd
 
 NOTES.md
 

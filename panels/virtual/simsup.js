@@ -5,6 +5,7 @@
 
 import { connectBus, parse } from './bus.js';
 import { GROUPS } from './probe/catalogue.js';
+import { STATIONS } from './shell.js';
 
 const TRIGGERS = [['now', 'now'], ['met', 'at MET s'], ['alt_below', 'below m'], ['alt_above', 'above m'], ['stage', 'at stage']];
 const STALE_AFTER_MS = 2000;
@@ -159,7 +160,7 @@ function drawScenarios(scenarios) {
 }
 
 /* ---------- the probe control room's clearances ---------- */
-let probeMode = false, clearance = new Set();
+let probeMode = false, clearance = new Set(), stationsOpen = null;     // null: SimSup has set none, all open
 
 function buildProbeGroups() {
   const container = element('probe-groups');
@@ -189,8 +190,24 @@ function drawProbe() {
   button.classList.toggle('on', probeMode);
   // the drawer's button says the state, so the drawer needs opening only to change it
   const open = element('probe-open');
-  open.textContent = `PROBE ${probeMode ? 'ON' : 'OFF'} · ${GROUPS.filter((group) => clearance.has(group.id)).length}/${GROUPS.length} cleared`;
+  const opened = STATIONS.filter(([id]) => stationsOpen === null || stationsOpen.includes(id)).map(([, label]) => label);
+  open.textContent = `OPEN: ${opened.join(' ') || 'none'} · PROBE ${probeMode ? 'ON' : 'OFF'} · ${GROUPS.filter((group) => clearance.has(group.id)).length}/${GROUPS.length} cleared`;
+  for (const box of document.querySelectorAll('#stations input')) box.checked = stationsOpen === null || stationsOpen.includes(box.value);
   open.classList.toggle('on', probeMode);
+}
+
+function buildStations() {
+  element('stations').replaceChildren(...STATIONS.map(([id, label]) => {
+    const item = create('label', 'ss-check');
+    const box = create('input');
+    Object.assign(box, { type: 'checkbox', value: id });
+    box.addEventListener('change', () => {
+      const open = [...document.querySelectorAll('#stations input')].filter((each) => each.checked).map((each) => each.value);
+      send({ action: 'stations', open });
+    });
+    item.append(box, create('span', '', label));
+    return item;
+  }));
 }
 
 function showDrawer(show) {
@@ -263,6 +280,7 @@ function onMessage(topic, text) {
   else if (topic === 'sim/simsup/log') { log = payload.log || []; drawLog(); }
   else if (topic === 'probe/mode') { probeMode = Boolean(payload.on); drawProbe(); }
   else if (topic === 'probe/clearance') { clearance = new Set(payload.groups || []); drawProbe(); }
+  else if (topic === 'stations/open') { stationsOpen = Array.isArray(payload.open) ? payload.open : null; drawProbe(); }
   else if (topic === 'gateway/status') { services.plant = payload.connected ? `${payload.plant} ✓` : '✗'; drawServices(); }
   else if (topic === 'cockpit/status') { services.cockpit = payload.online ? '✓' : '✗'; drawServices(); }
 }
@@ -270,8 +288,9 @@ function onMessage(topic, text) {
 client = connectBus({
   name: 'simsup-page',
   onConnect: (connection) => connection.subscribe(['sim/simsup/#', 'tlm/time', 'tlm/flight', 'tlm/vessel', 'cw/state',
-    'gateway/status', 'cockpit/status', 'probe/mode', 'probe/clearance'], { qos: 0 }),
+    'gateway/status', 'cockpit/status', 'probe/mode', 'probe/clearance', 'stations/open'], { qos: 0 }),
   onMessage,
 });
+buildStations();
 buildProbeGroups();
 setInterval(drawFlight, 500);

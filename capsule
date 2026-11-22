@@ -19,7 +19,7 @@ case "${1:-}" in
   start)
     compose stop "$(other "$plant")" >/dev/null 2>&1 || true
     docker compose --profile "$plant" up -d --build --remove-orphans
-    echo "panel: http://localhost:8650   plant: $plant" ;;
+    echo "console: http://localhost:8650/console.html   probe room: http://localhost:8650   plant: $plant" ;;
   stop)
     compose stop ;;
   restart)
