@@ -123,3 +123,24 @@ def test_every_failure_parameter_offers_its_default_value():
     for failure in failure_catalogue(parameter_choices(modules)):
         for name, default in failure['parameters'].items():
             assert default in [each['value'] for each in failure['choices'][name]], (failure['id'], name)
+
+
+def test_probe_mode_and_clearances_are_retained_and_logged():
+    simsup = SimSup()
+    out = topics(simsup.handle('sim/simsup/cmd', {'action': 'probe_mode', 'on': True}, 1))
+    assert out['probe/mode'] == {'on': True}
+    out = topics(simsup.handle('sim/simsup/cmd', {'action': 'clearance', 'groups': ['state', 'altitude']}, 2))
+    assert out['probe/clearance'] == {'groups': ['altitude', 'state']}
+    simsup.handle('sim/simsup/cmd', {'action': 'clearance', 'groups': ['altitude', 'apsides']}, 3)
+    texts = [line['text'] for line in simsup.log]
+    assert 'PROBE MODE ON' in texts and 'cleared: apsides' in texts and 'clearance withdrawn: state' in texts
+
+
+def test_a_restarted_simsup_keeps_the_clearances_it_had_published():
+    simsup = SimSup()
+    simsup.handle('probe/clearance', {'groups': ['altitude']}, 0)       # its own retained message, read back
+    simsup.handle('probe/mode', {'on': True}, 0)
+    assert simsup.clearance == ['altitude'] and simsup.probe_mode
+    simsup.handle('sim/simsup/cmd', {'action': 'clearance', 'groups': []}, 1)
+    simsup.handle('probe/clearance', {'groups': []}, 1)
+    assert simsup.clearance == []

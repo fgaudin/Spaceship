@@ -21,6 +21,7 @@ class WatchedEngine:
         # CTRL FROM PORT, a docking), and a position read once went stale (the CSM's Cheetah 32 m off its own axis).
         self.position = streams.call(SLOW_HZ, engine.part.position, vessel_frame)
         self.stage = engine.part.stage
+        self.drop = engine.part.decouple_stage      # the staging that drops it (−1: stays to the end)
         # What the engine gives at full throttle, also before it is lit (thrust and available_thrust are zero then):
         # the cockpit needs it for the TWR and the stage Δv on the pad. Specific impulse in vacuum and at sea level;
         # the cockpit takes the value for the outside pressure in between.
@@ -35,7 +36,7 @@ class WatchedEngine:
 
     def telemetry(self, held=False):
         right, _, down = self.position()
-        return {'x': round(right, 2), 'z': round(down, 2), 'stage': self.stage, 'on': self.active(), 'held': held,
+        return {'x': round(right, 2), 'z': round(down, 2), 'stage': self.stage, 'drop': self.drop, 'on': self.active(), 'held': held,
                 'thrust': round(self.thrust(), 1), 'max': round(self.available_thrust(), 1), 'fuel': self.has_fuel(),
                 'rated': round(self.rated_thrust(), 1), 'isp_vac': self.vacuum_specific_impulse,
                 'isp_sl': self.sea_level_specific_impulse, 'propellants': self.propellants}

@@ -14,6 +14,9 @@ Class: **theory** (a concept is missing), **numerical** (formula right, number o
   circularisation PAD at apoapsis (TM-9/10). Planner: worst case 3 325 m/s left over CdA × 0.5…2.
 - Proposed fix: in TM-6 or TM-7, say when closed-loop terminal guidance applies (long burn, low TWR, T ≫ time to climb)
   and give the "apoapsis cutoff + circularisation" profile used by small launchers, with its Δv cost.
+- **Fixed in Moonshot (2026-11-22)**: TM-6 section 6.3 "Direct insertion or coast to apogee" (the guidance demand
+  6Δh/T², Explorer 1's coast to apogee, the circularisation Δv from the cutoff state, when to use which), a practice
+  problem and a concept question.
 
 ## G2. One exponential does not fit a real atmosphere (TM-5) — numerical
 - Phase: Kerbin profile.

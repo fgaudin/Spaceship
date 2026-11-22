@@ -483,7 +483,7 @@ class Plant:
                 thrust = self.thrust / working_count if lit and has_fuel and not failed else 0.0
                 # the mock's engines burn propellant at a fixed rate: their thrust follows the specific impulse
                 rated = full_thrust_each * stage.specific_impulse_at(pressure) / stage.vacuum_isp if has_fuel else 0.0
-                engines.append({'x': x, 'z': z, 'stage': len(STAGES) - index, 'on': lit, 'fuel': has_fuel,
+                engines.append({'x': x, 'z': z, 'stage': len(STAGES) - index, 'drop': len(STAGES) - index - 1, 'on': lit, 'fuel': has_fuel,
                                 'max': round(full_thrust_each if has_fuel else 0.0, 1), 'thrust': round(thrust, 1),
                                 'rated': round(rated, 1), 'isp_vac': stage.vacuum_isp, 'isp_sl': stage.sea_level_isp})
         return {'engines': engines, 'stage': self.ksp_stage_number(), 'limit': self.thrust_limit,

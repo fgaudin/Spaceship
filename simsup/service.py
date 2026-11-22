@@ -13,7 +13,7 @@ MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
 MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
 SCENARIOS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scenarios.json')
 PANELS_DIR = os.environ.get('PANELS_DIR', os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'protocol', 'panels'))
-SUBSCRIPTIONS = ['sim/simsup/cmd', 'tlm/#', 'panel/+/in/#', 'cmd/#', 'cw/state']
+SUBSCRIPTIONS = ['sim/simsup/cmd', 'tlm/#', 'panel/+/in/#', 'cmd/#', 'cw/state', 'probe/mode', 'probe/clearance']
 TICK_EVERY_S = 1.0
 INBOX_WAIT_S = 0.1
 

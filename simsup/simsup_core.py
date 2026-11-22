@@ -105,6 +105,8 @@ class SimSup:
     held_back: dict = field(default_factory=dict)       # control → (kind, text) not logged yet: the latest value
     debrief: list = field(default_factory=list)         # {'failure', 'met', 'first_ack', 'first_action'}
     frozen: bool = False
+    probe_mode: bool = False                            # probe/mode: the probe control room flies, not the crew
+    clearance: list = None                              # probe/clearance: the room's groups cleared; None: not known yet
     next_number: int = 1
     now: float = 0.0
     changed: bool = True
@@ -115,6 +117,8 @@ class SimSup:
         messages = []
         if topic == 'sim/simsup/cmd':
             messages += self._request(payload)
+        elif topic in ('probe/mode', 'probe/clearance'):
+            self._adopt_probe_state(topic, payload)
         elif topic.startswith('tlm/'):
             self.telemetry[topic] = payload
             if topic in ('tlm/time', 'tlm/flight', 'tlm/vessel'):
@@ -195,10 +199,34 @@ class SimSup:
             self.log, self.debrief, self.scenario = [], [], None
             self._add_log('simsup', 'new session')
             return []
+        if action == 'probe_mode':
+            self.probe_mode = bool(request.get('on'))
+            self._add_log('simsup', 'PROBE MODE ON' if self.probe_mode else 'PROBE MODE OFF')
+            return [Message('probe/mode', {'on': self.probe_mode}, retain=True)]
+        if action == 'clearance':
+            groups = request.get('groups')
+            if not isinstance(groups, list):
+                return []
+            before = set(self.clearance or [])
+            self.clearance = sorted({str(group) for group in groups})
+            added, removed = sorted(set(self.clearance) - before), sorted(before - set(self.clearance))
+            if added:
+                self._add_log('simsup', f"cleared: {', '.join(added)}")
+            if removed:
+                self._add_log('simsup', f"clearance withdrawn: {', '.join(removed)}")
+            return [Message('probe/clearance', {'groups': self.clearance}, retain=True)]
         if action == 'note':
             self._add_log('note', str(request.get('text', ''))[:200])
             return []
         return []
+
+    def _adopt_probe_state(self, topic, payload):
+        """Our own retained probe/mode and probe/clearance, read back when the service starts: a restart keeps what
+        the instructor had cleared. After that the service's own state is the truth."""
+        if topic == 'probe/mode':
+            self.probe_mode = bool(payload.get('on'))
+        elif self.clearance is None and isinstance(payload.get('groups'), list):
+            self.clearance = sorted(str(group) for group in payload['groups'])
 
     def _arm(self, failure, parameters, trigger):
         if 'now' in trigger:

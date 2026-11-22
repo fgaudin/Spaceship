@@ -4,6 +4,7 @@
    URL: simsup.html?broker=ws://host:9001 */
 
 import { connectBus, parse } from './bus.js';
+import { GROUPS } from './probe/catalogue.js';
 
 const TRIGGERS = [['now', 'now'], ['met', 'at MET s'], ['alt_below', 'below m'], ['alt_above', 'above m'], ['stage', 'at stage']];
 const STALE_AFTER_MS = 2000;
@@ -157,6 +158,37 @@ function drawScenarios(scenarios) {
   }));
 }
 
+/* ---------- the probe control room's clearances ---------- */
+let probeMode = false, clearance = new Set();
+
+function buildProbeGroups() {
+  const container = element('probe-groups');
+  container.replaceChildren();
+  for (const [kind, title] of [['tlm', 'TELEMETRY'], ['cmd', 'COMMANDS']]) {
+    container.append(create('h3', '', title));
+    for (const group of GROUPS.filter((each) => (each.kind || 'tlm') === kind)) {
+      const label = create('label', 'ss-check');
+      const box = create('input');
+      Object.assign(box, { type: 'checkbox', value: group.id });
+      box.addEventListener('change', () => {
+        const groups = new Set(clearance);
+        if (box.checked) groups.add(group.id); else groups.delete(group.id);
+        send({ action: 'clearance', groups: [...groups] });
+      });
+      label.append(box, create('span', '', group.title), create('span', 'where', group.module));
+      container.append(label);
+    }
+  }
+  drawProbe();
+}
+
+function drawProbe() {
+  for (const box of document.querySelectorAll('#probe-groups input')) box.checked = clearance.has(box.value);
+  const button = element('probe-mode');
+  button.textContent = probeMode ? 'PROBE MODE ON' : 'PROBE MODE OFF';
+  button.classList.toggle('on', probeMode);
+}
+
 /* ---------- log ---------- */
 function drawLog() {
   const kind = element('log-filter').value;
@@ -197,6 +229,13 @@ element('note-form').addEventListener('submit', (event) => {
   if (text) { send({ action: 'note', text }); element('note').value = ''; }
 });
 element('log-filter').addEventListener('change', drawLog);
+element('probe-mode').addEventListener('click', () => {
+  if (probeMode || confirm('Probe mode: the probe control room flies the craft and the panels command nothing. Go on?')) {
+    send({ action: 'probe_mode', on: !probeMode });
+  }
+});
+element('probe-none').addEventListener('click', () => send({ action: 'clearance', groups: [] }));
+element('probe-all').addEventListener('click', () => send({ action: 'clearance', groups: GROUPS.map((group) => group.id) }));
 element('export').addEventListener('click', exportLog);
 
 const services = { plant: '?', cockpit: '?', simsup: '?' };
@@ -210,6 +249,8 @@ function onMessage(topic, text) {
   else if (topic === 'sim/simsup/scenarios') { catalogue = payload.failures || []; buildFailures(); drawScenarios(payload.scenarios || []); services.simsup = '✓'; drawServices(); }
   else if (topic === 'sim/simsup/state') { state = payload; drawState(); }
   else if (topic === 'sim/simsup/log') { log = payload.log || []; drawLog(); }
+  else if (topic === 'probe/mode') { probeMode = Boolean(payload.on); drawProbe(); }
+  else if (topic === 'probe/clearance') { clearance = new Set(payload.groups || []); drawProbe(); }
   else if (topic === 'gateway/status') { services.plant = payload.connected ? `${payload.plant} ✓` : '✗'; drawServices(); }
   else if (topic === 'cockpit/status') { services.cockpit = payload.online ? '✓' : '✗'; drawServices(); }
 }
@@ -217,7 +258,8 @@ function onMessage(topic, text) {
 client = connectBus({
   name: 'simsup-page',
   onConnect: (connection) => connection.subscribe(['sim/simsup/#', 'tlm/time', 'tlm/flight', 'tlm/vessel', 'cw/state',
-    'gateway/status', 'cockpit/status'], { qos: 0 }),
+    'gateway/status', 'cockpit/status', 'probe/mode', 'probe/clearance'], { qos: 0 }),
   onMessage,
 });
+buildProbeGroups();
 setInterval(drawFlight, 500);

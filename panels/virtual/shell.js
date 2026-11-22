@@ -12,7 +12,7 @@ export const PAGES = [
   // [link, label]: the console of I/O modules (protocol/panels/console.json, drawn by panel.js), then glass and
   // station pages
   ['index.html', 'CONSOLE'],
-  ['fdai.html', 'FDAI'], ['cam.html', 'CAM'], ['simsup.html', 'SIMSUP'], ['mcc.html', 'MCC'], ['wall.html', 'WALL'],
+  ['fdai.html', 'FDAI'], ['cam.html', 'CAM'], ['simsup.html', 'SIMSUP'], ['mcc.html', 'MCC'], ['probe.html', 'PROBE'], ['wall.html', 'WALL'],
 ];
 
 /* The page the browser is on, written as in PAGES ("index.html", "fdai.html"). */

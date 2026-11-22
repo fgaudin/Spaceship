@@ -58,10 +58,6 @@ input:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
 .mcc-pad { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
 .mcc-pad label { display: flex; flex-direction: column; gap: .25rem; font-size: .75rem; color: var(--legend-dim); }
 .mcc-pad button { grid-column: 1 / -1; }
-.mcc-footer { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
-  padding: .6rem 1rem; background: #0b0c0d; border-top: 1px solid #000; }
-.mcc-footer-poll { display: flex; gap: .5rem; align-items: center; color: var(--legend); font-size: .85rem; }
-.mcc-footer-poll[hidden] { display: none; }
 
 /* The poll banner (see updateBanner in mcc/mcc.js) */
 .mcc-poll-banner { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap;

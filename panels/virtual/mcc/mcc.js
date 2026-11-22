@@ -3,7 +3,7 @@
    the consoles held are shown side by side, each a standard screen of fixed layout, zoomed together to fit. The choice is remembered on that laptop and kept in the address
    (mcc.html#fido+retro).
 
-   The footer and the poll banner speak for every console held: one GO / NO-GO answers for all of them (FLIGHT's
+   The poll banner speaks for every console held: one GO / NO-GO answers for all of them (FLIGHT's
    board still shows each). FLIGHT runs the poll and does not answer it. */
 import { CONSOLES } from './roster.js';
 import { store, publish, met } from './bus.js';
@@ -72,8 +72,6 @@ function showRoles() {
   for (const tab of document.querySelectorAll('#tabs .mcc-tab')) tab.setAttribute('aria-pressed', String(roles.includes(tab.dataset.role)));
   const names = roles.map((role) => CONSOLES.find((console) => console.id === role).name);
   document.title = `MCC · ${names.join(' + ')}`;
-  document.getElementById('my-roles').textContent = names.join(' + ');
-  document.querySelector('.mcc-footer-poll').hidden = answeringRoles().length === 0;
   fitConsoles();
 }
 
@@ -84,8 +82,7 @@ function fitConsoles() {
   const count = heldRoles().length;
   holder.style.zoom = 1;
   const top = holder.getBoundingClientRect().top + window.scrollY;
-  const footer = document.querySelector('.mcc-footer').offsetHeight;
-  const available = [window.innerWidth - 2 * CONSOLE_GAP_PX, window.innerHeight - top - footer - 2 * CONSOLE_GAP_PX];
+  const available = [window.innerWidth - 2 * CONSOLE_GAP_PX, window.innerHeight - top - 2 * CONSOLE_GAP_PX];
   let best = { zoom: 0, columns: 1 };
   for (let columns = 1; columns <= count; columns++) {
     const rows = Math.ceil(count / columns);
@@ -125,33 +122,26 @@ function updateBanner() {
   document.getElementById('banner-nogo').classList.toggle('chosen', answer === false);
 }
 
-function updateFooter() {
-  const poll = store['mcc/poll'] || {}, answer = heldAnswer();
-  document.getElementById('poll-question').textContent = poll.open ? `POLL: ${poll.question}` : 'no poll open';
-  for (const [id, go] of [['answer-go', true], ['answer-nogo', false]]) {
-    const button = document.getElementById(id);
-    button.disabled = !poll.open;
-    button.classList.toggle('chosen', poll.open && answer === go);
-  }
+function updateClock() {
   document.getElementById('clock').textContent = `MET ${formatMet(met())}`;
 }
 
-function wireFooter() {
+function wireBanner() {
   const answer = (go) => {
     for (const role of answeringRoles()) publish(`mcc/poll/${role}`, { go, met: met() }, true);
   };
-  for (const [id, go] of [['answer-go', true], ['answer-nogo', false], ['banner-go', true], ['banner-nogo', false]]) {
+  for (const [id, go] of [['banner-go', true], ['banner-nogo', false]]) {
     document.getElementById(id).addEventListener('click', () => answer(go));
   }
 }
 
 buildTabs();
-wireFooter();
+wireBanner();
 showRoles();
 window.addEventListener('hashchange', showRoles);
 window.addEventListener('resize', fitConsoles);
 setInterval(() => {
   for (const role of heldRoles()) CONSOLES.find((console) => console.id === role).module.update();
-  updateFooter();
+  updateClock();
   updateBanner();
 }, UPDATE_EVERY_MS);

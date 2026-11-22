@@ -12,7 +12,7 @@ from cockpit import Cockpit
 MQTT_HOST = os.environ.get('MQTT_HOST', 'localhost')
 MQTT_PORT = int(os.environ.get('MQTT_PORT', '1883'))
 SUBSCRIPTIONS = ['panel/+/in/#', 'tlm/#', 'gateway/status', 'sim/reset', 'pad/uplink', 'cam/list', 'cam/status',
-                 'sim/failures/#', 'fd/status']
+                 'sim/failures/#', 'fd/status', 'probe/mode', 'probe/program', 'probe/exec']
 TICK_EVERY_S = 0.25             # periodic work of the cockpit: staleness, re-commands, displays
 INBOX_WAIT_S = 0.05
 TELEMETRY_GAP_LOGGED_ABOVE_S = 1.0  # to find what makes NO LINK come on

@@ -194,6 +194,11 @@ debrief with the crew's response times. Vehicle failures act in KSP through the 
 reaction wheels, parachutes, comms, telemetry); instrument failures in the cockpit (false alarm, dark panel, frozen
 display, stuck switch). How it works: [simsup/README.md](simsup/README.md).
 
+**PROBE** (the probe control room, http://localhost:8650/probe.html, one shared screen for the students of the
+Moonshot + KSP campaign): telemetry rows dark until the instructor clears them in SIMSUP, charts and a CSV export of
+what is cleared, and a flight program (steps at T+ or MET) uplinked to a sequencer in the cockpit logic, which flies
+it in probe mode. How it works: [panels/virtual/probe/README.md](panels/virtual/probe/README.md).
+
 **FDAI** (glass module, 2 × 3 U: ATTITUDE 2 × 2 on top, SAS MODE and ATTITUDE HOLD under it; ATTITUDE: the ball on a 4" round screen, pitch, heading and roll with their
 rates on 7-segment displays beside it, the FDAI controls in the corners around it (MARKERS top left, NEEDLES and ERROR
 SCALE at the bottom), and under them SAS, RCS and RCS FINE on the left, SPEED REF on the right (the navball's speed
@@ -244,12 +249,12 @@ To fly the mock: open the ENG ARM guard and arm, push the throttle, open STAGE A
 
 ### Tests
 ```sh
-.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the panels and the burn computer (65)
+.venv/bin/python -m pytest -q cockpit-logic/tests     # unit tests of the pure logic, the panels, the burn computer and the probe sequencer (121)
 .venv/bin/python tests/e2e_mock.py                    # end to end on the running stack with the mock (76 checks; `MQTT_PORT` selects another broker)
 .venv/bin/python tests/e2e_ksp.py                     # end to end with KSP and gateway-ksp (85 checks; loads a save in orbit)
 .venv/bin/python tests/e2e_ksp_docking.py --save lor3-rdv-handover   # docking display signs in KSP (8 checks)
 .venv/bin/python tests/e2e_ksp_undock.py --save lor3-rdv-docked       # UNDOCK from the panel in KSP (5 checks)
-.venv/bin/python -m pytest -q simsup/tests             # SimSup logic (9)
+.venv/bin/python -m pytest -q simsup/tests             # SimSup logic (13)
 .venv/bin/python -m pytest -q flight-dynamics/tests    # the PAD sums (9)
 .venv/bin/python -m pytest -q mcc-data/tests           # the flight recorder and the relief maps (6)
 .venv/bin/python tests/e2e_ksp_solo.py [circ] [plane] [rdv] [inject]   # each SOLO PAD flown in KSP and its outcome checked

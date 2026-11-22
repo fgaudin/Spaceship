@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Capsule · Probe control room</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="panel.css">
+<link rel="stylesheet" href="vendor/uPlot.min.css">
+<link rel="stylesheet" href="probe.css">
+</head>
+<body>
+<header class="topbar" data-subtitle="Probe control room">
+  <div class="links"><span id="services">plant ? · cockpit ?</span></div>
+</header>
+
+<main class="pr">
+  <section class="pr-strip" aria-label="Mission">
+    <div class="pr-big"><span class="label">MET</span><b id="met">---:--:--</b></div>
+    <div class="pr-big"><span class="label">LINK</span><b id="link">—</b></div>
+    <div class="pr-big"><span class="label">PROBE</span><b id="vessel">—</b></div>
+    <div class="pr-big"><span class="label">PROGRAM</span><b id="seq-state">—</b></div>
+    <div class="pr-big"><span class="label">NEXT STEP</span><b id="seq-next">—</b></div>
+    <div id="mode-warning" class="pr-warning" hidden>PROBE MODE OFF · the instructor has not handed the probe to the room: uplinks are ignored</div>
+  </section>
+
+  <section class="pr-col" aria-label="Trajectory"><div id="box-trajectory" class="pr-box"></div></section>
+  <section class="pr-col" aria-label="Vehicle and environment">
+    <div id="box-vehicle" class="pr-box"></div>
+    <div id="box-environment" class="pr-box"></div>
+  </section>
+  <section class="pr-col" aria-label="Charts and events">
+    <div class="pr-box pr-chart-box"><h2>ALTITUDE</h2><div id="chart-alt" class="pr-chart"></div></div>
+    <div class="pr-box pr-chart-box"><h2>SPEED</h2><div id="chart-speed" class="pr-chart"></div></div>
+    <div class="pr-box pr-events-box"><h2>EVENTS <button id="export" class="pr-btn small" type="button" title="The cleared telemetry of the flight so far, one sample a second, for your spreadsheet">EXPORT CSV</button></h2>
+      <ol id="events" class="pr-events"></ol></div>
+  </section>
+  <section class="pr-col" aria-label="Program">
+    <div class="pr-box pr-program">
+      <h2>FLIGHT PROGRAM <span class="pr-hint">draft, kept in this browser</span></h2>
+      <div class="pr-row">
+        <input id="program-name" aria-label="Program name" placeholder="program name" autocomplete="off">
+        <select id="saved" aria-label="Saved programs"><option value="">saved programs…</option></select>
+        <button id="save" class="pr-btn" type="button">SAVE</button>
+        <button id="delete" class="pr-btn" type="button">DELETE</button>
+      </div>
+      <table class="pr-steps"><thead><tr><th>#</th><th>WHEN</th><th>TIME (s or m:s)</th><th>ACTION</th><th>SETTINGS</th><th></th></tr></thead>
+        <tbody id="draft"></tbody></table>
+      <div class="pr-row">
+        <button id="add" class="pr-btn" type="button">+ STEP</button>
+        <span class="pr-spacer"></span>
+        <button id="uplink" class="pr-btn primary" type="button">UPLINK</button>
+      </div>
+    </div>
+    <div class="pr-box pr-onboard">
+      <h2>ON BOARD <span id="onboard-name" class="pr-hint"></span></h2>
+      <div id="onboard-message" class="pr-message" aria-live="polite"></div>
+      <ol id="onboard" class="pr-onboard-steps"></ol>
+      <div class="pr-row">
+        <button id="go" class="pr-btn go" type="button">GO</button>
+        <button id="stop" class="pr-btn stop" type="button">STOP</button>
+        <span class="pr-spacer"></span>
+        <button id="clear" class="pr-btn" type="button">CLEAR</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="vendor/mqtt.min.js"></script>
+<script src="vendor/uPlot.iife.min.js"></script>
+<script type="module" src="shell.js"></script>
+<script type="module" src="probe/probe.js"></script>
+</body>
+</html>

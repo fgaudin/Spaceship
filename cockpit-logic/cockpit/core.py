@@ -8,6 +8,10 @@ Pure logic: no I/O, and the time is passed in, so it runs the same in tests and 
 
 Every panel output is computed from the whole state on each call and only the ones that changed are published
 (retained), so a panel that reconnects gets the full picture from the broker.
+
+Probe mode (probe/mode, set by the instructor through SimSup): an uncrewed probe flown from the probe control room.
+The panels' inputs are recorded but command nothing, and nothing is re-commanded from their positions; the probe
+sequencer (probe_sequencer.py) flies the programs the room uplinks (probe/program, probe/exec).
 """
 from dataclasses import dataclass
 
@@ -20,6 +24,7 @@ from .event_timer import EventTimer
 from .injected_failures import InjectedFailures
 from .messages import Message
 from .node_mirror import NodeMirror
+from .probe_sequencer import ProbeSequencer
 from .panels import (attitude_hold, aux_panel, comm_panel, computer_panel, engine_panel, hand_controller, rendezvous_panel,
                      science_panel, solo_panel, station_panel, systems_panel)
 
@@ -87,6 +92,8 @@ class Cockpit:
         self.selected_experiment = 0            # its place in the list of tlm/science
         self.station_move = station_panel.StationMove()     # CM ⇄ LM: the blackout, then the power-up
         self.injected_failures = InjectedFailures()   # instruments and switches the instructor broke (SimSup)
+        self.probe_mode = False                 # probe/mode: flown from the probe control room, not the panels
+        self.probe_sequencer = ProbeSequencer()
 
     # ---------- reading the state ----------
     @property
@@ -222,6 +229,12 @@ class Cockpit:
             self.scene = payload.get('scene')
         elif topic.startswith('sim/failures/'):
             self.injected_failures.update(topic.rsplit('/', 1)[1], payload, self.published)
+        elif topic == 'probe/mode':
+            commands = self._set_probe_mode(bool(payload.get('on')))
+        elif topic == 'probe/program' and self.probe_mode:
+            commands = self.probe_sequencer.load(self, payload)
+        elif topic == 'probe/exec' and self.probe_mode:
+            commands = self.probe_sequencer.execute(self, payload)
         elif topic == 'fd/status':
             self.telemetry['fd/status'] = payload        # not telemetry from the plant: not counted as fresh
         elif topic == 'cam/list':
@@ -250,8 +263,8 @@ class Cockpit:
         self.inputs[control] = value
         if control in ('master_alarm', 'master_caution') and change.pressed:
             self._acknowledge(warnings=control == 'master_alarm')
-        if not self.powered():
-            return []                           # no power: the inputs are dead (see _on_power_change)
+        if not self.powered() or self.probe_mode:
+            return []                           # no power: the inputs are dead (see _on_power_change); a probe has no crew
         for panel_module in PANELS_WITH_INPUTS:
             commands = panel_module.handle_input(self, change)
             if commands is not None:
@@ -269,6 +282,17 @@ class Cockpit:
         if self.mission_launch_ut is not None and abs(launch - self.mission_launch_ut) > S.MISSION_CLOCK_JUMP_S:
             self.burn_computer.shift_mission_time(self.mission_launch_ut - launch)
         self.mission_launch_ut = launch
+
+    def _set_probe_mode(self, on):
+        """Into probe mode: the throttle closed (a save that loads leaves KSP's at 50 %). Out of it: a running
+        program stops, and the panels command again from where their switches are."""
+        if on == self.probe_mode:
+            return []
+        self.probe_mode = on
+        if on:
+            self.throttle_cut_latched = False
+            return self.command('cmd/throttle', {'v': 0.0})
+        return self.probe_sequencer.stop(self, 'probe mode off') if self.probe_sequencer.state == 'running' else []
 
     def _acknowledge(self, warnings):
         self.acknowledged_alarms |= {name for name in self.active_alarms() if ALARMS[name].is_warning == warnings}
@@ -306,6 +330,8 @@ class Cockpit:
     def tick(self, now):
         """Periodic work: mirror the PAD to the game, and re-command "panel wins" switches the game disagrees with."""
         self.now = now
+        if self.probe_mode:
+            return self._probe_tick()
         commands = station_panel.tick(self) + self._on_power_change() + attitude_hold.tick(self)
         if self.powered() and self.telemetry_is_fresh():
             commands += self.node_mirror.pad_to_node(self)
@@ -314,6 +340,17 @@ class Cockpit:
                 disagrees = field in self.vessel and bool(self.vessel[field]) != wanted
                 if disagrees and self.seconds_since_command(S.TOGGLE_COMMANDS[switch]) >= S.REASSERT_EVERY_S:
                     commands += self.command(S.TOGGLE_COMMANDS[switch], {'on': wanted})
+            commands += self._follow_sas_mode()
+            commands += self._reassert_throttle()
+        return commands + self.render()
+
+    def _probe_tick(self):
+        """Probe mode: the sequencer, the PAD mirrored as a node, the SAS mode asked for and the throttle last
+        commanded; none of the panels' switches."""
+        commands = self._on_power_change()
+        if self.telemetry_is_fresh():
+            commands += self.probe_sequencer.tick(self)
+            commands += self.node_mirror.pad_to_node(self)
             commands += self._follow_sas_mode()
             commands += self._reassert_throttle()
         return commands + self.render()
@@ -378,6 +415,7 @@ class Cockpit:
         self.docking_rates = rendezvous_panel.DockingRates()
         self.attitude_rates = AngleRates(S.ATTITUDE_RATE_SMOOTHING)
         self.station_move.stop()
+        self.probe_sequencer = ProbeSequencer()
         return self.render()
 
     # ---------- panel outputs ----------
@@ -401,6 +439,7 @@ class Cockpit:
         wanted['cam/select'] = aux_panel.camera_selection(self)
         wanted.update(station_panel.window_cameras(self))
         wanted['cmp/pad'] = self._pad_summary()
+        wanted['probe/sequencer'] = self.probe_sequencer.summary()
         wanted['cw/state'] = self._alarm_summary(active, unacknowledged)
         powered = self.powered()
         wanted['cockpit/power'] = {'on': powered}

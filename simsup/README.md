@@ -114,3 +114,13 @@ docker compose up -d --build simsup                       # with the rest of the
 - Failures with a degree (an engine at 50 % thrust, a slow leak) rather than on/off.
 - A voice loop to the crew, and Mission Control's side (PADs are uplinked from the burn computer's own page).
 - Battery and heat failures in KSP: kRPC cannot drain a resource or heat a part.
+
+## The probe control room
+
+The *Probe control room* box sets **probe mode** (`probe/mode`: the cockpit logic flies the probe sequencer's
+program and the panels command nothing) and what the students' room (`probe.html`) is **cleared** for
+(`probe/clearance`): telemetry groups, which are rows of the room, and command groups, which are kinds of program
+steps. Each group gives the course module it is meant for. Clear a derived group (apsides, Δv, TWR) once the
+students have shown they can work it out by hand. The service keeps both retained and reads them back when it
+restarts; every change goes in the log. See [panels/virtual/probe/README.md](../panels/virtual/probe/README.md).
+

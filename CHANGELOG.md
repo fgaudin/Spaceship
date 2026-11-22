@@ -3,6 +3,48 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-22 — Probe control room; MCC: the footer is gone
+
+- **A probe control room** (new `panels/virtual/probe.html`, `probe.css`, `probe/probe.js`, `probe/catalogue.js`,
+  `probe/README.md`; PROBE in the top bar). The students' station for the probe era of the Moonshot + KSP campaign:
+  one shared 2560 × 1440 screen with telemetry rows that stay dark (dashes) until the instructor clears them, charts
+  and a CSV export of the cleared series only, flight events that never name the trajectory (no ORBIT,
+  SUBORBITAL), and a flight program builder (steps at T+ or MET: stage, throttle, kick, SAS on/off and modes,
+  burn, chutes, experiments) with UPLINK, GO, STOP, CLEAR and the program on board with its countdown. Drafts and
+  named programs are kept in the browser.
+- **The probe sequencer** (new `cockpit-logic/cockpit/probe_sequencer.py`, in `core.py`). In probe mode the cockpit
+  logic records the panels' inputs but commands nothing from them and re-asserts no switch; it flies the uplinked
+  program instead, still as the only writer of `cmd/*`. A KICK holds stick inputs with SAS off, then centres them and
+  puts SAS back on (the course's pitch-over, then SAS PROGRADE). A BURN loads its PAD in the burn computer as soon as
+  it is the next burn, so the node exists for SAS MANEUVER, arms at TIG and ends at the cutoff on accumulated Δv
+  (given up after 10 s with no Δv). Uplink and commands need the radio link; a running program carries on through
+  LOS. Entering probe mode closes the throttle, leaving it stops a running program. Topics `probe/mode`,
+  `probe/clearance`, `probe/program`, `probe/exec`, `probe/sequencer` (`protocol/topics.md`). Tests:
+  `cockpit-logic/tests/test_probe.py`.
+- **Flown in KSP** (stock Ariane 5, `tmp/ariane_fly.py`, `tmp/ariane_rescue.py`): stage, a 4 s yaw kick at T+8, SAS
+  PROGRADE (pitch 84° → 56° by 30 km), booster separation at T+64; then core separation, SAS MANEUVER on the node of
+  the BURN's PAD, ignition at TIG, cutoff on accumulated Δv: 147.3 × 145.4 km (residual −1.0 m/s). Found on the way:
+  **STOP did nothing once the program was done** (its last step had left the throttle open: the apoapsis went 58 km
+  past the one wanted). A second flight (booster separation on BURNOUT+1 s, at MET 65.7) showed why the
+  circularisation on the core found no thrust: the craft's only battery is the probe core's 15 EC; the Mainsail's
+  alternator keeps it up while it burns, and the coast to apoapsis drained it (probe core and reaction wheel holding
+  SAS): no control, no link, SAS off. A craft question, not the room's; the room's CHARGE row (`power`) shows it. A third flight (with a battery) ran the whole sequence and found **a burn that flames out never ended**: the core ran dry 1 100 m/s into a 1 611 m/s circularisation (the test's PAD had not checked the core's propellant), and the step waited, throttle open, so the staging to the Poodle never came; the probe fell back. A burn whose thrust stops for 3 s before its cutoff now ends as failed, logs how short it was, closes the throttle and lets the program go on. STOP now always closes the throttle and centres the inputs, and the page keeps it
+  enabled for a finished program. The altitude chart leaves out a periapsis under the ground (−600 km on the way up
+  flattened the rest).
+- **BURNOUT trigger** (`probe_sequencer.py`, the room's WHEN: T+, MET, BURNOUT+): a step fires a delay after the
+  engines the next staging will drop have run out of propellant (lit ones; every lit engine when it drops none),
+  read empty for 0.5 s on an engine list taken after the last staging. Short burners staged with the boosters do
+  not fire it. `tlm/engines` gives each engine's `drop` (kRPC `decouple_stage`; the mock too). Clearable as
+  `cmd_burnout`. Tests in `test_probe.py`.
+- **SimSup clears the room** (`simsup/simsup_core.py`, `simsup.html`, `simsup.js`): a *Probe control room* box with
+  PROBE MODE and a checkbox per telemetry group and command group (with the course module each is meant for), NONE
+  and ALL. The service owns `probe/mode` and `probe/clearance` (retained), logs every change, and reads its own
+  retained values back after a restart.
+
+- **The MCC footer is removed** (`panels/virtual/mcc.html`, `mcc.css`, `mcc/mcc.js`). Its GO / NO-GO repeated the poll
+  banner, which already takes the answer (and keeps it changeable once given); its list of consoles held repeated the
+  tabs. The consoles get the room back. The MET clock in the top bar is updated as before.
+
 ## 2026-11-21 — STATION moves the whole crew; the engines follow STATION; one mission clock
 
 - **A bill of materials** (new `panels/bom/make_bom.py` → `panels/bom/BOM.md`), generated from the module definitions:
