@@ -36,7 +36,7 @@ What changed and why, in more detail than the commit messages. Newest first. Top
   read empty for 0.5 s on an engine list taken after the last staging. Short burners staged with the boosters do
   not fire it. `tlm/engines` gives each engine's `drop` (kRPC `decouple_stage`; the mock too). Clearable as
   `cmd_burnout`. Tests in `test_probe.py`.
-- **SimSup clears the room** (`simsup/simsup_core.py`, `simsup.html`, `simsup.js`): a *Probe control room* box with
+- **SimSup clears the room** (`simsup/simsup_core.py`, `simsup.html`, `simsup.js`): a *Probe control room* drawer, opened from the top bar (whose button shows probe mode and the groups cleared), so the four boxes and the debrief stay where they were; it has
   PROBE MODE and a checkbox per telemetry group and command group (with the course module each is meant for), NONE
   and ALL. The service owns `probe/mode` and `probe/clearance` (retained), logs every change, and reads its own
   retained values back after a restart.

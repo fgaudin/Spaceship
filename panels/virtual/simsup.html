@@ -11,7 +11,7 @@
 </head>
 <body>
 <header class="topbar" data-subtitle="SimSup · instructor station">
-  <div class="links"><span id="services">plant ? · cockpit ? · simsup ?</span></div>
+  <div class="links"><button id="probe-open" class="ss-btn ss-small" type="button" aria-controls="probe-drawer" aria-expanded="false" title="The probe control room: probe mode and what the students are cleared for">PROBE ROOM</button><span id="services">plant ? · cockpit ? · simsup ?</span></div>
 </header>
 
 <main class="ss">
@@ -41,13 +41,6 @@
     <div id="failures"></div>
   </section>
 
-  <section class="ss-box ss-probe" aria-label="Probe control room">
-    <h2>Probe control room <button id="probe-mode" class="ss-btn ss-small" type="button" title="probe/mode: the probe sequencer flies, the panels command nothing">PROBE MODE OFF</button></h2>
-    <p class="ss-empty">What the room (probe.html) is cleared for. A group stays dark there until it is ticked: clear derived rows once the students have shown they can work them out by hand.</p>
-    <div class="ss-inline"><button id="probe-none" class="ss-btn" type="button">NONE</button><button id="probe-all" class="ss-btn" type="button">ALL</button></div>
-    <div id="probe-groups"></div>
-  </section>
-
   <section class="ss-box ss-log" aria-label="Log and debrief">
     <h2>Debrief <button id="new-session" class="ss-btn ss-small" type="button">NEW SESSION</button></h2>
     <table class="ss-table"><thead><tr><th>Failure</th><th>MET</th><th>Ack after</th><th>First action after</th></tr></thead>
@@ -64,6 +57,14 @@
     <ol id="log" class="ss-logs"></ol>
   </section>
 </main>
+
+<aside id="probe-drawer" class="ss-drawer" aria-label="Probe control room" hidden>
+  <h2>Probe control room <button id="probe-close" class="ss-btn ss-small" type="button" aria-label="Close">✕</button></h2>
+  <div class="ss-inline"><button id="probe-mode" class="ss-btn" type="button" title="probe/mode: the probe sequencer flies, the panels command nothing">PROBE MODE OFF</button>
+    <button id="probe-none" class="ss-btn" type="button">NONE</button><button id="probe-all" class="ss-btn" type="button">ALL</button></div>
+  <p class="ss-empty">What the room (probe.html) is cleared for. A group stays dark there until it is ticked: clear derived rows once the students have shown they can work them out by hand.</p>
+  <div id="probe-groups"></div>
+</aside>
 
 <script src="vendor/mqtt.min.js"></script>
 <script type="module" src="shell.js"></script>

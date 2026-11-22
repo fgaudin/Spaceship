@@ -117,7 +117,7 @@ docker compose up -d --build simsup                       # with the rest of the
 
 ## The probe control room
 
-The *Probe control room* box sets **probe mode** (`probe/mode`: the cockpit logic flies the probe sequencer's
+The *Probe control room* drawer (PROBE in the page's top bar, which also shows probe mode and how many groups are cleared; Esc closes it) sets **probe mode** (`probe/mode`: the cockpit logic flies the probe sequencer's
 program and the panels command nothing) and what the students' room (`probe.html`) is **cleared** for
 (`probe/clearance`): telemetry groups, which are rows of the room, and command groups, which are kinds of program
 steps. Each group gives the course module it is meant for. Clear a derived group (apsides, Δv, TWR) once the

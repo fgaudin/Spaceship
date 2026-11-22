@@ -187,6 +187,15 @@ function drawProbe() {
   const button = element('probe-mode');
   button.textContent = probeMode ? 'PROBE MODE ON' : 'PROBE MODE OFF';
   button.classList.toggle('on', probeMode);
+  // the drawer's button says the state, so the drawer needs opening only to change it
+  const open = element('probe-open');
+  open.textContent = `PROBE ${probeMode ? 'ON' : 'OFF'} · ${GROUPS.filter((group) => clearance.has(group.id)).length}/${GROUPS.length} cleared`;
+  open.classList.toggle('on', probeMode);
+}
+
+function showDrawer(show) {
+  element('probe-drawer').hidden = !show;
+  element('probe-open').setAttribute('aria-expanded', String(show));
 }
 
 /* ---------- log ---------- */
@@ -234,6 +243,9 @@ element('probe-mode').addEventListener('click', () => {
     send({ action: 'probe_mode', on: !probeMode });
   }
 });
+element('probe-open').addEventListener('click', () => showDrawer(element('probe-drawer').hidden));
+element('probe-close').addEventListener('click', () => showDrawer(false));
+document.addEventListener('keydown', (event) => { if (event.key === 'Escape') showDrawer(false); });
 element('probe-none').addEventListener('click', () => send({ action: 'clearance', groups: [] }));
 element('probe-all').addEventListener('click', () => send({ action: 'clearance', groups: GROUPS.map((group) => group.id) }));
 element('export').addEventListener('click', exportLog);

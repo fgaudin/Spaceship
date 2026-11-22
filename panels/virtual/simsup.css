@@ -51,4 +51,11 @@
 .ss-check { display: grid; grid-template-columns: auto 1fr; gap: 0 .5rem; align-items: center; padding: .25rem .2rem;
   font-size: .78rem; border-bottom: 1px solid #ffffff08; cursor: pointer; }
 .ss-check .where { grid-column: 2; font-size: .6rem; letter-spacing: .1em; color: var(--legend-dim); text-transform: uppercase; }
-.ss-probe .ss-inline .ss-btn { margin: 0; }
+.ss-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(30rem, 100vw); overflow: auto; z-index: 10;
+  padding: .8rem 1rem 1rem; background: linear-gradient(160deg, var(--plate-hi), var(--plate) 35%, var(--plate-lo));
+  border-left: 1px solid #000; box-shadow: -8px 0 24px #000a; }
+.ss-drawer[hidden] { display: none; }
+.ss-drawer h2, .ss-drawer h3 { margin: .2rem 0 .6rem; font-size: .78rem; letter-spacing: .2em; color: var(--legend); font-weight: 600;
+  display: flex; align-items: center; gap: .6rem; }
+.ss-drawer h3 { margin-top: 1rem; color: var(--legend-dim); }
+.ss-drawer .ss-inline .ss-btn { margin: 0; }
