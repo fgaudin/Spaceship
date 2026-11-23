@@ -3,6 +3,16 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-23 — Frame rate with the window cameras
+
+- **New `PERFORMANCE.md`**: what the two window cameras cost in JNSQ on Linux, measured setting by setting. Unwatched
+  cameras cost nothing; the first camera of each frame pays about 10 ms more than the second, whatever it sees; the
+  GPU is never the limit. Resolution, anti-aliasing, plumes, parts and JRTI's integration switches make no difference.
+  Scatterer and EVE cost the game's own view 10–20 ms. Recommended: Spread Captures off, Max FPS 10. It also gives the
+  procedure for the same test on Windows, and what the stack needs to run there.
+- **New `tests/framerate.py`**: the read-only sampler behind those numbers (JRTI's debug page, nvidia-smi, KSP's CPU
+  on Linux), standard library only, for Linux and Windows.
+
 ## 2026-11-23 — Instructor manual (draft)
 
 - **New `INSTRUCTOR.md`**: a first outline of the instructor's manual for the Moonshot + KSP campaign. It covers the
