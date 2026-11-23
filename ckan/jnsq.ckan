@@ -1,0 +1,79 @@
+{
+    "spec_version": "v1.6",
+    "identifier": "installed-JNSQ-2",
+    "name": "installed-JNSQ 2",
+    "abstract": "A list of modules installed on the JNSQ 2 KSP instance",
+    "author": "francois",
+    "version": "2026.11.23.06.42.07",
+    "ksp_version_min": "1.8",
+    "ksp_version_max": "1.12",
+    "license": "unknown",
+    "depends": [
+        {
+            "name": "Waterfall",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "HullcamVDSContinued",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "Deferred",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "EnvironmentalVisualEnhancements",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "Firefly",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "JNSQ",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "JustReadTheInstructions",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "kRPC",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "KSPBurst",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "RocketSoundEnhancement",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "Scatterer",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "Shaddy",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "StockWaterfallEffects",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "TexturesUnlimited",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "VABOrganizer-Munk",
+            "suppress_recommendations": true
+        },
+        {
+            "name": "WaterfallRestock",
+            "suppress_recommendations": true
+        }
+    ],
+    "release_date": "2026-11-23T18:42:07.940283Z",
+    "kind": "metapackage"
+}

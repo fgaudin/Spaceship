@@ -3,6 +3,15 @@
 What changed and why, in more detail than the commit messages. Newest first. Topic and panel names are those of
 `protocol/topics.md` and `protocol/panels/`.
 
+## 2026-11-23 — Instructor manual (draft)
+
+- **New `INSTRUCTOR.md`**: a first outline of the instructor's manual for the Moonshot + KSP campaign. It covers the
+  three eras (probes, Mission Control, crew), the rules (no oracle, rows earned by hand proofs), the setup, the
+  briefing (backstory left as a placeholder), and a table of the 18 probe flights with what to clear in SimSup after
+  each. It also has the crewed missions, the flight day and the open questions. It lists the holes found while
+  writing it: the catalogue's module hints use old names, TM-6 circularises before TM-9 teaches burns, there is no
+  phase angle row, and docking or landing a probe can't be done with timed steps alone.
+
 ## 2026-11-22 — SimSup: a password, and the stations the students may open
 
 - **SimSup asks for a password** (`panels/nginx.conf`, `docker-compose.yml`, new `panels/auth/README.md`): the web
